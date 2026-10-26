@@ -22,6 +22,7 @@ from settings import load_settings
 from meta_playfellow.budget import DailyBudget
 from meta_playfellow.handover import HandOver, taken_line
 from meta_playfellow.muse_brain import MuseBrain
+from meta_playfellow.push_to_talk import VoiceLatency
 from meta_playfellow.voice import CommandQueue, typed_listener
 from meta_playfellow.session import play_session
 from meta_playfellow.stage_timer import StageTimer
@@ -52,6 +53,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--card", help="the controls card name (default: from the settings)")
     parser.add_argument("--minutes", type=int)
     parser.add_argument("--typed", action="store_true", help="type commands in this window, one per line (no microphone needed)")
+    parser.add_argument("--talk-key", default="", help="hold this key (for example f8) to talk to the buddy; needs a Muse key and a microphone")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
     parser.add_argument("--budget-file", type=Path, default=Path.home() / ".meta-playfellow" / "budget.json")
@@ -61,6 +63,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     cfg = dataclasses.replace(cfg, **{k: v for k, v in overrides.items() if v is not None})
     parts = build_parts(cfg)
     parts.typed = args.typed
+    parts.talk_key = args.talk_key.lower().strip()
+    parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
     if args.brain == "muse":
         key = key_loader()
         if not key:
@@ -81,14 +85,31 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     commands = CommandQueue()
     if getattr(parts, "typed", False):
         typed_listener(commands, input)
+    latency = VoiceLatency()
+    talk_key = getattr(parts, "talk_key", "")
+    if talk_key:
+        key = load_muse_key()
+        if not key:
+            say(tr("Talking needs a Muse key (MODEL_API_KEY). You can still type commands with --typed.",
+                   "الكلام يحتاج مفتاح Muse (MODEL_API_KEY). يمكنك الكتابة بدلًا منه باستخدام --typed."))
+        else:
+            from meta_playfellow.microphone import Microphone
+            from meta_playfellow.push_to_talk import PushToTalk, listen_hold
+            from meta_playfellow.realtime_voice import RealtimeTranscriber
+
+            talker = PushToTalk(Microphone(), RealtimeTranscriber(key, budget=parts.voice_budget),
+                                commands, say, card=parts.card, language=cfg.language, latency=latency)
+            listen_hold(talk_key, talker.key_down, talker.key_up)
     timer = StageTimer()
     listen_stop(lambda: parts.safety.stop("stopped_f12"))
     listen_key("f9", lambda: say(handover.toggle() or taken_line()))
     say(tr(f"Playing '{cfg.game_window}'. F9 takes the controls, F9 again gives them back. F12 or the mouse in the top-left "
            "corner stops at once.",
            f"ألعب '{cfg.game_window}'. F9 يأخذ التحكم، وF9 مرة أخرى يعيده. F12 أو الفأرة في الزاوية العلوية اليسرى يوقف فورًا."))
-    reason = run(parts, cfg, play.system_for(parts, cfg), timer, handover, on_event=lambda kind, data: None, commands=commands)
+    reason = run(parts, cfg, play.system_for(parts, cfg), timer, handover, on_event=lambda kind, data: None, commands=commands, latency=latency)
     say(msg(reason, minutes=cfg.max_minutes, calls=cfg.max_ai_calls))
+    if latency.samples:
+        say(tr(f"Key release to the first game key, measured: {latency.summary()}", f"من ترك المفتاح إلى أول ضغطة في اللعبة (مقيس): {latency.summary()}"))
     return 0
 
 

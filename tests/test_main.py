@@ -31,7 +31,7 @@ def test_f9_and_f12_are_registered_and_f9_toggles_the_hand_over():
 
         return parts, settings.Settings()
 
-    def run(p, cfg, system, timer, handover, on_event, commands=None):
+    def run(p, cfg, system, timer, handover, on_event, commands=None, latency=None):
         seen["handover"] = handover
         keys["f9"]()  # the player presses F9: takes over
         assert handover.human_has_controls

@@ -29,7 +29,7 @@ def _quiet(kind: str, data: Any) -> None:
 
 
 def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callable[[str, Any], None] = _quiet,
-              chat: list[str] | None = None) -> Reply | None:
+              chat: list[str] | None = None, latency=None) -> Reply | None:
     """One look-think-act turn, timed. None when there was nothing to do (no window, or it is not in front)."""
     box = parts.screen.find(settings.game_window)
     if box is None or not parts.screen.in_front(settings.game_window):
@@ -69,6 +69,9 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
             if parts.safety.stopped or not parts.screen.in_front(settings.game_window):
                 break  # F12, the corner, a limit, or the player clicked away: nothing more is pressed
             parts.hands.do(step, box)
+            if chat and latency is not None:  # this turn acted on something the player said: stop the voice stopwatch once
+                latency.key_pressed()
+                latency = None
     on_event("actions", reply.action_names())
     parts.memory.add(Moment(shrink(image, MEMORY_IMAGE_WIDTH), reply.thought, tuple(reply.action_names()), reply.say))
     return reply
@@ -76,7 +79,7 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
 
 def play_session(parts, settings, system: str, timer: StageTimer, handover: HandOver | None = None,
                  on_event: Callable[[str, Any], None] = _quiet, max_turns: int | None = None,
-                 wait: Callable[[float], bool] | None = None, commands: CommandQueue | None = None) -> str:
+                 wait: Callable[[float], bool] | None = None, commands: CommandQueue | None = None, latency=None) -> str:
     """Take turns until something stops play. Returns the reason. `wait(seconds)` returns True when play should end."""
     safety = parts.safety
     wait = wait or safety.wait
@@ -97,7 +100,7 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
             try:
                 said = commands.drain() if commands is not None else []
                 try:
-                    reply = take_turn(parts, settings, system, timer, on_event, chat=said)
+                    reply = take_turn(parts, settings, system, timer, on_event, chat=said, latency=latency)
                 except BrainError:
                     for line in said:  # a failed turn must not lose what the player said
                         commands.put(line)
