@@ -202,11 +202,11 @@ def test_every_plan_walks_toward_its_target_one_square_per_key_without_a_bump(ro
             continue
         avoid = frozenset({game.key} if game.key and row["intent"] != "key" else ())
         before = len(ds.route(game, {tile}, avoid=avoid)[0])
-        moves = game.moves
+        moves, bumps = game.moves, game.bumps  # the seeded walk before the frame may have bumped; only the plan's own keys count
         for action in reply["actions"]:
             game.press(action.lower())
         after = 0 if game.player == tile else len(ds.route(game, {tile}, avoid=avoid)[0])
-        assert game.bumps == 0 and game.moves == moves + len(reply["actions"]) and after == before - len(reply["actions"]), row["id"]
+        assert game.bumps == bumps and game.moves == moves + len(reply["actions"]) and after == before - len(reply["actions"]), row["id"]
 
 
 def test_a_plan_is_the_start_of_a_shortest_walk():

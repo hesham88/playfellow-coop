@@ -189,6 +189,18 @@ class BadRow(ValueError):
     """A row that breaks the data rule or the format: nothing is written when one exists."""
 
 
+def _strings(value):
+    """Every text inside a row, as it really reads."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _strings(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _strings(item)
+
+
 def validate_row(row: dict) -> None:
     if not isinstance(row, dict) or row.get("schema") != SCHEMA:
         raise BadRow("not a pf-train/1 row")
@@ -209,7 +221,7 @@ def validate_row(row: dict) -> None:
     blob = json.dumps(row, ensure_ascii=False)
     if VENDOR_NAMES.search(blob):
         raise BadRow(f"{name}: names a model or a vendor")
-    if PERSONAL_PATH.search(blob):
+    if any(PERSONAL_PATH.search(text) for text in _strings(row)):  # on the real text, not the JSON-escaped one (where "\n" would look like a path)
         raise BadRow(f"{name}: holds a file path")
     try:
         reply = json.loads(row["completion"])
