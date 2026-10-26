@@ -1,0 +1,21 @@
+name: Idea or feature request
+description: Suggest something that would help players
+labels: ["idea"]
+body:
+  - type: textarea
+    id: who
+    attributes:
+      label: Who is this for, and what problem does it solve?
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: dropdown
+    id: safety
+    attributes:
+      label: Does it touch safety, keys, spending or network hosts?
+      options: ["No", "Yes (explain above)"]

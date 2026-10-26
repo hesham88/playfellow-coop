@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem (private)
+    url: https://github.com/hesham88/playfellow-coop/security/advisories/new
+    about: Please report security problems privately, not in a public issue.

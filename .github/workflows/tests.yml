@@ -1,0 +1,28 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# No secrets are used here, and none are exposed to pull requests from forks.
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install the engine from the pinned tag, then this repository
+        shell: bash
+        run: |
+          git clone --depth 1 --branch pre-hackathon https://github.com/hesham88/playfellow.git engine
+          python -m pip install -e engine
+          python -m pip install -e . pytest
+      - name: Test (warnings are errors)
+        run: python -m pytest -q -W error
