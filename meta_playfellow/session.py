@@ -15,6 +15,7 @@ from memory import Moment
 from reply import Reply, parse_reply
 
 from meta_playfellow.handover import HandOver
+from meta_playfellow.sam_marks import mark_image
 from meta_playfellow.stage_timer import StageTimer
 
 MEMORY_IMAGE_WIDTH = 320  # older pictures the brain sees again are small: they only remind it what happened
@@ -37,7 +38,14 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         image = shrink(picture, settings.image_width)
         if parts.card.uses_clicks:
             image = add_grid(image)
+    labels = ""
+    marker = getattr(parts, "marker", None)
+    if marker is not None:  # SAM marks, if the session has them: numbered labels on the picture the brain sees
+        with timer.stage("mark"):
+            image, labels = mark_image(image, marker)
     text = turn_text(settings.goal, parts.memory.as_text(), [], None)
+    if labels:
+        text = labels + "\n\n" + text
     parts.safety.count_ai_call()
     images = [moment.image for moment in parts.memory.recent()] + [image]
     asked = timer.now()

@@ -9,13 +9,12 @@ action that is not on the game's controls card. Safety rules for the screenshots
 from __future__ import annotations
 
 import base64
-import ssl
 import time
 
-import certifi
 import httpx
 
 from brain import BrainError, to_jpeg_bytes
+from meta_playfellow import _http
 from meta_playfellow.budget import DailyBudget
 
 ENDPOINTS = {"muse": "https://api.meta.ai/v1"}  # pinned on purpose, like the engine's own brains
@@ -30,9 +29,7 @@ class MuseBrain:
         self.model = model
         self._key = api_key  # never shown: see __repr__
         self.budget = budget
-        # trust_env=False: no HTTP_PROXY and friends; verify with certifi only, never SSL_CERT_FILE; no redirects.
-        self._client = client or httpx.Client(trust_env=False, follow_redirects=False, timeout=REQUEST_TIMEOUT,
-                                              verify=ssl.create_default_context(cafile=certifi.where()))
+        self._client = client or _http.new_client()
         self.last_usage: dict | None = None
         self.last_timings: dict | None = None  # seconds spent encoding the pictures and waiting for the service, per call
 
@@ -57,25 +54,9 @@ class MuseBrain:
         encoded = time.perf_counter()
         request = {"model": self.model, "max_tokens": MAX_TOKENS,
                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}]}
-        try:
-            response = self._client.post(ENDPOINTS["muse"] + "/chat/completions", json=request,
-                                         headers={"Authorization": f"Bearer {self._key}"})
-        except httpx.TimeoutException:
-            raise BrainError("busy", retry=True, wait_seconds=5) from None
-        except httpx.HTTPError:
-            raise BrainError("offline", retry=True, wait_seconds=5) from None  # no detail: it could quote the request
+        response = _http.post(self._client, ENDPOINTS["muse"] + "/chat/completions", self._key, request)
         self.last_timings = {"encode": encoded - started, "request": time.perf_counter() - encoded}  # measured here, inside
-        status = response.status_code
-        if 300 <= status < 400:
-            raise BrainError("brain_trouble", detail="the service tried to send the request somewhere else")
-        if status in (401, 403):
-            raise BrainError("bad_key")
-        if status == 429:
-            raise BrainError("busy", retry=True, wait_seconds=10)
-        if status >= 500:
-            raise BrainError("busy", retry=True, wait_seconds=5)
-        if status >= 400:
-            raise BrainError("brain_trouble", detail=f"the service answered {status}")
+        _http.check_status(response.status_code)
         try:
             body = response.json()
             answer = body["choices"][0]["message"]["content"]

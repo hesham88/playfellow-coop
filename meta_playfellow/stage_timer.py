@@ -1,6 +1,6 @@
 """Per-stage timing for one turn, and the summary the speed bench writes.
 
-Only stages that really exist are measured: capture, shrink, encode, request, parse_and_check, key_down. A stage that was never
+Only stages that really exist are measured: capture, shrink, mark, encode, request, parse_and_check, key_down. A stage that was never
 timed is reported as "not measured", never as zero. Nothing here is typed in: every number comes from time.perf_counter()."""
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import time
 from contextlib import contextmanager
 from typing import Callable, Iterator
 
-STAGES = ("capture", "shrink", "encode", "request", "parse_and_check", "key_down")
+STAGES = ("capture", "shrink", "mark", "encode", "request", "parse_and_check", "key_down")
 NOT_MEASURED = "not measured"
 
 

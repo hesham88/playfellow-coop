@@ -42,6 +42,14 @@ class DailyBudget:
         data = self._load()
         return data["spent_usd"] >= self.cap_usd or data["calls"] >= self.max_calls
 
+    def record_cost(self, usd: float) -> float:
+        """Add one call whose price is known up front (for example a per-image price)."""
+        data = self._load()
+        data["spent_usd"] = float(data["spent_usd"]) + usd
+        data["calls"] = int(data["calls"]) + 1
+        self._save(data)
+        return usd
+
     def record(self, prompt_tokens: int | None = None, completion_tokens: int | None = None) -> float:
         """Add one finished call. Returns what it cost."""
         data = self._load()
