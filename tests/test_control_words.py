@@ -5,11 +5,11 @@ import json
 
 import pytest
 
-from meta_playfellow import session
-from meta_playfellow.control_words import BUDDY_TAKES, PLAYER_TAKES, STOP, control_action, split
-from meta_playfellow.handover import HandOver
-from meta_playfellow.stage_timer import StageTimer
-from meta_playfellow.voice import CommandQueue
+from playfellow_coop import session
+from playfellow_coop.control_words import BUDDY_TAKES, PLAYER_TAKES, STOP, control_action, split
+from playfellow_coop.handover import HandOver
+from playfellow_coop.stage_timer import StageTimer
+from playfellow_coop.voice import CommandQueue
 from tests.test_session_and_handover import MOVE, make
 
 

@@ -7,7 +7,7 @@ import http.server
 import json
 import threading
 
-from meta_playfellow.sam_eval import arena_truth_boxes
+from playfellow_coop.sam_eval import arena_truth_boxes
 
 
 class FakeSam:

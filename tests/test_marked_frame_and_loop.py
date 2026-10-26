@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 from PIL import Image, ImageChops
 
-from meta_playfellow import sam_marks
-from meta_playfellow.budget import DailyBudget
-from meta_playfellow.fakes import FakeSam
-from meta_playfellow.sam_marks import DEFAULT_PROMPTS, SamMarker, mark_image
-from meta_playfellow.stage_timer import StageTimer
+from playfellow_coop import sam_marks
+from playfellow_coop.budget import DailyBudget
+from playfellow_coop.fakes import FakeSam
+from playfellow_coop.sam_marks import DEFAULT_PROMPTS, SamMarker, mark_image
+from playfellow_coop.stage_timer import StageTimer
 from practice_arena.game import ArenaGame
 from tests.test_session_and_handover import Brain, make, session
 

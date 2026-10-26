@@ -12,9 +12,9 @@ import pytest
 from PIL import Image
 
 from brain import BrainError
-from meta_playfellow import muse_brain
-from meta_playfellow.budget import DailyBudget
-from meta_playfellow.muse_brain import MuseBrain
+from playfellow_coop import muse_brain
+from playfellow_coop.budget import DailyBudget
+from playfellow_coop.muse_brain import MuseBrain
 
 SECRET = "muse-test-key-S3cr3tValue"
 IMAGE = Image.new("RGB", (16, 12), (10, 20, 30))

@@ -23,7 +23,7 @@ from typing import Callable, Iterable
 import certifi
 
 from brain import BrainError
-from meta_playfellow.budget import DailyBudget
+from playfellow_coop.budget import DailyBudget
 
 ENDPOINTS = {"realtime": "wss://api.meta.ai/v1/asr/realtime"}  # pinned on purpose
 MODEL = "muse-voice-transcribe-1.0"

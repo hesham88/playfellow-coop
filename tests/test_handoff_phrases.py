@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from messages import set_language
-from meta_playfellow.handover import summary, taken_line
+from playfellow_coop.handover import summary, taken_line
 
 
 @pytest.fixture(autouse=True)

@@ -2,7 +2,7 @@
 
 The arena knows where its coins, door and player are, so a mark can be checked without a human. The score says how many marks
 were right (precision) and how many real things were found (recall). WHO produced the marks is recorded in the result, because a
-run against the fake server in meta_playfellow/fakes.py only checks this harness; it says nothing about SAM's accuracy."""
+run against the fake server in playfellow_coop/fakes.py only checks this harness; it says nothing about SAM's accuracy."""
 from __future__ import annotations
 
 import math

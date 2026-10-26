@@ -11,10 +11,10 @@ import wave
 import pytest
 
 from brain import BrainError
-from meta_playfellow import session, voice
-from meta_playfellow.budget import DailyBudget
-from meta_playfellow.stage_timer import StageTimer
-from meta_playfellow.voice import CommandQueue, MuseVoiceTranscriber, check_wav, for_the_planner, typed_listener
+from playfellow_coop import session, voice
+from playfellow_coop.budget import DailyBudget
+from playfellow_coop.stage_timer import StageTimer
+from playfellow_coop.voice import CommandQueue, MuseVoiceTranscriber, check_wav, for_the_planner, typed_listener
 from tests.test_session_and_handover import MOVE, make
 
 SECRET = "voice-test-key-S3cr3t"

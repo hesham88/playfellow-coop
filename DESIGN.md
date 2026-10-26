@@ -1,11 +1,11 @@
-# meta-playfellow: design note
+# playfellow-coop: design note
 
 Status: design note for the plugin. The engine is installed from a clone of the tag `pre-hackathon`; nothing here copies it.
 Sources: a survey of the engine's public hook points, with file and line, made at the tag.
 
 ## 1. What it is, in one paragraph
 
-`meta-playfellow` is a small plugin package for the open PlayFellow engine. The engine is a buddy that watches one game window, asks a brain what to do,
+`playfellow-coop` is a small plugin package for the open PlayFellow engine. The engine is a buddy that watches one game window, asks a brain what to do,
 and presses only keys on that game's controls card. This package adds, during the event: a Muse brain, SAM marks that label what is on screen, a stage timer with a
 speed benchmark, and a hand-over mode where the player and the buddy pass the controls back and forth. It contains **only** event work. The engine is installed from
 its public repo at the tag `pre-hackathon` and is never copied here.
@@ -13,13 +13,13 @@ its public repo at the tag `pre-hackathon` and is never copied here.
 ## 2. Repository layout (all new files, all written during the event)
 
 ```
-meta-playfellow/
+playfellow-coop/
   README.md              first lines: what pre-existed (the engine, public since 22 Oct, tag pre-hackathon) and what is new
   DESIGN.md              this note, trimmed
   pyproject.toml         depends on playfellow @ git+https://github.com/hesham88/playfellow@pre-hackathon
-  meta_playfellow/
+  playfellow_coop/
     __init__.py
-    __main__.py          `python -m meta_playfellow ...`: the plugin's own entry point (it owns main())
+    __main__.py          `python -m playfellow_coop ...`: the plugin's own entry point (it owns main())
     muse_brain.py        MuseBrain: ask(system, text, images) -> str, against the Meta Model API
     sam_marks.py         SamMarker: marker(image) -> list[Mark], built on the engine's grounding.mark_from_box
     stage_timer.py       StageTimer, STAGES, and thin timing wrappers around the engine's parts

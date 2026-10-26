@@ -8,11 +8,11 @@ import pytest
 from PIL import Image
 
 from brain import BrainError
-from meta_playfellow import sam_marks
-from meta_playfellow.budget import DailyBudget
-from meta_playfellow.fakes import FakeSam
-from meta_playfellow.sam_eval import arena_truth, evaluate, score, tile_box
-from meta_playfellow.sam_marks import DEFAULT_PROMPTS, SamMarker, answer_text, parse_boxes
+from playfellow_coop import sam_marks
+from playfellow_coop.budget import DailyBudget
+from playfellow_coop.fakes import FakeSam
+from playfellow_coop.sam_eval import arena_truth, evaluate, score, tile_box
+from playfellow_coop.sam_marks import DEFAULT_PROMPTS, SamMarker, answer_text, parse_boxes
 from practice_arena.game import ArenaGame
 
 KEY = "sam-test-key-S3cr3t"

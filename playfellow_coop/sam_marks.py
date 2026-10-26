@@ -23,8 +23,8 @@ from PIL import Image
 from brain import BrainError
 from grounding import Mark, draw_marks, label_marks, legend, mark_from_box
 
-from meta_playfellow import _http
-from meta_playfellow.budget import DailyBudget
+from playfellow_coop import _http
+from playfellow_coop.budget import DailyBudget
 
 ENDPOINTS = {"sam": "https://api.meta.ai/v1"}  # pinned on purpose
 MODEL = "sam-3.1"

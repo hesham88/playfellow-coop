@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "meta-playfellow"
+name = "playfellow-coop"
 version = "0.1.0.dev0"
 description = "Event work for the PlayFellow engine: a Muse brain with a daily spending cap"
 requires-python = ">=3.11"
@@ -11,7 +11,7 @@ dependencies = ["httpx>=0.27", "certifi", "Pillow>=10.1", "websockets>=13", "sou
 # The engine itself is installed first, from a clone of the tag (see the README); it is not a dependency pulled from here.
 
 [tool.setuptools]
-packages = ["meta_playfellow"]
+packages = ["playfellow_coop", "train"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

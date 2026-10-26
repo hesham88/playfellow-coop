@@ -116,7 +116,7 @@ def test_the_data_makers_never_call_a_model_or_the_network():
         elif isinstance(node, ast.ImportFrom):
             imported.add((node.module or "").split(".")[0])
     assert not imported & {"urllib", "http", "httpx", "requests", "socket", "ssl", "websockets", "subprocess", "brain", "ollama", "keyring"}
-    assert not any(name.startswith("meta_playfellow.muse") or name.endswith("muse_brain") for name in imported)
+    assert not any(name.startswith("playfellow_coop.muse") or name.endswith("muse_brain") for name in imported)
 
 
 # held-out: nothing shared with training -----------------------------------------------------------------------------------------------------
@@ -328,5 +328,5 @@ def test_the_scripted_baseline_is_named_as_a_teacher_and_never_as_the_buddys_pla
 
 
 def test_the_generator_is_not_imported_by_anything_that_plays():
-    for path in (ROOT / "meta_playfellow").rglob("*.py"):
+    for path in (ROOT / "playfellow_coop").rglob("*.py"):
         assert not re.search(r"^\s*(from|import)\s+train\b", path.read_text(encoding="utf-8"), re.MULTILINE), path.name

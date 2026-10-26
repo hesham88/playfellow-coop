@@ -14,9 +14,9 @@ from eyes import WindowBox
 from memory import Memory
 from safety import Safety
 
-from meta_playfellow import session
-from meta_playfellow.handover import HandOver, summary
-from meta_playfellow.stage_timer import StageTimer
+from playfellow_coop import session
+from playfellow_coop.handover import HandOver, summary
+from playfellow_coop.stage_timer import StageTimer
 
 ENGINE = Path(os.environ["PLAYFELLOW_ENGINE"])
 

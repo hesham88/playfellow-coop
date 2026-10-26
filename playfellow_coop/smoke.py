@@ -18,11 +18,11 @@ from typing import Callable
 import httpx
 
 from brain import BrainError
-from meta_playfellow import _http, muse_brain, sam_marks, voice
-from meta_playfellow.budget import DailyBudget
-from meta_playfellow.muse_brain import MuseBrain
-from meta_playfellow.sam_marks import SamMarker, answer_text, parse_boxes
-from meta_playfellow.voice import MuseVoiceTranscriber
+from playfellow_coop import _http, muse_brain, sam_marks, voice
+from playfellow_coop.budget import DailyBudget
+from playfellow_coop.muse_brain import MuseBrain
+from playfellow_coop.sam_marks import SamMarker, answer_text, parse_boxes
+from playfellow_coop.voice import MuseVoiceTranscriber
 
 TOTAL_CAP_USD = 10.0
 MUSE_PROMPT = 'You see one frame of a small maze game. Reply with JSON only: {"thought": "...", "say": "...", "actions": []}'

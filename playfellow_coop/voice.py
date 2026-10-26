@@ -18,8 +18,8 @@ import httpx
 
 from ai_armor import AIArmor
 from brain import BrainError
-from meta_playfellow import _http
-from meta_playfellow.budget import DailyBudget
+from playfellow_coop import _http
+from playfellow_coop.budget import DailyBudget
 
 ENDPOINTS = {"voice": "https://api.meta.ai/v1"}  # pinned on purpose
 MODEL = "muse-voice-transcribe-1.0"
@@ -99,7 +99,7 @@ class CommandQueue:
     def take_controls(self) -> list[str]:
         """Remove the hand-over control phrases ("stop", "you take it", "I've got it") and return their actions in order.
         Ordinary commands stay in the queue for the planner."""
-        from meta_playfellow.control_words import control_action
+        from playfellow_coop.control_words import control_action
 
         with self._lock:
             kept, actions = [], []

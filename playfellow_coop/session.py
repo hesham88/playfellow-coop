@@ -14,10 +14,10 @@ from hands import CornerStop
 from memory import Moment
 from reply import Reply, parse_reply
 
-from meta_playfellow.handover import HandOver
-from meta_playfellow.sam_marks import mark_image
-from meta_playfellow.voice import CommandQueue, for_the_planner
-from meta_playfellow.stage_timer import StageTimer
+from playfellow_coop.handover import HandOver
+from playfellow_coop.sam_marks import mark_image
+from playfellow_coop.voice import CommandQueue, for_the_planner
+from playfellow_coop.stage_timer import StageTimer
 
 MEMORY_IMAGE_WIDTH = 320  # older pictures the brain sees again are small: they only remind it what happened
 MAX_ERRORS_IN_ROW = 3
@@ -79,8 +79,8 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
 
 def _apply_control(action: str, parts, handover: HandOver | None, on_event: Callable[[str, Any], None]) -> None:
     """A spoken or typed control phrase, applied at once and without the AI."""
-    from meta_playfellow.control_words import BUDDY_TAKES, PLAYER_TAKES, STOP
-    from meta_playfellow.handover import taken_line
+    from playfellow_coop.control_words import BUDDY_TAKES, PLAYER_TAKES, STOP
+    from playfellow_coop.handover import taken_line
 
     if action == STOP:
         parts.safety.stop("stopped_button")  # the same stop as the Stop button; F12 and the corner still work too

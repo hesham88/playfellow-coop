@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 
 from brain import BrainError
-from meta_playfellow import __main__ as entry
-from meta_playfellow.handover import HandOver
-from meta_playfellow.muse_brain import MuseBrain
+from playfellow_coop import __main__ as entry
+from playfellow_coop.handover import HandOver
+from playfellow_coop.muse_brain import MuseBrain
 
 
 class Parts:

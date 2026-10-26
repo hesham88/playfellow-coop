@@ -25,7 +25,7 @@ from pathlib import Path
 from grounding import label_marks, legend, mark_from_box
 from practice_arena.game import MOVES, ArenaGame
 
-from meta_playfellow.sam_eval import arena_truth, tile_box
+from playfellow_coop.sam_eval import arena_truth, tile_box
 
 SCHEMA = "pf-train/1"
 ALLOWED = ("UP", "DOWN", "LEFT", "RIGHT", "WAIT")  # the Practice Arena's controls card; a test compares this with the card itself

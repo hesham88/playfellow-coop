@@ -11,9 +11,9 @@ import time
 from typing import Callable
 
 from brain import BrainError
-from meta_playfellow.microphone import Source
-from meta_playfellow.realtime_voice import RealtimeTranscriber, keywords_for
-from meta_playfellow.voice import CommandQueue
+from playfellow_coop.microphone import Source
+from playfellow_coop.realtime_voice import RealtimeTranscriber, keywords_for
+from playfellow_coop.voice import CommandQueue
 
 
 class VoiceLatency:

@@ -11,12 +11,12 @@ import pytest
 from websockets.sync.server import serve
 
 from brain import BrainError
-from meta_playfellow import realtime_voice, session
-from meta_playfellow.budget import DailyBudget
-from meta_playfellow.push_to_talk import PushToTalk, VoiceLatency
-from meta_playfellow.realtime_voice import RealtimeTranscriber, keywords_for
-from meta_playfellow.stage_timer import StageTimer
-from meta_playfellow.voice import CommandQueue
+from playfellow_coop import realtime_voice, session
+from playfellow_coop.budget import DailyBudget
+from playfellow_coop.push_to_talk import PushToTalk, VoiceLatency
+from playfellow_coop.realtime_voice import RealtimeTranscriber, keywords_for
+from playfellow_coop.stage_timer import StageTimer
+from playfellow_coop.voice import CommandQueue
 from tests.test_session_and_handover import CARD, MOVE, make
 
 KEY = "rt-test-key-S3cr3tValue"
@@ -295,16 +295,16 @@ def test_no_stopwatch_sample_without_a_spoken_command_and_not_twice(fake, tmp_pa
 def test_the_entry_point_offers_a_talk_key_and_the_microphone_is_never_built_without_one():
     import inspect
 
-    from meta_playfellow import __main__ as entry
+    from playfellow_coop import __main__ as entry
 
     source = inspect.getsource(entry)
-    assert "--talk-key" in source and "from meta_playfellow.microphone import Microphone" in source
+    assert "--talk-key" in source and "from playfellow_coop.microphone import Microphone" in source
     parts, cfg = entry.build(["--typed"], build_parts=lambda c: type("P", (), {"card": CARD})(), key_loader=lambda: None)
     assert parts.talk_key == "" and parts.typed is True  # no talk key: nothing about a microphone is touched
 
 
 def test_no_test_can_reach_a_real_microphone():
-    import meta_playfellow.microphone as mic
+    import playfellow_coop.microphone as mic
 
     class NoDevice:
         def RawInputStream(self, **kw):  # noqa: N802

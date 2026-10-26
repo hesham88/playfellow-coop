@@ -14,8 +14,8 @@ import time
 import httpx
 
 from brain import BrainError, to_jpeg_bytes
-from meta_playfellow import _http
-from meta_playfellow.budget import DailyBudget
+from playfellow_coop import _http
+from playfellow_coop.budget import DailyBudget
 
 ENDPOINTS = {"muse": "https://api.meta.ai/v1"}  # pinned on purpose, like the engine's own brains
 REQUEST_TIMEOUT = 25.0

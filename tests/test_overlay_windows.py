@@ -6,7 +6,7 @@ import ctypes
 import pytest
 from PIL import Image
 
-from meta_playfellow.overlay import hotkey, winstyle
+from playfellow_coop.overlay import hotkey, winstyle
 from tests.test_session_and_handover import CARD, MOVE
 
 

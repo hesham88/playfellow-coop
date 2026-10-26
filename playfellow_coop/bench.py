@@ -14,8 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from meta_playfellow.session import play_session
-from meta_playfellow.stage_timer import NOT_MEASURED, StageTimer
+from playfellow_coop.session import play_session
+from playfellow_coop.stage_timer import NOT_MEASURED, StageTimer
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "pf-results/1"

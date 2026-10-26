@@ -25,9 +25,9 @@ from eyes import WindowBox
 from memory import Memory
 from reply import parse_reply
 from safety import Safety
-from meta_playfellow import muse_brain
-from meta_playfellow.budget import DailyBudget
-from meta_playfellow.muse_brain import MuseBrain
+from playfellow_coop import muse_brain
+from playfellow_coop.budget import DailyBudget
+from playfellow_coop.muse_brain import MuseBrain
 
 muse_brain.ENDPOINTS["muse"] = sys.argv[3]
 root = Path(play.SOFTWARE)

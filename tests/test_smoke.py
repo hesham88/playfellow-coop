@@ -10,7 +10,7 @@ import wave
 
 import pytest
 
-from meta_playfellow import muse_brain, sam_marks, smoke, voice
+from playfellow_coop import muse_brain, sam_marks, smoke, voice
 
 KEY = "smoke-test-key-S3cr3tValue"
 CHAT = {"choices": [{"message": {"role": "assistant", "content": '{"thought": "t", "say": "", "actions": []}'}}],

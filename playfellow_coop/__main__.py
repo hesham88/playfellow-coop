@@ -1,4 +1,4 @@
-"""`python -m meta_playfellow`: play a game WITH the buddy. F9 takes the controls (the buddy lets go of every key and asks no AI),
+"""`python -m playfellow_coop`: play a game WITH the buddy. F9 takes the controls (the buddy lets go of every key and asks no AI),
 F9 again hands them back with a short spoken-style summary; F12 or the mouse in the top-left corner stops everything.
 
 The brain is the engine's built-in one (no key, no network) or the Muse brain (needs MODEL_API_KEY, from the environment or the
@@ -19,16 +19,16 @@ from messages import msg, tr
 from safety import listen_for_f12, listen_for_key
 from settings import load_settings
 
-from meta_playfellow.budget import DailyBudget
-from meta_playfellow.handover import HandOver, taken_line
-from meta_playfellow.muse_brain import MuseBrain
-from meta_playfellow.push_to_talk import VoiceLatency
-from meta_playfellow.voice import CommandQueue, typed_listener
-from meta_playfellow.session import play_session
-from meta_playfellow.stage_timer import StageTimer
+from playfellow_coop.budget import DailyBudget
+from playfellow_coop.handover import HandOver, taken_line
+from playfellow_coop.muse_brain import MuseBrain
+from playfellow_coop.push_to_talk import VoiceLatency
+from playfellow_coop.voice import CommandQueue, typed_listener
+from playfellow_coop.session import play_session
+from playfellow_coop.stage_timer import StageTimer
 
 KEY_NAME = "MODEL_API_KEY"  # Meta's own name for the key
-KEYRING_SERVICE = "meta-playfellow"
+KEYRING_SERVICE = "playfellow-coop"
 
 
 def load_muse_key() -> str | None:
@@ -56,7 +56,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--talk-key", default="", help="hold this key (for example f8) to talk to the buddy; needs a Muse key and a microphone")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
-    parser.add_argument("--budget-file", type=Path, default=Path.home() / ".meta-playfellow" / "budget.json")
+    parser.add_argument("--budget-file", type=Path, default=Path.home() / ".playfellow-coop" / "budget.json")
     args = parser.parse_args(argv)
     cfg = load_settings(args.settings)
     overrides = {"game_window": args.window, "controls_card": args.card, "max_minutes": args.minutes, "brain": "builtin"}
@@ -93,9 +93,9 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
             say(tr("Talking needs a Muse key (MODEL_API_KEY). You can still type commands with --typed.",
                    "الكلام يحتاج مفتاح Muse (MODEL_API_KEY). يمكنك الكتابة بدلًا منه باستخدام --typed."))
         else:
-            from meta_playfellow.microphone import Microphone
-            from meta_playfellow.push_to_talk import PushToTalk, listen_hold
-            from meta_playfellow.realtime_voice import RealtimeTranscriber
+            from playfellow_coop.microphone import Microphone
+            from playfellow_coop.push_to_talk import PushToTalk, listen_hold
+            from playfellow_coop.realtime_voice import RealtimeTranscriber
 
             talker = PushToTalk(Microphone(), RealtimeTranscriber(key, budget=parts.voice_budget),
                                 commands, say, card=parts.card, language=cfg.language, latency=latency)

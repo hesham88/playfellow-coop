@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-from meta_playfellow import bench
-from meta_playfellow.stage_timer import NOT_MEASURED, STAGES
+from playfellow_coop import bench
+from playfellow_coop.stage_timer import NOT_MEASURED, STAGES
 from tests.test_session_and_handover import Brain, make  # noqa: F401
 
 

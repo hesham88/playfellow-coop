@@ -1,4 +1,4 @@
-# meta-playfellow
+# playfellow-coop
 
 **Built on the PlayFellow engine (hesham88/playfellow). Two tags say what existed when: before-kickoff = b7b72a8 (committed 08:04, pushed 12:01 on 26 Oct, before the kickoff); pre-hackathon = d63c1b4 (pushed 19:33 on 26 Oct), re-exporting engine work finished before the kickoff in our private repo (LM Studio adapter, memory check, proxy/CA hardening, redaction, game clock), plus packaging. Everything in this repo was built during the event.**
 
@@ -8,13 +8,13 @@ PlayFellow is an open-source engine that plays a PC game *with* you: it watches 
 
 | Piece | What it does | Status and honest limits |
 |---|---|---|
-| `meta_playfellow/muse_brain.py` | A brain that asks a Muse model on the Meta Model API what to do. Pinned address, no proxy or CA variables, redirects refused, the key never shown | built; tested against a fake server only. **No live call yet**: the endpoint path and usage field names are unverified until the first capped real call |
-| `meta_playfellow/budget.py` | A daily spending cap (dollars and calls) kept in a small file; a call over the cap is stopped before it is sent | built; prices are the published Standard prices for muse-spark |
-| `meta_playfellow/handover.py`, `session.py` | **You take over, I take over.** F9 takes the controls: every held key is released, the buddy presses nothing and asks no AI. F9 again hands them back with a one-line summary made only of counted facts (seconds, turns skipped, AI calls made). F12 and the mouse corner still stop everything | built; tested with pretend eyes, hands and brain. **Not yet run live on the Practice Arena** |
-| `meta_playfellow/stage_timer.py`, `bench.py`, `bench/speed_bench.py` | Times capture, shrink, encode, request, parse-and-check and key-down per turn and writes one `pf-results/1` file (p50, p90, p95) | built; offline-tested. `encode` is measured only for the Muse brain; `first_byte` and `change_test` are not measured, and the file says "not measured" instead of inventing a number. **No live run yet** |
-| `meta_playfellow/sam_marks.py`, `sam_eval.py` | SAM 3.1 marks: where things are on screen, drawn as numbered labels on the picture the buddy sees, with the engine's own legend. Asked again only when the picture changes; every request is gated by the daily budget | built and tested against a **fake server** built from the Practice Arena's own truth. **No real SAM call yet**: the response wrapper is unverified. The scores from the fake server check the harness only and say nothing about SAM's accuracy |
-| `meta_playfellow/voice.py` | Voice commands ("grab the coins on the left") with Muse Voice Transcribe in file mode (push-to-talk), and **typed commands as the fallback**, so the demo never needs a microphone. The command goes to the planner next to the marks; only keys on the controls card are pressed | written; tests pending (they run before this row says "built"). No real voice call yet |
-| `meta_playfellow/realtime_voice.py`, `push_to_talk.py`, `microphone.py` | **Hold a key, speak, release.** The microphone streams to Muse Voice Transcribe over a WebSocket; partial text shows live; the final words become a command; a typed line works the same. The key goes only in the handshake frame. It also measures the time from letting go of the talk key to the buddy's first game key | built and tested against a **fake WebSocket server** and a pretend microphone. **Not yet run against the real service or a real microphone**: the frame format comes from our notes, so the first real call saves the real frames as a fixture before anything else builds on them. The measured key-release-to-first-key time is "not measured" until a live run |
+| `playfellow_coop/muse_brain.py` | A brain that asks a Muse model on the Meta Model API what to do. Pinned address, no proxy or CA variables, redirects refused, the key never shown | built; tested against a fake server only. **No live call yet**: the endpoint path and usage field names are unverified until the first capped real call |
+| `playfellow_coop/budget.py` | A daily spending cap (dollars and calls) kept in a small file; a call over the cap is stopped before it is sent | built; prices are the published Standard prices for muse-spark |
+| `playfellow_coop/handover.py`, `session.py` | **You take over, I take over.** F9 takes the controls: every held key is released, the buddy presses nothing and asks no AI. F9 again hands them back with a one-line summary made only of counted facts (seconds, turns skipped, AI calls made). F12 and the mouse corner still stop everything | built; tested with pretend eyes, hands and brain. **Not yet run live on the Practice Arena** |
+| `playfellow_coop/stage_timer.py`, `bench.py`, `bench/speed_bench.py` | Times capture, shrink, encode, request, parse-and-check and key-down per turn and writes one `pf-results/1` file (p50, p90, p95) | built; offline-tested. `encode` is measured only for the Muse brain; `first_byte` and `change_test` are not measured, and the file says "not measured" instead of inventing a number. **No live run yet** |
+| `playfellow_coop/sam_marks.py`, `sam_eval.py` | SAM 3.1 marks: where things are on screen, drawn as numbered labels on the picture the buddy sees, with the engine's own legend. Asked again only when the picture changes; every request is gated by the daily budget | built and tested against a **fake server** built from the Practice Arena's own truth. **No real SAM call yet**: the response wrapper is unverified. The scores from the fake server check the harness only and say nothing about SAM's accuracy |
+| `playfellow_coop/voice.py` | Voice commands ("grab the coins on the left") with Muse Voice Transcribe in file mode (push-to-talk), and **typed commands as the fallback**, so the demo never needs a microphone. The command goes to the planner next to the marks; only keys on the controls card are pressed | written; tests pending (they run before this row says "built"). No real voice call yet |
+| `playfellow_coop/realtime_voice.py`, `push_to_talk.py`, `microphone.py` | **Hold a key, speak, release.** The microphone streams to Muse Voice Transcribe over a WebSocket; partial text shows live; the final words become a command; a typed line works the same. The key goes only in the handshake frame. It also measures the time from letting go of the talk key to the buddy's first game key | built and tested against a **fake WebSocket server** and a pretend microphone. **Not yet run against the real service or a real microphone**: the frame format comes from our notes, so the first real call saves the real frames as a fixture before anything else builds on them. The measured key-release-to-first-key time is "not measured" until a live run |
 | Split controls ("you block, I heal") | Share the keys between you and the buddy | planned, a stretch goal |
 
 Items marked planned are not built: a row changes only when a dated commit shows it.
@@ -35,7 +35,7 @@ The engine's controls cards and settings files sit next to its code, so the engi
 2. In this repo, start the buddy with the built-in brain, which needs no key and no network, and with typed commands:
 
    ```
-   python -m meta_playfellow --typed
+   python -m playfellow_coop --typed
    ```
 
    With a Muse key in `MODEL_API_KEY`, add `--brain muse`. To talk instead of typing, add `--talk-key f8` and hold F8 while you speak.
@@ -55,8 +55,8 @@ python -m pytest -q
 To use the Muse brain, put your own key in the environment as `MODEL_API_KEY` (Meta's name for it) or in the Windows credential manager. It is never read from a file in this repo, and it is never printed. Then:
 
 ```
-python -m meta_playfellow --brain muse        # F9 takes the controls, F9 again gives them back, F12 stops
-python -m meta_playfellow                     # the same with the engine's built-in brain (no key, no network)
+python -m playfellow_coop --brain muse        # F9 takes the controls, F9 again gives them back, F12 stops
+python -m playfellow_coop                     # the same with the engine's built-in brain (no key, no network)
 ```
 
 Every test runs offline: a fake server on 127.0.0.1 stands in for the Meta API, and nothing presses a key, grabs the screen or spends money.

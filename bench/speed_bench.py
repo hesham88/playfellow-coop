@@ -13,15 +13,15 @@ sys.path.insert(0, str(HERE.parent))
 
 import play  # noqa: E402
 
-from meta_playfellow.__main__ import build  # noqa: E402
-from meta_playfellow.bench import run_bench  # noqa: E402
+from playfellow_coop.__main__ import build  # noqa: E402
+from playfellow_coop.bench import run_bench  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Time every stage of the composed loop and write one results file.")
     parser.add_argument("--turns", type=int, default=30)
     parser.add_argument("--out", type=Path, default=HERE / "results")
-    args, rest = parser.parse_known_args(argv)  # the rest goes to the game and brain options of `python -m meta_playfellow`
+    args, rest = parser.parse_known_args(argv)  # the rest goes to the game and brain options of `python -m playfellow_coop`
     parts, cfg = build(rest)
     brain = "muse" if "muse" in rest else "builtin"
     path = run_bench(parts, cfg, play.system_for(parts, cfg), args.turns, args.out, brain, getattr(parts.brain, "model", "none"))

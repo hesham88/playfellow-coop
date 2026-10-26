@@ -1,7 +1,7 @@
 """The stage timer: real durations in the right stage, honest summaries, no invented numbers."""
 import pytest
 
-from meta_playfellow.stage_timer import NOT_MEASURED, STAGES, StageTimer
+from playfellow_coop.stage_timer import NOT_MEASURED, STAGES, StageTimer
 
 
 class Clock:

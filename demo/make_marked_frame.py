@@ -1,6 +1,6 @@
 """Make the picture for the README and the video: one Practice Arena frame with numbered marks drawn on it.
 
-OFFLINE: the marks come from a FAKE server that answers from the arena's own truth (meta_playfellow/fakes.py). The picture shows
+OFFLINE: the marks come from a FAKE server that answers from the arena's own truth (playfellow_coop/fakes.py). The picture shows
 the mark-and-label pipeline, not SAM's accuracy; the file name and the text beside it say so. When credits arrive, the same
 function runs with the real marker and the file is replaced."""
 from __future__ import annotations
@@ -20,10 +20,10 @@ except ImportError:
 
 from practice_arena.game import ArenaGame  # noqa: E402
 
-from meta_playfellow import sam_marks  # noqa: E402
-from meta_playfellow.budget import DailyBudget  # noqa: E402
-from meta_playfellow.fakes import FakeSam  # noqa: E402
-from meta_playfellow.sam_marks import DEFAULT_PROMPTS, SamMarker, mark_image  # noqa: E402
+from playfellow_coop import sam_marks  # noqa: E402
+from playfellow_coop.budget import DailyBudget  # noqa: E402
+from playfellow_coop.fakes import FakeSam  # noqa: E402
+from playfellow_coop.sam_marks import DEFAULT_PROMPTS, SamMarker, mark_image  # noqa: E402
 
 OUT = Path(__file__).resolve().parents[1] / "docs" / "img"
 

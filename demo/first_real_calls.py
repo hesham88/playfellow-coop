@@ -15,7 +15,7 @@ except ImportError:
 
     sys.path.insert(0, str(Path(os.environ.get("PLAYFELLOW_ENGINE") or Path(__file__).resolve().parents[2] / "playfellow" / "software")))
 
-from meta_playfellow.smoke import run  # noqa: E402
+from playfellow_coop.smoke import run  # noqa: E402
 
 if __name__ == "__main__":
     sys.exit(run())
