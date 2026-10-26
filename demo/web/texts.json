@@ -1,0 +1,29 @@
+{
+ "schema": "pf-web-levels/1",
+ "texts": {
+  "english": {
+   "score": "Score",
+   "coins_left": "Coins left",
+   "key": "Key",
+   "yes_no": "YES / no",
+   "intro": "Collect the coins, find the key, open the door!",
+   "bump": "Bump! That's a wall.",
+   "locked": "The door is locked. Find the key!",
+   "coin": "Coin! +10",
+   "got_key": "You got the key! Now open the door.",
+   "win": "YOU WIN! Press R to play again."
+  },
+  "arabic": {
+   "score": "النقاط",
+   "coins_left": "العملات المتبقية",
+   "key": "المفتاح",
+   "yes_no": "نعم / لا",
+   "intro": "اجمع العملات، جد المفتاح، افتح الباب!",
+   "bump": "آخ! هذا جدار.",
+   "locked": "الباب مقفل. ابحث عن المفتاح!",
+   "coin": "عملة! ‎+10",
+   "got_key": "حصلت على المفتاح! الآن افتح الباب.",
+   "win": "فزت! اضغط R لتلعب مرة أخرى."
+  }
+ }
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web arena</title>
+<style>
+  :root { --bg: #0b0b1a; --panel: #15172e; --text: #f2f3ff; --accent: #7c5cff; --go: #4ade80; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; display: grid; gap: 12px; }
+  canvas { width: 100%; height: auto; background: var(--panel); border-radius: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, select { background: var(--panel); color: var(--text); border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; font-size: 16px; }
+  .pad { display: grid; grid-template-columns: repeat(3, 56px); gap: 6px; justify-content: center; }
+  .pad button { height: 56px; }
+  #status { color: var(--go); }
+</style>
+</head>
+<body>
+<main>
+  <div id="status" role="status"></div>
+  <canvas id="arena" width="576" height="504" aria-label="The web arena"></canvas>
+  <div class="row">
+    <button type="button" data-key="F9">Hand over (F9)</button>
+    <button type="button" data-key="F12">Stop (F12)</button>
+    <button type="button" data-key="r">Play again (R)</button>
+    <select id="level" aria-label="Level"><option value="0">1</option><option value="1">2</option><option value="2">3</option></select>
+  </div>
+  <div class="pad">
+    <span></span><button type="button" data-key="up" aria-label="Up">↑</button><span></span>
+    <button type="button" data-key="left" aria-label="Left">←</button><button type="button" data-key="down" aria-label="Down">↓</button><button type="button" data-key="right" aria-label="Right">→</button>
+  </div>
+  <p>This is the web arena. The Windows app plays your own games.</p>
+</main>
+<script type="module">
+  import { startPage } from './page.mjs';
+  startPage(document, { language: new URLSearchParams(location.search).get('lang') === 'ar' ? 'arabic' : 'english' });
+</script>
+</body>
+</html>
