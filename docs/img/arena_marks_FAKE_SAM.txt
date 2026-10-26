@@ -1,0 +1,12 @@
+Marks drawn from a FAKE server that answers with the Practice Arena's own truth (no Meta call was made).
+This shows the mark-and-label pipeline, not SAM's accuracy.
+
+Labels drawn on the picture:
+[ME] = you
+[R1] = something good to get (down, a bit away)
+[R2] = something good to get (down-right, a bit away)
+[R3] = something good to get (down-right, far)
+[R4] = something good to get (down, far)
+[R5] = something good to get (right, far)
+[R6] = something good to get (down-right, far)
+[D1] = a way through (down-right, far)

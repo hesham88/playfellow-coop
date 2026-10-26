@@ -10,6 +10,13 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+try:  # the engine is normally pip-installed; without that, use PLAYFELLOW_ENGINE or the clone beside this repo
+    import practice_arena  # noqa: F401
+except ImportError:
+    import os
+
+    engine = Path(os.environ.get("PLAYFELLOW_ENGINE") or Path(__file__).resolve().parents[2] / "playfellow" / "software")
+    sys.path.insert(0, str(engine))
 
 from practice_arena.game import ArenaGame  # noqa: E402
 
@@ -33,6 +40,11 @@ def make(out: Path = OUT) -> tuple[Path, Path]:
             marker.close()
         finally:
             sam_marks.ENDPOINTS.update(saved)
+    from PIL import ImageDraw
+
+    stamp = ImageDraw.Draw(marked)
+    stamp.rectangle((0, marked.height - 22, marked.width, marked.height), fill=(0, 0, 0))
+    stamp.text((8, marked.height - 18), "FAKE server marks: a pipeline demo, not SAM output", fill=(255, 220, 80))  # burned in: it cannot be cropped off by accident
     picture, words = out / "arena_marks_FAKE_SAM.png", out / "arena_marks_FAKE_SAM.txt"
     marked.save(picture)
     words.write_text("Marks drawn from a FAKE server that answers with the Practice Arena's own truth (no Meta call was made).\n"
