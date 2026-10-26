@@ -20,8 +20,9 @@ from safety import listen_for_f12, listen_for_key
 from settings import load_settings
 
 from meta_playfellow.budget import DailyBudget
-from meta_playfellow.handover import HandOver
+from meta_playfellow.handover import HandOver, taken_line
 from meta_playfellow.muse_brain import MuseBrain
+from meta_playfellow.voice import CommandQueue, typed_listener
 from meta_playfellow.session import play_session
 from meta_playfellow.stage_timer import StageTimer
 
@@ -50,6 +51,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--window", help="the game window's title (default: the Practice Arena)")
     parser.add_argument("--card", help="the controls card name (default: from the settings)")
     parser.add_argument("--minutes", type=int)
+    parser.add_argument("--typed", action="store_true", help="type commands in this window, one per line (no microphone needed)")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
     parser.add_argument("--budget-file", type=Path, default=Path.home() / ".meta-playfellow" / "budget.json")
@@ -58,6 +60,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     overrides = {"game_window": args.window, "controls_card": args.card, "max_minutes": args.minutes, "brain": "builtin"}
     cfg = dataclasses.replace(cfg, **{k: v for k, v in overrides.items() if v is not None})
     parts = build_parts(cfg)
+    parts.typed = args.typed
     if args.brain == "muse":
         key = key_loader()
         if not key:
@@ -75,13 +78,16 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         return 2
     make_dpi_aware()
     handover = HandOver(parts.hands, parts.safety)
+    commands = CommandQueue()
+    if getattr(parts, "typed", False):
+        typed_listener(commands, input)
     timer = StageTimer()
     listen_stop(lambda: parts.safety.stop("stopped_f12"))
-    listen_key("f9", lambda: (lambda text: text and say(text))(handover.toggle()))
+    listen_key("f9", lambda: say(handover.toggle() or taken_line()))
     say(tr(f"Playing '{cfg.game_window}'. F9 takes the controls, F9 again gives them back. F12 or the mouse in the top-left "
            "corner stops at once.",
            f"ألعب '{cfg.game_window}'. F9 يأخذ التحكم، وF9 مرة أخرى يعيده. F12 أو الفأرة في الزاوية العلوية اليسرى يوقف فورًا."))
-    reason = run(parts, cfg, play.system_for(parts, cfg), timer, handover, on_event=lambda kind, data: None)
+    reason = run(parts, cfg, play.system_for(parts, cfg), timer, handover, on_event=lambda kind, data: None, commands=commands)
     say(msg(reason, minutes=cfg.max_minutes, calls=cfg.max_ai_calls))
     return 0
 

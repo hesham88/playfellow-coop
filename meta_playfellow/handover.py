@@ -70,6 +70,11 @@ class HandOver:
         return summary(seconds, skipped, calls)
 
 
+def taken_line() -> str:
+    """What the buddy says when the player takes the controls."""
+    return tr("It's yours. I'm letting go of every key and I'll wait.", "التحكم لك الآن. أرفع يدي عن كل الأزرار وسأنتظر.")
+
+
 def summary(seconds: float, skipped_turns: int, ai_calls: int) -> str:
     """One plain sentence from counted facts."""
     return tr(f"Back with me. You played for {round(seconds)} s; I waited out {skipped_turns} turns and asked the AI {ai_calls} times.",

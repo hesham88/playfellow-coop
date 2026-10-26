@@ -28,6 +28,16 @@ def post(client: httpx.Client, url: str, key: str, body: dict) -> httpx.Response
         raise BrainError("offline", retry=True, wait_seconds=5) from None
 
 
+def post_files(client: httpx.Client, url: str, key: str, files: dict) -> httpx.Response:
+    """POST multipart parts (for audio). The same error handling as post(): nothing from the request is ever quoted."""
+    try:
+        return client.post(url, files=files, headers={"Authorization": f"Bearer {key}", "Accept": "application/json"})
+    except httpx.TimeoutException:
+        raise BrainError("busy", retry=True, wait_seconds=5) from None
+    except httpx.HTTPError:
+        raise BrainError("offline", retry=True, wait_seconds=5) from None
+
+
 def check_status(status: int) -> None:
     """Raise the friendly error for a bad status; return for a good one."""
     if 300 <= status < 400:

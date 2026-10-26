@@ -31,7 +31,7 @@ def test_f9_and_f12_are_registered_and_f9_toggles_the_hand_over():
 
         return parts, settings.Settings()
 
-    def run(p, cfg, system, timer, handover, on_event):
+    def run(p, cfg, system, timer, handover, on_event, commands=None):
         seen["handover"] = handover
         keys["f9"]()  # the player presses F9: takes over
         assert handover.human_has_controls
@@ -42,6 +42,7 @@ def test_f9_and_f12_are_registered_and_f9_toggles_the_hand_over():
                       listen_stop=lambda cb: stops.append(cb), run=run, say=said.append)
     assert code == 0 and "f9" in keys and len(stops) == 1
     assert any("Back with me" in line for line in said) and isinstance(seen["handover"], HandOver)
+    assert any("It's yours" in line for line in said)  # the take-over line is said too
 
 
 def test_a_missing_key_is_a_friendly_stop_not_a_crash():

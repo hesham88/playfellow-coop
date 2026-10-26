@@ -16,6 +16,7 @@ from reply import Reply, parse_reply
 
 from meta_playfellow.handover import HandOver
 from meta_playfellow.sam_marks import mark_image
+from meta_playfellow.voice import CommandQueue, for_the_planner
 from meta_playfellow.stage_timer import StageTimer
 
 MEMORY_IMAGE_WIDTH = 320  # older pictures the brain sees again are small: they only remind it what happened
@@ -27,7 +28,8 @@ def _quiet(kind: str, data: Any) -> None:
     pass
 
 
-def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callable[[str, Any], None] = _quiet) -> Reply | None:
+def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callable[[str, Any], None] = _quiet,
+              chat: list[str] | None = None) -> Reply | None:
     """One look-think-act turn, timed. None when there was nothing to do (no window, or it is not in front)."""
     box = parts.screen.find(settings.game_window)
     if box is None or not parts.screen.in_front(settings.game_window):
@@ -43,7 +45,7 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     if marker is not None:  # SAM marks, if the session has them: numbered labels on the picture the brain sees
         with timer.stage("mark"):
             image, labels = mark_image(image, marker)
-    text = turn_text(settings.goal, parts.memory.as_text(), [], None)
+    text = turn_text(settings.goal, parts.memory.as_text(), for_the_planner(chat or []), None)  # the player's words come first
     if labels:
         text = labels + "\n\n" + text
     parts.safety.count_ai_call()
@@ -74,7 +76,7 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
 
 def play_session(parts, settings, system: str, timer: StageTimer, handover: HandOver | None = None,
                  on_event: Callable[[str, Any], None] = _quiet, max_turns: int | None = None,
-                 wait: Callable[[float], bool] | None = None) -> str:
+                 wait: Callable[[float], bool] | None = None, commands: CommandQueue | None = None) -> str:
     """Take turns until something stops play. Returns the reason. `wait(seconds)` returns True when play should end."""
     safety = parts.safety
     wait = wait or safety.wait
@@ -93,7 +95,16 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                 continue
             timer.begin_turn()
             try:
-                reply = take_turn(parts, settings, system, timer, on_event)
+                said = commands.drain() if commands is not None else []
+                try:
+                    reply = take_turn(parts, settings, system, timer, on_event, chat=said)
+                except BrainError:
+                    for line in said:  # a failed turn must not lose what the player said
+                        commands.put(line)
+                    raise
+                if reply is None:  # no window, or not in front: nothing was asked, so keep the words for the next turn
+                    for line in said:
+                        commands.put(line)
             except CornerStop:
                 timer.end_turn()
                 safety.stop("stopped_corner")
