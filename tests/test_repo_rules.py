@@ -51,6 +51,31 @@ def test_the_package_imports_only_public_engine_names():
     assert bad == []
 
 
+def test_the_licence_is_the_engines_text_word_for_word():
+    here = (ROOT / "LICENSE").read_bytes()
+    assert here and b"OpenRAIL-S" in here
+    engine = ROOT.parent / "playfellow" / "LICENSE"
+    if engine.is_file():
+        assert here == engine.read_bytes()
+    assert "LICENSE" in (ROOT / "README.md").read_text(encoding="utf-8")
+
+
+def test_the_key_is_named_model_api_key_and_the_key_code_reads_no_file():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "MODEL_API_KEY" in readme
+    for name in ("muse_brain.py", "__main__.py"):
+        tree = ast.parse((ROOT / "meta_playfellow" / name).read_text(encoding="utf-8"))
+        functions = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and ("key" in n.name.lower() or n.name == "__init__")]
+        for function in functions:
+            for call in (n for n in ast.walk(function) if isinstance(n, ast.Call)):
+                called = call.func.attr if isinstance(call.func, ast.Attribute) else getattr(call.func, "id", "")
+                assert called not in {"open", "read_text", "read_bytes"}, f"{name}:{function.name} reads a file"
+
+
+def test_the_bench_script_is_valid_python():
+    ast.parse((ROOT / "bench" / "speed_bench.py").read_text(encoding="utf-8"))
+
+
 def test_the_readme_opens_with_the_disclosure():
     first = (ROOT / "README.md").read_text(encoding="utf-8").splitlines()[:4]
     text = " ".join(first)

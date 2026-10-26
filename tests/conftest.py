@@ -7,6 +7,7 @@ from pathlib import Path
 ENGINE = Path(os.environ.get("PLAYFELLOW_ENGINE") or Path(__file__).resolve().parents[2] / "playfellow" / "software")
 if ENGINE.is_dir() and str(ENGINE) not in sys.path:
     sys.path.insert(0, str(ENGINE))
+os.environ["PLAYFELLOW_ENGINE"] = str(ENGINE)  # tests read the engine folder from here (the engine has its own "tests" package)
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

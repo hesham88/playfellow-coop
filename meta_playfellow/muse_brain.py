@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import ssl
+import time
 
 import certifi
 import httpx
@@ -33,6 +34,7 @@ class MuseBrain:
         self._client = client or httpx.Client(trust_env=False, follow_redirects=False, timeout=REQUEST_TIMEOUT,
                                               verify=ssl.create_default_context(cafile=certifi.where()))
         self.last_usage: dict | None = None
+        self.last_timings: dict | None = None  # seconds spent encoding the pictures and waiting for the service, per call
 
     def __repr__(self) -> str:
         return f"<MuseBrain model={self.model!r}>"
@@ -47,10 +49,12 @@ class MuseBrain:
     def ask(self, system: str, text: str, images: list) -> str:
         if self.budget is not None and self.budget.exhausted():
             raise BrainError("token_cap_day")  # nothing is sent
+        started = time.perf_counter()
         content = [{"type": "text", "text": text}]
         for image in images:
             data = base64.standard_b64encode(to_jpeg_bytes(image)).decode("ascii")
             content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{data}"}})
+        encoded = time.perf_counter()
         request = {"model": self.model, "max_tokens": MAX_TOKENS,
                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}]}
         try:
@@ -60,6 +64,7 @@ class MuseBrain:
             raise BrainError("busy", retry=True, wait_seconds=5) from None
         except httpx.HTTPError:
             raise BrainError("offline", retry=True, wait_seconds=5) from None  # no detail: it could quote the request
+        self.last_timings = {"encode": encoded - started, "request": time.perf_counter() - encoded}  # measured here, inside
         status = response.status_code
         if 300 <= status < 400:
             raise BrainError("brain_trouble", detail="the service tried to send the request somewhere else")
