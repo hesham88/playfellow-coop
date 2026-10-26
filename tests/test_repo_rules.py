@@ -8,7 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 # The organisers' banned-topic wording, kept as data so a scan can look for it (this file is the only place it may appear).
-BANNED = ("coach", "analyz", "analys", "sports", "football", "soccer", "basketball", "war game", "warfare", "military")
+BANNED = ("coach", "analyz", "analys", "sports", "football", "soccer", "basketball", "war game", "warfare", "military",
+          "dashboard", "streamlit")  # the last two: banned project types (kickoff slides); bench results are README tables
 ENGINE_MODULES = {"play.py", "settings.py", "safety.py", "hands.py", "eyes.py", "reply.py", "grounding.py", "controls.py"}
 
 
@@ -27,6 +28,18 @@ def test_no_banned_wording_anywhere_but_this_file():
         text = path.read_text(encoding="utf-8").lower()
         hits += [f"{path.relative_to(ROOT)}: {word}" for word in BANNED if word in text]
     assert hits == []
+
+
+def test_no_web_dashboard_framework_is_imported_anywhere():
+    banned = {"streamlit", "gradio", "dash", "panel", "flask", "fastapi"}
+    bad = []
+    for path in ROOT.rglob("*.py"):
+        if ".git" in path.parts or path.name == "test_repo_rules.py":
+            continue
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            names = [a.name for a in node.names] if isinstance(node, ast.Import) else                 [node.module] if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module else []
+            bad += [f"{path.relative_to(ROOT)}: {n}" for n in names if n.split(".")[0] in banned]
+    assert bad == []
 
 
 def test_no_personal_path_or_key_shape():
