@@ -38,10 +38,18 @@ class DailyBudget:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_suffix(".tmp")
         temporary.write_text(json.dumps(data, indent=2), encoding="utf-8")
-        os.replace(temporary, self.path)  # a crash never leaves half a file
+        for attempt in range(8):  # Windows briefly refuses a replace while a scanner or another reader holds the file
+            try:
+                os.replace(temporary, self.path)  # a crash never leaves half a file
+                return
+            except PermissionError:
+                if attempt == 7:
+                    raise
+                time.sleep(0.02 * (attempt + 1))
 
     def exhausted(self) -> bool:
-        data = self._load()
+        with self._guard:
+            data = self._load()
         return data["spent_usd"] >= self.cap_usd or data["calls"] >= self.max_calls
 
     def record_cost(self, usd: float) -> float:
@@ -55,13 +63,14 @@ class DailyBudget:
 
     def record(self, prompt_tokens: int | None = None, completion_tokens: int | None = None) -> float:
         """Add one finished call. Returns what it cost."""
-        data = self._load()
-        if prompt_tokens is None and completion_tokens is None:
-            cost = self.estimate_usd
-            data["estimated_calls"] = data.get("estimated_calls", 0) + 1
-        else:
-            cost = (prompt_tokens or 0) * INPUT_USD_PER_TOKEN + (completion_tokens or 0) * OUTPUT_USD_PER_TOKEN
-        data["spent_usd"] = float(data["spent_usd"]) + cost
-        data["calls"] = int(data["calls"]) + 1
-        self._save(data)
+        with self._guard:
+            data = self._load()
+            if prompt_tokens is None and completion_tokens is None:
+                cost = self.estimate_usd
+                data["estimated_calls"] = data.get("estimated_calls", 0) + 1
+            else:
+                cost = (prompt_tokens or 0) * INPUT_USD_PER_TOKEN + (completion_tokens or 0) * OUTPUT_USD_PER_TOKEN
+            data["spent_usd"] = float(data["spent_usd"]) + cost
+            data["calls"] = int(data["calls"]) + 1
+            self._save(data)
         return cost

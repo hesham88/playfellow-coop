@@ -29,7 +29,7 @@ def parse(text: str) -> tuple[int, int, str]:
         bits |= MODIFIERS[mod]
     if key in SPECIAL:
         code = SPECIAL[key]
-    elif len(key) == 1 and key.isalnum():
+    elif len(key) == 1 and key.isascii() and key.isalnum():
         code = ord(key.upper())
     else:
         raise HotkeyError(f"unknown key {key!r}")

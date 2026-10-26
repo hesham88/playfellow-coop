@@ -10,20 +10,33 @@ ROOT = Path(__file__).resolve().parents[1]
 # The organisers' banned-topic wording, kept as data so a scan can look for it (this file is the only place it may appear).
 BANNED = ("coach", "analyz", "analys", "sports", "football", "soccer", "basketball", "war game", "warfare", "military",
           "dashboard", "streamlit")  # the last two: banned project types (kickoff slides); bench results are README tables
+# folders that are not our code: a virtual environment, a build, installed packages, a scratch result
+SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", "results", ".venv", "venv", "build", "node_modules"}
+# test files that hold the banned words AS DATA, in order to scan for them (they are the scanners, not the offenders)
+RULE_FILES = {"test_repo_rules.py", "test_web_arena_parity.py"}
 ENGINE_MODULES = {"play.py", "settings.py", "safety.py", "hands.py", "eyes.py", "reply.py", "grounding.py", "controls.py"}
+
+
+def _walk(pattern: str = "*"):
+    """Every path under the repo that is our own: no virtual environment, build output, installed package metadata or caches."""
+    for path in ROOT.rglob(pattern):
+        parts = path.relative_to(ROOT).parts
+        if set(parts) & SKIP_DIRS or any(part.endswith(".egg-info") for part in parts):
+            continue
+        yield path
 
 
 def _files():
     for path in ROOT.rglob("*"):
         parts = set(path.relative_to(ROOT).parts)
-        if path.is_file() and not parts & {".git", "__pycache__", ".pytest_cache", "results"} and path.suffix in (".py", ".md", ".toml", ".txt", ".yaml"):
+        if path.is_file() and not parts & SKIP_DIRS and not any(p.endswith(".egg-info") for p in parts) and path.suffix in (".py", ".md", ".toml", ".txt", ".yaml"):
             yield path
 
 
 def test_no_banned_wording_anywhere_but_this_file():
     hits = []
     for path in _files():
-        if path.name == "test_repo_rules.py":
+        if path.name in RULE_FILES:
             continue
         text = path.read_text(encoding="utf-8").lower()
         hits += [f"{path.relative_to(ROOT)}: {word}" for word in BANNED if word in text]
@@ -33,12 +46,17 @@ def test_no_banned_wording_anywhere_but_this_file():
 def test_no_web_dashboard_framework_is_imported_anywhere():
     banned = {"streamlit", "gradio", "dash", "panel", "flask", "fastapi"}
     bad = []
-    for path in ROOT.rglob("*.py"):
-        if ".git" in path.parts or path.name == "test_repo_rules.py":
+    for path in _walk("*.py"):
+        if path.name == "test_repo_rules.py":
             continue
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            names = [a.name for a in node.names] if isinstance(node, ast.Import) else                 [node.module] if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module else []
-            bad += [f"{path.relative_to(ROOT)}: {n}" for n in names if n.split(".")[0] in banned]
+        text = path.read_text(encoding="utf-8")
+        try:
+            names = []
+            for node in ast.walk(ast.parse(text)):
+                names += [a.name for a in node.names] if isinstance(node, ast.Import) else                     [node.module] if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module else []
+        except SyntaxError:  # a file that does not even parse is somebody else's failure; still look for the imports in its text
+            names = re.findall(r"^\s*(?:import|from)\s+([A-Za-z_][\w]*)", text, flags=re.MULTILINE)
+        bad += [f"{path.relative_to(ROOT)}: {n}" for n in names if n.split(".")[0] in banned]
     assert bad == []
 
 
@@ -47,10 +65,7 @@ def test_the_old_repo_name_is_nowhere_in_the_repo():
     so this file does not contain them either. Every text file, tracked or not, is scanned; a folder name counts too."""
     old = ("meta" + "-playfellow", "meta" + "_playfellow")
     hits = []
-    for path in ROOT.rglob("*"):
-        parts = set(path.relative_to(ROOT).parts)
-        if parts & {".git", "__pycache__", ".pytest_cache", ".venv", "venv", "build", "node_modules"} or path.name.endswith(".egg-info"):
-            continue
+    for path in _walk("*"):
         relative = str(path.relative_to(ROOT)).lower()
         hits += [f"{relative}: in the name" for word in old if word in relative]
         if path.is_file() and path.suffix in (".py", ".md", ".toml", ".txt", ".yaml", ".yml", ".json", ".cfg", ".ini"):
@@ -66,6 +81,35 @@ def test_the_package_and_the_training_folder_are_both_listed_for_install():
     assert config["project"]["name"] == "playfellow-coop" and config["tool"]["setuptools"]["packages"] == ["playfellow_coop", "train"]
 
 
+def test_no_judge_pass_link_or_code_is_in_any_file():
+    """The judge pass goes ONLY in the submission form's private notes. The patterns are built from pieces so this file is not a hit."""
+    patterns = [re.compile("pa" + r"ss\s*=\s*[A-Za-z0-9_\-]{6,}", re.I),
+                re.compile(r"judge[ _-]?(?:pa" + r"ss|code|link|token)\s*[:=]\s*\S{6,}", re.I),
+                re.compile(r"[?&](?:judge|jp|token|access)=[A-Za-z0-9_\-]{8,}", re.I)]
+    hits = []
+    for path in _walk("*"):
+        if path.is_file() and path.name != "test_repo_rules.py" and path.suffix in (".py", ".md", ".toml", ".txt", ".yaml", ".yml", ".json", ".html", ".js"):
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            hits += [f"{path.relative_to(ROOT)}: {p.pattern[:20]}" for p in patterns if p.search(text)]
+    assert hits == []
+
+
+def test_the_readme_points_judges_to_the_submission_note_and_names_no_code():
+    text = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+    assert "judges" not in text or "access note in the submission" in text
+
+
+def test_nothing_routes_traffic_to_a_partner_gpu_service():
+    """Partner credits are for the owner's own recorded runs, the bench and partner verification only: no code here may send
+    public or judge traffic to Baseten or Modal. Mentioning the names in a doc is fine; importing or calling them is not."""
+    code = [p for p in _walk("*.py") if p.name != "test_repo_rules.py"]
+    hits = []
+    for path in code:
+        text = path.read_text(encoding="utf-8", errors="ignore").lower()
+        hits += [f"{path.relative_to(ROOT)}: {word}" for word in ("baseten", "import modal", "from modal", "modal.com") if word in text]
+    assert hits == []
+
+
 def test_no_personal_path_or_key_shape():
     pattern = re.compile(r"[A-Za-z]:[\\/]+(Users|PlayFellow)\b|AIza[0-9A-Za-z_\-]{30,}|\bsk-[A-Za-z0-9_\-]{20,}|pdl_(live|sdbx)_", re.I)
     hits = [str(p.relative_to(ROOT)) for p in _files() if p.name != "test_repo_rules.py" and pattern.search(p.read_text(encoding="utf-8"))]
@@ -73,7 +117,7 @@ def test_no_personal_path_or_key_shape():
 
 
 def test_no_engine_file_is_copied_here():
-    names = {p.name for p in ROOT.rglob("*.py") if ".git" not in p.parts}
+    names = {p.name for p in _walk("*.py")}
     assert not names & ENGINE_MODULES
 
 

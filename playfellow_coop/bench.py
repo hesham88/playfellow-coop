@@ -59,6 +59,7 @@ def run_bench(parts, settings, system: str, turns: int, out_dir, brain_name: str
               git: tuple[str, bool] | None = None, wait: Callable[[float], bool] | None = None, clock=time.monotonic) -> Path:
     """Run `turns` turns, write <out_dir>/speed_bench-<date>-<commit>.json and a per-turn log beside it. Returns the file."""
     commit, dirty = git or git_state()
+    marks = getattr(parts, "marks_source", "off")
     timer = StageTimer()
     started = datetime.now().astimezone()
     begun = clock()
@@ -73,7 +74,9 @@ def run_bench(parts, settings, system: str, turns: int, out_dir, brain_name: str
         "schema": SCHEMA, "tool": "speed_bench", "commit": commit, "dirty": dirty, "machine": machine(),
         "brain": brain_name, "model": model, "started": started.isoformat(timespec="seconds"), "seconds": round(seconds, 3),
         "metrics": {"turns": len(timer.turns), "stopped_because": reason, "stages": timer.summary(),
-                    "label": "diagnostic: the working tree had uncommitted changes" if dirty else "clean"},
+                    "marks": marks,
+                    "label": ("diagnostic: FAKE marks, not SAM output" if marks == "fake" else
+                              "diagnostic: the working tree had uncommitted changes" if dirty else "clean")},
         "levels": NOT_MEASURED, "raw": raw.name,
     }
     path = out / f"speed_bench-{stamp}.json"

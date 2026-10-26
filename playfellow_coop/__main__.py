@@ -44,6 +44,31 @@ def load_muse_key() -> str | None:
         return None
 
 
+FAKE_MARKS_BANNER = ("FAKE MARKS ON: the numbered marks come from a fake server built from the Practice Arena's starting layout. "
+                     "This is a pipeline demo, NOT SAM output. Do not use it for results, the README or the video.")
+
+
+def attach_marks(parts, mode: str, key_loader: Callable, budget_file: Path, daily_usd: float, daily_calls: int) -> None:
+    """Give the session a marker. "sam" needs a key and calls the real service; "fake" starts a local fake server and says so loudly."""
+    from playfellow_coop import sam_marks
+    from playfellow_coop.sam_marks import DEFAULT_PROMPTS, SamMarker
+
+    budget = DailyBudget(budget_file, daily_usd, daily_calls)
+    if mode == "sam":
+        key = key_loader()
+        if not key:
+            raise BrainError("no_key")
+        parts.marker = SamMarker(key, budget=budget)
+        return
+    from practice_arena.game import ArenaGame
+
+    from playfellow_coop.fakes import FakeSam
+
+    parts.fake_sam = FakeSam(ArenaGame(), DEFAULT_PROMPTS).__enter__()  # a local server; it never talks to Meta
+    sam_marks.ENDPOINTS["sam"] = parts.fake_sam.url
+    parts.marker = SamMarker("fake-key-never-sent-to-meta", budget=budget)
+
+
 def build(argv: list[str] | None = None, build_parts: Callable = play.build_parts, key_loader: Callable = load_muse_key):
     parser = argparse.ArgumentParser(description="Play a game with the buddy: F9 takes over, F9 hands back, F12 stops.")
     parser.add_argument("--settings", type=Path, default=Path(play.SOFTWARE) / "settings.yaml")
@@ -54,6 +79,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--minutes", type=int)
     parser.add_argument("--typed", action="store_true", help="type commands in this window, one per line (no microphone needed)")
     parser.add_argument("--talk-key", default="", help="hold this key (for example f8) to talk to the buddy; needs a Muse key and a microphone")
+    parser.add_argument("--marks", choices=("off", "sam", "fake"), default="off",
+                        help="numbered marks on the picture: sam = SAM 3.1 (needs a key), fake = a fake server for a pipeline demo; "
+                             "fake marks are NEVER SAM output and never belong in results or the video")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
     parser.add_argument("--budget-file", type=Path, default=Path.home() / ".playfellow-coop" / "budget.json")
@@ -65,6 +93,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parts.typed = args.typed
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
+    parts.marks_source = args.marks
+    if args.marks != "off":
+        attach_marks(parts, args.marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
     if args.brain == "muse":
         key = key_loader()
         if not key:
@@ -81,6 +112,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         say(error.friendly())
         return 2
     make_dpi_aware()
+    if getattr(parts, "marks_source", "off") == "fake":
+        say(FAKE_MARKS_BANNER)
     handover = HandOver(parts.hands, parts.safety)
     commands = CommandQueue()
     if getattr(parts, "typed", False):
@@ -108,6 +141,11 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
            f"ألعب '{cfg.game_window}'. F9 يأخذ التحكم، وF9 مرة أخرى يعيده. F12 أو الفأرة في الزاوية العلوية اليسرى يوقف فورًا."))
     reason = run(parts, cfg, play.system_for(parts, cfg), timer, handover, on_event=lambda kind, data: None, commands=commands, latency=latency)
     say(msg(reason, minutes=cfg.max_minutes, calls=cfg.max_ai_calls))
+    if getattr(parts, "marks_source", "off") == "fake":
+        say(FAKE_MARKS_BANNER)  # said again at the end, so a log or a recording can never miss it
+    fake = getattr(parts, "fake_sam", None)
+    if fake is not None:
+        fake.__exit__(None, None, None)
     if latency.samples:
         say(tr(f"Key release to the first game key, measured: {latency.summary()}", f"من ترك المفتاح إلى أول ضغطة في اللعبة (مقيس): {latency.summary()}"))
     return 0

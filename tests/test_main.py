@@ -80,3 +80,63 @@ def test_the_key_comes_from_the_environment_and_from_no_file(monkeypatch):
     assert entry.load_muse_key() == "vault-key"
     monkeypatch.setattr("keyring.get_password", lambda service, name: None)
     assert entry.load_muse_key() is None
+
+
+# ---- --marks sam|fake|off ------------------------------------------------------------------------------------------
+def _parts_builder(cfg):
+    return Parts()
+
+
+def test_marks_are_off_by_default_and_nothing_is_attached():
+    parts, _ = entry.build([], build_parts=_parts_builder, key_loader=lambda: None)
+    assert parts.marks_source == "off" and not hasattr(parts, "marker")
+
+
+def test_sam_marks_need_a_key_and_a_marker_is_attached_when_there_is_one(tmp_path):
+    with pytest.raises(BrainError) as caught:
+        entry.build(["--marks", "sam", "--budget-file", str(tmp_path / "b.json")], build_parts=_parts_builder, key_loader=lambda: None)
+    assert caught.value.key == "no_key"
+    from playfellow_coop.sam_marks import SamMarker
+
+    parts, _ = entry.build(["--marks", "sam", "--budget-file", str(tmp_path / "b.json")], build_parts=_parts_builder,
+                           key_loader=lambda: "unique-key-VALUE-7")
+    assert isinstance(parts.marker, SamMarker) and "unique-key-VALUE-7" not in repr(parts.marker) and parts.marks_source == "sam"
+    parts.marker.close()
+
+
+def test_fake_marks_start_a_local_server_and_are_said_loudly_at_the_start_and_the_end(tmp_path, monkeypatch):
+    from playfellow_coop import sam_marks
+
+    monkeypatch.setitem(sam_marks.ENDPOINTS, "sam", sam_marks.ENDPOINTS["sam"])  # restored afterwards
+    said, ran = [], {}
+    parts_holder = {}
+
+    def build(argv):
+        parts, cfg = entry.build(["--marks", "fake", "--budget-file", str(tmp_path / "b.json")], build_parts=_parts_builder,
+                                 key_loader=lambda: None)
+        parts_holder["parts"] = parts
+        ran["endpoint"] = sam_marks.ENDPOINTS["sam"]
+        return parts, cfg
+
+    import settings
+
+    code = entry.main([], build_fn=lambda argv: (lambda p_c: (p_c[0], settings.Settings()))(build(argv)),
+                      listen_key=lambda name, cb: None, listen_stop=lambda cb: None,
+                      run=lambda *a, **k: "round_done", say=said.append)
+    banner = [line for line in said if line.startswith("FAKE MARKS ON")]
+    assert code == 0 and len(banner) == 2 and "NOT SAM output" in banner[0]
+    assert ran["endpoint"].startswith("http://127.0.0.1:")  # the fake lives on this PC; it never talks to Meta
+    parts_holder["parts"].marker.close()
+
+
+def test_a_fake_marks_bench_run_is_labelled_a_diagnostic_and_names_its_marks(tmp_path):
+    import json
+
+    from playfellow_coop import bench
+    from tests.test_session_and_handover import Brain, make
+
+    parts, cfg = make(Brain())
+    parts.marks_source = "fake"
+    path = bench.run_bench(parts, cfg, "system", 2, tmp_path, "builtin", "none", git=("a" * 40, False), wait=lambda s: False)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["metrics"]["marks"] == "fake" and data["metrics"]["label"] == "diagnostic: FAKE marks, not SAM output"

@@ -96,14 +96,13 @@ def test_the_budget_stops_requests_before_they_are_sent_and_play_keeps_the_last_
     assert again == first
 
 
-def test_a_failing_service_never_stops_play_and_the_error_is_kept(game, monkeypatch, tmp_path):
-    with FakeSam(game, DEFAULT_PROMPTS) as server:
-        monkeypatch.setitem(sam_marks.ENDPOINTS, "sam", server.url)
-        m = marker(tmp_path)
-        good = m(game.render())
-        server.server.RequestHandlerClass.do_POST = lambda self: (self.send_response(500), self.end_headers())
-        game.press("right")
-        marks = m(game.render())
+def test_a_failing_service_never_stops_play_and_the_error_is_kept(game, fake, tmp_path):
+    m = marker(tmp_path)
+    good = m(game.render())
+    for phrase in DEFAULT_PROMPTS.values():
+        fake.statuses[phrase] = 500
+    game.press("right")
+    marks = m(game.render())
     assert marks == good and m.last_error is not None and m.last_error.key == "busy"
 
 
@@ -138,11 +137,20 @@ def test_a_coin_is_found_once_even_if_two_marks_land_on_it(game):
 
 
 def test_latency_is_measured_not_typed(game, fake, tmp_path):
-    ticks = iter([0.0, 0.25, 1.0, 1.5, 2.0, 2.1, 3.0, 3.4])
-    m = marker(tmp_path, clock=lambda: next(ticks))
+    import itertools
+    import threading
+
+    counter, lock = itertools.count(), threading.Lock()
+
+    def clock():  # a clock that moves 0.5 s every time anyone reads it: the numbers come from the marker's own reads
+        with lock:
+            return next(counter) * 0.5
+
+    m = marker(tmp_path, clock=clock)
     m(game.render())
-    assert m.latencies == pytest.approx([0.25, 0.5, 0.1, 0.4])
-    assert evaluate(m, [], source="SAM 3.1")["latency_p50_s"] == 0.25
+    assert len(m.latencies) == 4 and all(seconds > 0 and seconds % 0.5 == 0 for seconds in m.latencies)
+    assert len(m.keyframe_latencies) == 1 and m.keyframe_latencies[0] >= max(m.latencies)  # the whole keyframe takes at least its slowest request
+    assert evaluate(m, [], source="SAM 3.1")["latency_p50_s"] == sorted(m.latencies)[1]
 
 
 def test_the_marker_is_pinned_to_its_address(monkeypatch):
@@ -158,3 +166,58 @@ def test_the_marker_uses_the_shared_safe_client(tmp_path):
         assert m._client._trust_env is False and m._client.follow_redirects is False  # no proxy variables, no redirects
     finally:
         m.close()
+
+
+# ---- one encode, concurrent phrases, charge only on a 2xx -----------------------------------------------------------
+def test_the_picture_is_encoded_once_and_every_phrase_gets_the_same_bytes(game, fake, tmp_path, monkeypatch):
+    calls = []
+    real = sam_marks.base64.standard_b64encode
+    monkeypatch.setattr(sam_marks.base64, "standard_b64encode", lambda data: calls.append(len(data)) or real(data))
+    marker(tmp_path)(game.render())
+    assert len(calls) == 1 and len(fake.requests) == len(DEFAULT_PROMPTS)
+    urls = {r["body"]["input"][0]["content"][1]["image_url"] for r in fake.requests}
+    assert len(urls) == 1  # four requests, one picture
+
+
+def test_the_phrases_are_asked_at_the_same_time(game, fake, tmp_path):
+    fake.delay = 0.3
+    m = marker(tmp_path)
+    m(game.render())
+    assert len(fake.requests) == 4 and m.keyframe_latencies[0] < 0.9  # four in a row would take at least 1.2 s
+
+
+@pytest.mark.parametrize("status", [401, 403, 429, 500])
+def test_a_request_that_was_not_answered_with_a_2xx_is_never_charged(game, fake, tmp_path, status):
+    for phrase in DEFAULT_PROMPTS.values():
+        fake.statuses[phrase] = status
+    m = marker(tmp_path)
+    m(game.render())
+    assert m.calls == 4 and m.failed_calls == 4 and m.last_error is not None
+    saved = tmp_path / "sam.json"
+    spent = json.loads(saved.read_text(encoding="utf-8"))["spent_usd"] if saved.is_file() else 0.0
+    assert spent == 0.0  # a wrong key or a rate limit must not drain the local cap
+
+
+def test_only_the_answered_requests_are_charged_when_one_of_four_fails(game, fake, tmp_path):
+    fake.statuses[DEFAULT_PROMPTS["hazard"]] = 429
+    m = marker(tmp_path)
+    m(game.render())
+    saved = json.loads((tmp_path / "sam.json").read_text(encoding="utf-8"))
+    assert m.calls == 4 and m.failed_calls == 1 and saved["calls"] == 3 and saved["spent_usd"] == pytest.approx(3 * 2.50 / 1000)
+
+
+def test_a_partly_failed_keyframe_keeps_the_last_good_marks(game, fake, tmp_path):
+    m = marker(tmp_path)
+    good = m(game.render())
+    game.press("right")
+    fake.statuses[DEFAULT_PROMPTS["door"]] = 500
+    assert m(game.render()) == good and m.last_error is not None and m.last_error.key == "busy"
+
+
+def test_the_budget_file_survives_four_answers_arriving_at_once(game, fake, tmp_path):
+    m = marker(tmp_path)
+    for _ in range(3):
+        game.press("right")
+        m(game.render())
+    saved = json.loads((tmp_path / "sam.json").read_text(encoding="utf-8"))
+    assert saved["calls"] == m.calls - m.failed_calls and saved["spent_usd"] == pytest.approx(saved["calls"] * 2.50 / 1000)
