@@ -20,9 +20,10 @@ Two checks need a person at the keyboard because they press real keys or look at
 
 ## Check 2: the floating panel does not disturb the game (about 5 minutes)
 
+0. You are asked to do this only after the builder has rehearsed it: `python demo/overlay_live_check.py --dry-run` runs the same steps over a plain window of its own, with no game. If you were not told that rehearsal passed, wait.
 1. With the arena open and in front, run in another terminal: `python demo/overlay_live_check.py`
 2. When it asks, click the arena window, then do **not** touch the keyboard or mouse for about 20 seconds.
-3. It opens and closes the panel 50 times, takes two screenshots, and prints two numbers and a saved file name.
+3. It opens and closes the panel 50 times, looks at only the panel's own rectangle in two screenshots (kept in memory, never saved), and prints two numbers and a saved file name.
 4. Send those two numbers back. The file also says what it could not measure.
 
 What good looks like: **focus losses 0** and **panel pixels 0 or very small** (the game itself moves, so a small count can be the game).

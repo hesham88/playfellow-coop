@@ -42,22 +42,43 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--game-title", default="PlayFellow Practice Arena")
     parser.add_argument("--opens", type=int, default=50)
+    parser.add_argument("--dry-run", action="store_true",
+                        help="rehearse over a plain window this script opens itself: no game needed, only the panel's own rectangle is looked at")
     parser.add_argument("--out", type=Path, default=Path(__file__).resolve().parents[1] / "results")
     args = parser.parse_args(argv)
 
-    game = find_game(args.game_title)
-    if not game:
-        print(f"I can't find a window called {args.game_title!r}. Open the game first (borderless or windowed), then run this again.")
-        return 2
-    print(f"Click the game window now. Waiting until it is in front... (Ctrl+C stops)")
-    while foreground() != game:
-        time.sleep(0.2)
-    print("The game is in front. Starting in 3 seconds: please do not touch the keyboard or the mouse.")
-    time.sleep(3)
+    host = None
+    if args.dry_run:
+        import tkinter as tk
+
+        host = tk.Tk()  # a plain window of our own stands in for the game
+        host.title("overlay dry run (stand-in for the game)")
+        host.geometry("640x420+120+120")
+        host.update()
+        host.focus_force()
+        host.update()
+        time.sleep(0.3)
+        host.update()
+        game = int(user32.GetParent(host.winfo_id()) or host.winfo_id())
+        if foreground() != game:
+            print("Windows would not let the stand-in window take the foreground (another program holds it); the focus numbers below "
+                  "are measured against whatever was in front.")
+            game = foreground()
+        args.game_title = "dry run: " + args.game_title
+    else:
+        game = find_game(args.game_title)
+        if not game:
+            print(f"I can't find a window called {args.game_title!r}. Open the game first (borderless or windowed), then run this again.")
+            return 2
+        print("Click the game window now. Waiting until it is in front... (Ctrl+C stops)")
+        while foreground() != game:
+            time.sleep(0.2)
+        print("The game is in front. Starting in 3 seconds: please do not touch the keyboard or the mouse.")
+        time.sleep(3)
 
     state = winstyle.full_screen_state()
     model = PanelModel(CommandQueue())
-    overlay = TkOverlay(model)
+    overlay = TkOverlay(model, root=__import__("tkinter").Toplevel(host) if host is not None else None)
     overlay.start()
     root = overlay.root
 
@@ -79,10 +100,12 @@ def main(argv: list[str] | None = None) -> int:
 
     from PIL import ImageGrab
 
-    pixels = capture_check(lambda: ImageGrab.grab(all_screens=True), model.show, model.hide, rect, settle)
+    width, height = rect[2] - rect[0], rect[3] - rect[1]
+    # only the panel's own rectangle is captured, kept in memory and compared; nothing from the screen is ever saved
+    pixels = capture_check(lambda: ImageGrab.grab(bbox=rect, all_screens=True), model.show, model.hide, (0, 0, width, height), settle)
     hwnd_style = overlay.applied
     result = {
-        "tool": "overlay_live_check", "started": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "tool": "overlay_live_check", "dry_run": bool(args.dry_run), "started": datetime.now().astimezone().isoformat(timespec="seconds"),
         "game_title": args.game_title, "windows_full_screen_state": state,
         "focus": {"opens": focus.opens, "focus_losses": focus.focus_losses, "game_window_was_foreground_at_start": focus.foreground_before == game},
         "capture": {"panel_pixels_found_in_capture": pixels, "rectangle": list(rect),
@@ -95,6 +118,8 @@ def main(argv: list[str] | None = None) -> int:
     path = args.out / f"overlay_live_check-{datetime.now():%Y%m%d-%H%M%S}.json"
     path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     overlay.close()
+    if host is not None:
+        host.destroy()
     print(json.dumps(result["focus"]), json.dumps(result["capture"]), sep="\n")
     print(f"Saved: {path}")
     if state == "exclusive":
