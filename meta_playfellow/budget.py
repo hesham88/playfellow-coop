@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 import time
 from pathlib import Path
 from typing import Callable
@@ -23,6 +24,7 @@ class DailyBudget:
         self.max_calls = int(max_calls)
         self.estimate_usd = float(estimate_usd)
         self._today = today
+        self._guard = threading.RLock()  # several requests may finish at once (the SAM phrases are asked together)
 
     def _load(self) -> dict:
         fresh = {"date": self._today(), "spent_usd": 0.0, "calls": 0, "estimated_calls": 0}
@@ -44,10 +46,11 @@ class DailyBudget:
 
     def record_cost(self, usd: float) -> float:
         """Add one call whose price is known up front (for example a per-image price)."""
-        data = self._load()
-        data["spent_usd"] = float(data["spent_usd"]) + usd
-        data["calls"] = int(data["calls"]) + 1
-        self._save(data)
+        with self._guard:
+            data = self._load()
+            data["spent_usd"] = float(data["spent_usd"]) + usd
+            data["calls"] = int(data["calls"]) + 1
+            self._save(data)
         return usd
 
     def record(self, prompt_tokens: int | None = None, completion_tokens: int | None = None) -> float:

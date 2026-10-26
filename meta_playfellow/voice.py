@@ -96,6 +96,20 @@ class CommandQueue:
             self._items.append(text[:300])
         return True
 
+    def take_controls(self) -> list[str]:
+        """Remove the hand-over control phrases ("stop", "you take it", "I've got it") and return their actions in order.
+        Ordinary commands stay in the queue for the planner."""
+        from meta_playfellow.control_words import control_action
+
+        with self._lock:
+            kept, actions = [], []
+            for text in self._items:
+                action = control_action(text)
+                (actions if action else kept).append(action or text)
+            self._items.clear()
+            self._items.extend(kept)
+        return actions
+
     def drain(self) -> list[str]:
         with self._lock:
             items, _ = list(self._items), self._items.clear()

@@ -1,6 +1,6 @@
 # meta-playfellow
 
-**Built on the PlayFellow engine (hesham88/playfellow, tag `pre-hackathon` = the engine at kickoff plus packaging/test-isolation commits made in the first hour; no new features). Everything in this repo was built during the event.**
+**Built on the PlayFellow engine (hesham88/playfellow). Two tags say what existed when: before-kickoff = b7b72a8 (committed 08:04, pushed 12:01 on 26 Oct, before the kickoff); pre-hackathon = d63c1b4 (pushed 19:33 on 26 Oct), re-exporting engine work finished before the kickoff in our private repo (LM Studio adapter, memory check, proxy/CA hardening, redaction, game clock), plus packaging. Everything in this repo was built during the event.**
 
 PlayFellow is an open-source engine that plays a PC game *with* you: it watches one game window, asks a brain what to do next, and presses only the keys that game's controls card allows. This repo adds the event work as a plugin package. It does not contain the engine; it installs it.
 

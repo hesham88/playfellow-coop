@@ -12,7 +12,9 @@ from __future__ import annotations
 import base64
 import io
 import re
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
 import httpx
@@ -87,7 +89,10 @@ class SamMarker:
         self._clock = clock
         self._signature: bytes | None = None
         self._marks: list[Mark] = []
-        self.calls = 0  # requests really sent
+        self.calls = 0  # requests attempted
+        self.failed_calls = 0  # attempts that did not end in a 2xx answer (never charged)
+        self._lock = threading.Lock()
+        self.keyframe_latencies: list[float] = []  # seconds for a whole keyframe (all phrases together)
         self.last_error: BrainError | None = None
         self.latencies: list[float] = []  # seconds per request, measured here
 
@@ -101,32 +106,50 @@ class SamMarker:
         signature = _signature(image)
         if not _changed(self._signature, signature):
             return list(self._marks)  # the picture has not changed: no request, no cost
+        if self.budget is not None and self.budget.exhausted():
+            self.last_error = BrainError("token_cap_day")  # nothing is sent
+            return list(self._marks)
+        buffer = io.BytesIO()
+        image.convert("RGB").save(buffer, format="PNG")  # the picture is encoded ONCE, then shared by every phrase
+        data = base64.standard_b64encode(buffer.getvalue()).decode("ascii")
+        started = self._clock()
         marks: list[Mark] = []
-        try:
-            for kind, phrase in self.prompts.items():
-                marks += self._find(kind, phrase, image)
-        except BrainError as error:
-            self.last_error = error  # a helper failure never stops play: keep the last good marks
+        failure: BrainError | None = None
+        with ThreadPoolExecutor(max_workers=max(1, len(self.prompts))) as pool:  # the phrases are asked at the same time
+            futures = [pool.submit(self._find, kind, phrase, data) for kind, phrase in self.prompts.items()]
+            for future in futures:
+                try:
+                    marks += future.result()
+                except BrainError as error:
+                    failure = failure or error
+        self.keyframe_latencies.append(self._clock() - started)
+        if failure is not None:
+            self.last_error = failure  # a helper failure never stops play: keep the last good marks
             return list(self._marks)
         self.last_error = None
         self._signature, self._marks = signature, marks
         return list(marks)
 
-    def _find(self, kind: str, phrase: str, image: Image.Image) -> list[Mark]:
-        if self.budget is not None and self.budget.exhausted():
-            raise BrainError("token_cap_day")  # nothing is sent
-        buffer = io.BytesIO()
-        image.convert("RGB").save(buffer, format="PNG")
-        data = base64.standard_b64encode(buffer.getvalue()).decode("ascii")
+    def _find(self, kind: str, phrase: str, data: str) -> list[Mark]:
         body = {"model": MODEL, "input": [{"role": "user", "content": [
             {"type": "input_text", "text": phrase}, {"type": "input_image", "image_url": f"data:image/png;base64,{data}"}]}]}
         started = self._clock()
-        response = _http.post(self._client, ENDPOINTS["sam"] + "/responses", self._key, body)
+        with self._lock:
+            self.calls += 1
+        try:
+            response = _http.post(self._client, ENDPOINTS["sam"] + "/responses", self._key, body)
+        except BrainError:
+            with self._lock:
+                self.failed_calls += 1  # never reached the service: nothing is charged
+            raise
         self.latencies.append(self._clock() - started)
-        self.calls += 1
-        if self.budget is not None:
-            self.budget.record_cost(USD_PER_IMAGE)  # charged once the request was sent, whatever the answer
-        _http.check_status(response.status_code)
+        if 200 <= response.status_code < 300:
+            if self.budget is not None:
+                self.budget.record_cost(USD_PER_IMAGE)  # charged only when the service really answered
+        else:
+            with self._lock:
+                self.failed_calls += 1  # a wrong key (401), a rate limit (429) or a server error is not billed, so not charged here
+            _http.check_status(response.status_code)
         try:
             text = answer_text(response.json())
         except ValueError:

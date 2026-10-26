@@ -1,6 +1,6 @@
 # Demo video script (3 minutes, skeleton)
 
-**Pre-existing:** the PlayFellow engine — the game window watcher, the controls-card key allowlist, the F12 instant stop, and the Practice Arena game — all from hesham88/playfellow at the tag `pre-hackathon`, installed as a dependency. **Built during the event (this repo):** the Muse brain with its daily spending cap, the SAM 3.1 marks loop, the F9 hand-over with its counted-facts summary, voice and typed commands, and the stage timer that writes the results file.
+**Pre-existing:** the PlayFellow engine, from hesham88/playfellow, installed as a dependency (the game window watcher, the controls-card key allowlist, the F12 instant stop, and the Practice Arena game). Two tags say what existed when: before-kickoff = b7b72a8 (committed 08:04, pushed 12:01 on 26 Oct, before the kickoff); pre-hackathon = d63c1b4 (pushed 19:33 on 26 Oct), re-exporting engine work finished before the kickoff in our private repo (LM Studio adapter, memory check, proxy/CA hardening, redaction, game clock), plus packaging. **Built during the event (this repo):** the Muse brain with its daily spending cap, the SAM 3.1 marks loop, the F9 hand-over with its counted-facts summary, voice and typed commands, and the stage timer that writes the results file.
 
 **Rules for this video:** only our own Practice Arena (or one open-source game); real recordings at real speed, labelled if sped up; no generated gameplay; the honest status from the README table is read as-is, including what is not live yet.
 

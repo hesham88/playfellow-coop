@@ -77,6 +77,20 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     return reply
 
 
+def _apply_control(action: str, parts, handover: HandOver | None, on_event: Callable[[str, Any], None]) -> None:
+    """A spoken or typed control phrase, applied at once and without the AI."""
+    from meta_playfellow.control_words import BUDDY_TAKES, PLAYER_TAKES, STOP
+    from meta_playfellow.handover import taken_line
+
+    if action == STOP:
+        parts.safety.stop("stopped_button")  # the same stop as the Stop button; F12 and the corner still work too
+    elif action == BUDDY_TAKES and handover is not None and handover.human_has_controls:
+        on_event("say", handover.give_back() or "")
+    elif action == PLAYER_TAKES and handover is not None and not handover.human_has_controls:
+        if handover.take_over():
+            on_event("say", taken_line())
+
+
 def play_session(parts, settings, system: str, timer: StageTimer, handover: HandOver | None = None,
                  on_event: Callable[[str, Any], None] = _quiet, max_turns: int | None = None,
                  wait: Callable[[float], bool] | None = None, commands: CommandQueue | None = None, latency=None) -> str:
@@ -91,6 +105,11 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
             if max_turns is not None and turns >= max_turns:
                 safety.stop("round_done")
                 break
+            if commands is not None:
+                for action in commands.take_controls():
+                    _apply_control(action, parts, handover, on_event)
+                if safety.check() is not None:
+                    break
             if handover is not None and handover.human_has_controls:
                 handover.note_skipped()  # the player is playing: no picture for the AI, no AI, no key
                 if wait(settings.look_every_seconds):
