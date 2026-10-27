@@ -187,3 +187,15 @@ def test_every_commit_is_by_the_noreply_identity():
     for line in out.stdout.split():
         for address in line.split("|"):
             assert address.endswith("@users.noreply.github.com"), address
+
+
+def test_no_commit_message_names_an_ai_assistant_or_carries_its_trailer():
+    """Owner, 2026-10-27: the public history uses only our own neutral role names (architect, supervisor, builder 1, builder 2)."""
+    import subprocess
+
+    out = subprocess.run(["git", "log", "--format=%B%x00"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    if out.returncode != 0:  # not a git checkout (an exported tarball): nothing to check
+        return
+    banned = re.compile(r"claude|anthropic|sonnet|\bopus\b|chatgpt|copilot|antigravity|\bgemini\b|co-authored-by|claude-session", re.I)
+    for message in out.stdout.split("\x00"):
+        assert not banned.search(message), message.strip().splitlines()[0] if message.strip() else message
