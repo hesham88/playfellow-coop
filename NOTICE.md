@@ -32,6 +32,7 @@ Fonts shipped in the Windows app (not in this repository): Baloo Bhaijaan 2 and 
 | websockets | BSD-3-Clause |
 | sounddevice | MIT |
 | pynput | LGPL-3.0 (used through a normal pip install, not bundled) |
+| PySide6 (Qt for Python; the floating panel, optional) | LGPL-3.0 (installed separately, not bundled) |
 | pytest (tests) | MIT |
 | Rust fast path (`rust/fastpath`) | our own code, written during the event; no Rust dependencies |
 | the PlayFellow engine and its own dependencies | see its NOTICE |

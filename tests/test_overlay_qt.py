@@ -122,3 +122,4 @@ def test_opacity_and_chat_lines_follow_the_model(app):
         for i in range(view.chat_layout.count())
     ]
     assert texts == ["On my way.", "grab the coins"]
+

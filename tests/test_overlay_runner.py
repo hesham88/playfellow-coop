@@ -160,6 +160,26 @@ def test_a_summon_key_the_game_uses_is_a_friendly_stop_not_a_crash():
     assert any("controls card" in line for line in said)
 
 
+def test_a_missing_qt_is_a_friendly_stop_with_its_message_and_no_old_window_opens_instead():
+    """Owner order 27 Oct: no old window is ever the fallback."""
+    from playfellow_coop.overlay.runner import OverlayUnavailableError
+
+    parts, said = Parts(), []
+
+    def build(argv):
+        import settings
+
+        parts.overlay, parts.summon_key = True, "ctrl+alt+p"
+        return parts, settings.Settings()
+
+    def builder(*args):
+        raise OverlayUnavailableError("The command center needs PySide6.")
+
+    assert entry.main([], build_fn=build, listen_key=lambda n, cb: None, listen_stop=lambda cb: None, say=said.append,
+                      overlay_builder=builder) == 2
+    assert any("PySide6" in line for line in said)
+
+
 def test_the_overlay_switch_is_off_by_default_and_read_from_the_command_line():
     parts, _ = entry.build([], build_parts=lambda cfg: Parts(), key_loader=lambda: None)
     assert parts.overlay is False and parts.summon_key == "ctrl+alt+p"

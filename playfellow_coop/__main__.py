@@ -205,13 +205,14 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     overlay = None
     if getattr(parts, "overlay", False):
         from playfellow_coop.overlay.hotkey import HotkeyError
+        from playfellow_coop.overlay.runner import OverlayUnavailableError
 
         if overlay_builder is None:
             from playfellow_coop.overlay.runner import build_overlay as overlay_builder
         try:
             overlay = overlay_builder(parts, commands, handover, getattr(parts, "summon_key", "ctrl+alt+p"),
                                       talker.key_down if talker else (lambda: None), talker.key_up if talker else (lambda: None))
-        except HotkeyError as error:
+        except (HotkeyError, OverlayUnavailableError) as error:  # a missing Qt says so in words; no old window opens instead
             say(str(error))
             return 2
     timer = StageTimer()
