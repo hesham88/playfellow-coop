@@ -1,0 +1,16 @@
+# Text files are checked out with LF on every machine, so the tests that compare bytes (the licence against the engine's, the recorded
+# sample against what the recorder writes) hold for a Windows clone with core.autocrlf=true too.
+* text=auto eol=lf
+
+# Images and compiled files are never touched.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.wav binary
+*.dll binary
+
+# Files written by our own code, kept byte for byte as written (some were written with CRLF): never rewritten.
+results/*.json -text
+docs/img/*.txt -text
