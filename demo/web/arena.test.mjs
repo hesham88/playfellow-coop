@@ -190,10 +190,15 @@ test('no page file contains a search that solves the maze for the player or the 
   }
 });
 
-test('the page files reach no network and no model', () => {
+test('the page files reach no network and no model, except the one service file, which reaches only the address in config', () => {
   for (const file of readdirSync(here).filter((f) => /\.(mjs|js|html)$/.test(f) && !f.endsWith('.test.mjs'))) {
     const text = readFileSync(join(here, file), 'utf8');
-    assert.doesNotMatch(text, /\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon|https?:\/\//i, file);
+    if (file === 'service.mjs') {
+      assert.doesNotMatch(text, /XMLHttpRequest|WebSocket|sendBeacon|https?:\/\//i, file); // no address of its own: it uses config.mjs
+      assert.match(text, /credentials: 'omit'/); // no cookies ever go with a call
+      continue;
+    }
+    assert.doesNotMatch(text, /fetch\(|XMLHttpRequest|WebSocket|sendBeacon|https?:\/\//i, file);
   }
 });
 

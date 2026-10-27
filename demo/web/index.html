@@ -48,6 +48,9 @@
   .pad { display: grid; grid-template-columns: repeat(3, 56px); gap: 6px; justify-content: center; }
   .pad button { height: 56px; padding: 0; border-radius: 16px; font-size: 20px; }
   #note { color: var(--ink3); font-size: 13px; margin: 0; }
+  .live { display: grid; gap: 10px; } .live input { flex: 1; min-width: 0; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--ink); font: 400 15px var(--font); }
+  .live .talk { border: 0; color: #05061c; font-weight: 700; background: linear-gradient(120deg, var(--violet), var(--cyan)); box-shadow: 0 0 28px rgba(155, 107, 255, .45); min-height: 56px; touch-action: none; }
+  #live { color: var(--ink2); font-size: 13px; margin: 0; min-height: 1.5em; }
 </style>
 </head>
 <body>
@@ -77,6 +80,11 @@
           <button type="button" data-key="r">Play again (R)</button>
           <button type="button" id="replay" hidden>Watch Fello play (recorded)</button>
           <select id="level" aria-label="Level"><option value="0">1</option><option value="1">2</option><option value="2">3</option></select>
+        </div>
+        <div id="livebox" hidden class="live">
+          <div class="row"><input id="command" type="text" maxlength="200" autocomplete="off" aria-label="Command"><button type="button" id="ask">Ask Fello</button></div>
+          <button type="button" id="talk" class="talk">Hold to talk</button>
+          <p id="live" role="status"></p>
         </div>
         <div class="pad">
           <span></span><button type="button" data-key="up" aria-label="Up">↑</button><span></span>
