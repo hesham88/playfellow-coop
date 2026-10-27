@@ -17,12 +17,10 @@ Privacy: only the fields named above are ever read from the log; anything else i
 is never copied. A spoken line that holds a path, an e-mail address, a key-like string or a private word is dropped whole."""
 from __future__ import annotations
 
-import getpass
 import json
 import math
 import os
 import re
-import socket
 import sys
 from datetime import date
 from pathlib import Path
@@ -35,6 +33,7 @@ except ImportError:
     sys.path.insert(0, str(engine))
 
 from playfellow_coop import sam_marks  # noqa: E402
+from playfellow_coop.session_log import COMMIT, MODEL, clean_line, private_words as words_to_avoid  # noqa: E402  (the writer's own rules, one copy)
 
 WEB = Path(__file__).resolve().parent / "web"
 DEFAULT_OUT = WEB / "replay.mjs"
@@ -43,14 +42,10 @@ MARKS_FROM = sam_marks.MODEL
 LOG_SCHEMA, SCHEMA = "pf-session-log/1", "pf-replay/1"
 REAL_BRAINS = ("muse", "local-open")
 MARK_KINDS = ("me", "reward", "hazard", "door")
-MAX_STEPS, MAX_MARKS, MAX_ACTIONS, MAX_SAY, MAX_TAG = 2000, 32, 8, 140, 6
+MAX_STEPS, MAX_MARKS, MAX_ACTIONS, MAX_TAG = 2000, 32, 8, 6
 
-MODEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-/]{0,59}$")
-COMMIT = re.compile(r"^[0-9a-f]{7,40}$")
 DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 TAG = re.compile(r"[^A-Za-z0-9]")
-PRIVATE_SHAPES = re.compile(
-    r"[A-Za-z]:[\\/]|\\|~/|\.\./|(?:^|[\s(\"'])/(?:home|users|etc|var|tmp|mnt|root)\b|@|sk-|AIza|pdl_|https?://|[A-Za-z0-9_\-]{24,}", re.I)
 
 
 class Refused(Exception):
@@ -68,11 +63,6 @@ def _card() -> tuple[str, ...]:
 def _levels() -> list[str]:
     data = json.loads((WEB / "levels.json").read_text(encoding="utf-8"))
     return [level["id"] for level in data["levels"]]
-
-
-def _private_words(extra) -> list[str]:
-    words = [*(extra or ()), getpass.getuser(), Path.home().name, socket.gethostname()]
-    return [w.lower() for w in words if isinstance(w, str) and len(w.strip()) >= 3]
 
 
 def read_log(path) -> tuple[dict, list[dict]]:
@@ -130,15 +120,6 @@ def _marks(raw) -> list[dict]:
     return kept[:MAX_MARKS]
 
 
-def _say(raw, words: list[str]) -> str:
-    if not isinstance(raw, str):
-        return ""
-    text = " ".join(raw.split())
-    if PRIVATE_SHAPES.search(text) or any(w in text.lower() for w in words):
-        return ""  # a line with anything private in it is dropped whole, never edited
-    return text[:MAX_SAY].rstrip()
-
-
 def _actions(raw, card: tuple[str, ...], number: int) -> list[str]:
     if not isinstance(raw, list) or len(raw) > MAX_ACTIONS or not all(isinstance(a, str) for a in raw):
         raise Refused(f"turn {number}: actions must be a list of at most {MAX_ACTIONS} key names")
@@ -166,13 +147,13 @@ def build(parsed, kind: str | None = None, private_words=None) -> dict:
         if why is not None:
             raise Refused(f"not written as a real recording: {why}")
         brain = head["model"] if head["brain"] == "muse" else f"local-open:{head['model']}"
-        if any(w in brain.lower() for w in _private_words(private_words)):
+        if any(w in brain.lower() for w in words_to_avoid(private_words)):
             raise Refused("the model name holds a private word")
         source = {"kind": "real", "brain": brain, "commit": head["commit"], "recorded": head["recorded"], "marks_from": MARKS_FROM}
     if not 1 <= len(turns) <= MAX_STEPS:
         raise Refused(f"the log has {len(turns)} turns; a recording needs 1 to {MAX_STEPS}")
-    card, words = _card(), _private_words(private_words)
-    steps = [{"say": _say(t.get("say"), words), "marks": _marks(t.get("marks")), "actions": _actions(t.get("actions"), card, i + 1)}
+    card, words = _card(), words_to_avoid(private_words)
+    steps = [{"say": clean_line(t.get("say"), words), "marks": _marks(t.get("marks")), "actions": _actions(t.get("actions"), card, i + 1)}
              for i, t in enumerate(turns)]
     return {"schema": SCHEMA, "source": source, "level": head["level"], "steps": steps}
 

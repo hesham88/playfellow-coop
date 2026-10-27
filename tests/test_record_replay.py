@@ -12,6 +12,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "demo"))
 import record_replay as rr  # noqa: E402
+from playfellow_coop import session_log  # noqa: E402
 
 WEB = Path(__file__).resolve().parents[1] / "demo" / "web"
 PINNED = rr.PINNED_MARKS_ENDPOINT  # the code's own constant, not a typed host
@@ -179,7 +180,7 @@ def test_a_private_looking_header_value_refuses_the_log(tmp_path):
 
 
 def test_the_default_private_words_include_the_os_user_name(monkeypatch, tmp_path):
-    monkeypatch.setattr(rr.getpass, "getuser", lambda: "Quentin")
+    monkeypatch.setattr(session_log.getpass, "getuser", lambda: "Quentin")
     rec = rr.build(rr.read_log(write_log(tmp_path, header(), [turn(say="quentin is here")])))
     assert rec["steps"][0]["say"] == ""
 

@@ -24,6 +24,7 @@ from playfellow_coop.budget import DailyBudget
 from playfellow_coop.handover import HandOver, taken_line
 from playfellow_coop.muse_brain import MuseBrain
 from playfellow_coop.push_to_talk import VoiceLatency
+from playfellow_coop.session_log import SessionLog, make_header
 from playfellow_coop.voice import CommandQueue, typed_listener
 from playfellow_coop.session import play_session
 from playfellow_coop.stage_timer import StageTimer
@@ -92,6 +93,10 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
     parser.add_argument("--budget-file", type=Path, default=Path.home() / ".playfellow-coop" / "budget.json")
+    parser.add_argument("--log", type=Path, default=None,
+                        help="write a raw session log (what the buddy said, the marks it saw, the keys it pressed) for the replay recorder; "
+                             "off unless you give a new file name; it never holds keys, pictures, paths, names or your own words")
+    parser.add_argument("--log-level", default=None, help="with --log: the web page's level id this run corresponds to (for example garden)")
     args = parser.parse_args(argv)
     cfg = load_settings(args.settings)
     overrides = {"game_window": args.window, "controls_card": args.card, "max_minutes": args.minutes, "brain": "builtin"}
@@ -103,6 +108,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise
     parts.overlay, parts.summon_key = args.overlay, args.summon_key
     parts.marks_source = marks
+    if args.log:
+        model = args.model or ("muse-spark" if args.brain == "muse" else "builtin" if args.brain == "builtin" else None)
+        parts.session_log_plan = {"path": args.log, "brain": args.brain, "model": model, "level": args.log_level}
     if marks != "off":
         attach_marks(parts, marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
     if args.brain == "local-open":
@@ -129,6 +137,18 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     except BrainError as error:
         say(error.friendly())
         return 2
+    log = None
+    plan = getattr(parts, "session_log_plan", None)
+    if plan:  # --log: opened before anything starts, and never over an existing file
+        try:
+            log = SessionLog(plan["path"], make_header(parts, plan))
+        except FileExistsError:
+            say(tr("That --log file already exists: nothing was overwritten. Pick a new file name.",
+                   "ملف --log موجود بالفعل: لم يُكتب فوقه شيء. اختر اسم ملف جديدًا."))
+            return 2
+        except OSError as error:
+            say(tr(f"The --log file cannot be created ({type(error).__name__}).", f"لا يمكن إنشاء ملف --log ({type(error).__name__})."))
+            return 2
     make_dpi_aware()
     if getattr(parts, "marks_source", "off") == "fake":
         say(FAKE_MARKS_BANNER)
@@ -175,6 +195,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
             say(data)
         if overlay is not None:
             overlay.event(kind, data)
+        if log is not None:
+            log(kind, data)
 
     def run_session():
         return run(parts, cfg, play_system, timer, handover, on_event=on_event, commands=commands, latency=latency)
@@ -196,6 +218,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         overlay.run()
         worker.join()
         reason = outcome.get("reason", "stopped")
+    if log is not None:
+        log.close()
     say(msg(reason, minutes=cfg.max_minutes, calls=cfg.max_ai_calls))
     if getattr(parts, "marks_source", "off") == "fake":
         say(FAKE_MARKS_BANNER)  # said again at the end, so a log or a recording can never miss it

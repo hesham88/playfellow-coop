@@ -46,6 +46,7 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     if marker is not None:  # SAM marks, if the session has them: numbered labels on the picture the brain sees
         with timer.stage("mark"):
             image, labels, marks = mark_image_full(image, marker)
+        on_event("marks", [{"tag": m.tag, "kind": m.kind, "x": m.x, "y": m.y} for m in marks])  # for the optional session log
         stuck = getattr(parts, "stuck", None) or StuckTracker()
         parts.stuck = stuck
         blocked = stuck.note(marks)  # "your last move did nothing", from the marks alone
@@ -68,6 +69,7 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     with timer.stage("parse_and_check"):
         reply = parse_reply(raw, parts.card, settings.max_actions_per_step)
     on_event("thought", reply.thought)
+    on_event("buddy_line", reply.say)  # for the optional session log (main's on_event ignores it; "say" is the hand-over line)
     if reply.dropped:
         on_event("dropped", reply.dropped)
     with timer.stage("key_down"):
