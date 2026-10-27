@@ -327,3 +327,12 @@ def test_the_owner_checklist_says_who_looks_at_a_real_recording_before_it_ships_
     assert "ONLY after the architect has looked at the file" in text
     assert "--brain muse --log run1.jsonl --log-level garden" in text
     assert "python demo/record_replay.py session-logs/run1.jsonl" in text
+
+
+# ---- the PC's own name ---------------------------------------------------------------------------------------------------
+def test_a_line_with_this_pcs_host_name_is_dropped(monkeypatch):
+    monkeypatch.setattr(session_log.socket, "gethostname", lambda: "ZED-PC")  # a made-up name: the real one is never in the repo
+    words = session_log.private_words()
+    assert "zed-pc" in words
+    assert session_log.clean_line("Heading for the door at Zed-PC now", words) == ""
+    assert session_log.clean_line("Heading for the door now.", words) == "Heading for the door now."
