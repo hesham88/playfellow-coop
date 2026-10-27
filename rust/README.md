@@ -21,4 +21,4 @@ The DLL has no dependencies (no crates, no runtime DLLs to ship) and is never co
 
 ## Measured (this PC, one run; read the medians, run it yourself)
 
-The numbers live in `results/fastpath_bench-*.json`, written by `bench/fastpath_bench.py`. Typical: 8 to 33 times faster for grid search, and about 50 times for the thumbnail count (which includes the cost of the call). The speed-up depends on the grid and on how busy the PC is.
+The numbers live in `results/fastpath_bench-*.json`, written by `bench/fastpath_bench.py`. Clean run on commit efc6314 (this PC, 15 repeats per size, a path always exists, identical paths): grid search 17 to 24 times faster (for example 128x128: 6.1 ms in Python, 0.31 ms in Rust); the thumbnail count about 57 times faster (0.136 ms to 0.0024 ms, including the cost of the call). The speed-up depends on the grid and on how busy the PC is.

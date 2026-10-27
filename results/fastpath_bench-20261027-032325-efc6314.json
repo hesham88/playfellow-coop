@@ -1,0 +1,113 @@
+{
+  "schema": "pf-results/1",
+  "tool": "fastpath_bench",
+  "commit": "efc63145541ec3e3daafdd6a786097db387c8c97",
+  "dirty": false,
+  "machine": {
+    "cpu": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
+    "ram_gb": 15.9,
+    "gpu": "not measured",
+    "os": "Windows-11-10.0.26200-SP0",
+    "load": "not measured"
+  },
+  "started": "2026-10-27T03:23:25+03:00",
+  "metrics": {
+    "label": "clean",
+    "native_loaded": true,
+    "astar": [
+      {
+        "grid": "32x32",
+        "path_found": true,
+        "path_cells": 63,
+        "python": {
+          "n": 15,
+          "median_ms": 0.3251,
+          "p95_ms": 0.4764,
+          "min_ms": 0.3137
+        },
+        "same_path_as_python": true,
+        "rust": {
+          "n": 15,
+          "median_ms": 0.0188,
+          "p95_ms": 0.0367,
+          "min_ms": 0.0185
+        },
+        "speedup_x": 17.3
+      },
+      {
+        "grid": "64x64",
+        "path_found": true,
+        "path_cells": 127,
+        "python": {
+          "n": 15,
+          "median_ms": 1.1483,
+          "p95_ms": 1.5497,
+          "min_ms": 1.1346
+        },
+        "same_path_as_python": true,
+        "rust": {
+          "n": 15,
+          "median_ms": 0.0531,
+          "p95_ms": 0.0935,
+          "min_ms": 0.0504
+        },
+        "speedup_x": 21.6
+      },
+      {
+        "grid": "128x128",
+        "path_found": true,
+        "path_cells": 255,
+        "python": {
+          "n": 15,
+          "median_ms": 6.0942,
+          "p95_ms": 7.2023,
+          "min_ms": 5.8724
+        },
+        "same_path_as_python": true,
+        "rust": {
+          "n": 15,
+          "median_ms": 0.3102,
+          "p95_ms": 0.4496,
+          "min_ms": 0.306
+        },
+        "speedup_x": 19.6
+      },
+      {
+        "grid": "256x256",
+        "path_found": true,
+        "path_cells": 511,
+        "python": {
+          "n": 15,
+          "median_ms": 22.5701,
+          "p95_ms": 31.9317,
+          "min_ms": 21.4769
+        },
+        "same_path_as_python": true,
+        "rust": {
+          "n": 15,
+          "median_ms": 0.9442,
+          "p95_ms": 1.1583,
+          "min_ms": 0.932
+        },
+        "speedup_x": 23.9
+      }
+    ],
+    "thumbnail_change": {
+      "cells": 1024,
+      "python": {
+        "n": 400,
+        "median_ms": 0.1364,
+        "p95_ms": 0.1479,
+        "min_ms": 0.1301
+      },
+      "rust": {
+        "n": 400,
+        "median_ms": 0.0024,
+        "p95_ms": 0.0035,
+        "min_ms": 0.0023
+      },
+      "same_count": true
+    },
+    "note": "the speed-up depends on the grid, this PC and how busy it is; read the medians, not one run"
+  }
+}
