@@ -156,3 +156,40 @@ def test_the_capture_check_opens_closes_and_grabs_in_order_and_leaves_the_panel_
     count = capture_check(lambda: (log.append("grab"), next(frames))[1], lambda: log.append("open"), lambda: log.append("close"),
                           (100, 20, 181, 101))
     assert count == 0 and log == ["close", "grab", "open", "grab", "close"]
+
+
+# ---- gaps found by mutating the overlay ---------------------------------------------------------------------------
+def test_setting_the_state_it_already_has_tells_no_view():
+    panel, _ = model()
+    seen = []
+    panel.subscribe(lambda: seen.append(1))
+    panel.set_state("ready")
+    assert seen == []
+    panel.set_state("listening")
+    assert seen == [1]
+
+
+def test_a_long_typed_command_is_cut_in_the_chat_line_but_not_in_the_queue():
+    panel, queue = model()
+    assert panel.submit("x" * 500) is True
+    assert len(panel.lines[-1].text) == 300
+
+
+def test_each_other_window_that_took_the_front_is_listed_once():
+    handles = iter([100, 7, 7, 8, 7])
+    result = measure_focus_loss(4, lambda: None, foreground=lambda: next(handles))
+    assert result.others == (7, 8) and result.losses_by == {7: 3, 8: 1}
+
+
+def test_a_change_exactly_at_the_tolerance_does_not_count_and_one_above_does():
+    reference = Image.new("RGB", (10, 10), (100, 100, 100))
+    at_tolerance = Image.new("RGB", (10, 10), (108, 108, 108))
+    above = Image.new("RGB", (10, 10), (109, 109, 109))
+    assert panel_pixels_in_capture(at_tolerance, reference, (0, 0, 10, 10), tolerance=8) == 0
+    assert panel_pixels_in_capture(above, reference, (0, 0, 10, 10), tolerance=8) == 100
+
+
+def test_the_reference_is_compared_pixel_by_pixel_not_by_its_corner():
+    pattern = Image.new("RGB", (40, 40), (0, 0, 0))
+    ImageDraw.Draw(pattern).rectangle((20, 0, 39, 39), fill=(255, 0, 0))  # a game scene that is not one flat colour
+    assert panel_pixels_in_capture(pattern.copy(), pattern, (0, 0, 40, 40)) == 0

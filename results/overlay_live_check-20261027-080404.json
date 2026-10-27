@@ -1,0 +1,35 @@
+{
+  "tool": "overlay_live_check",
+  "dry_run": true,
+  "show_in_recordings": false,
+  "baseline_no_toggle": false,
+  "started": "2026-10-27T08:04:04+03:00",
+  "game_title": "dry run: PlayFellow Practice Arena",
+  "windows_full_screen_state": "none",
+  "focus": {
+    "opens": 50,
+    "focus_losses": 0,
+    "game_window_was_foreground_at_start": true,
+    "other_windows_that_took_the_front": [],
+    "focus_taken_by_the_panel_itself": 0,
+    "focus_taken_by_something_else": 0
+  },
+  "capture": {
+    "panel_pixels_found_in_capture": 0,
+    "rectangle": [
+      1536,
+      24,
+      1896,
+      444
+    ],
+    "note": "0 means the panel is absent from this capture; the game keeps moving, so a small count can be the game itself"
+  },
+  "style": {
+    "excluded_from_capture": true,
+    "click_through_when_pinned": true
+  },
+  "not_measured": [
+    "F12 with the panel open (press F12 yourself while the engine runs)",
+    "dropped keys in a fast game (watch the game)"
+  ]
+}
