@@ -15,7 +15,8 @@ from memory import Moment
 from reply import Reply, parse_reply
 
 from playfellow_coop.handover import HandOver
-from playfellow_coop.sam_marks import mark_image
+from playfellow_coop.sam_marks import mark_image_full
+from playfellow_coop.spatial import StuckTracker
 from playfellow_coop.voice import CommandQueue, for_the_planner
 from playfellow_coop.stage_timer import StageTimer
 
@@ -40,12 +41,17 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         image = shrink(picture, settings.image_width)
         if parts.card.uses_clicks:
             image = add_grid(image)
-    labels = ""
+    labels, blocked, stuck = "", "", None
     marker = getattr(parts, "marker", None)
     if marker is not None:  # SAM marks, if the session has them: numbered labels on the picture the brain sees
         with timer.stage("mark"):
-            image, labels = mark_image(image, marker)
+            image, labels, marks = mark_image_full(image, marker)
+        stuck = getattr(parts, "stuck", None) or StuckTracker()
+        parts.stuck = stuck
+        blocked = stuck.note(marks)  # "your last move did nothing", from the marks alone
     text = turn_text(settings.goal, parts.memory.as_text(), for_the_planner(chat or []), None)  # the player's words come first
+    if blocked:
+        text = blocked + "\n\n" + text
     if labels:
         text = labels + "\n\n" + text
     parts.safety.count_ai_call()
@@ -73,6 +79,8 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
                 latency.key_pressed()
                 latency = None
     on_event("actions", reply.action_names())
+    if stuck is not None:
+        stuck.acted(reply.action_names())
     parts.memory.add(Moment(shrink(image, MEMORY_IMAGE_WIDTH), reply.thought, tuple(reply.action_names()), reply.say))
     return reply
 

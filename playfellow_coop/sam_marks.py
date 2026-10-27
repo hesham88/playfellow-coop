@@ -44,14 +44,20 @@ def _changed(a: bytes | None, b: bytes) -> bool:
     return a is None or fastpath.changed_cells(a, b, CELL_CHANGE) >= CELLS_NEEDED  # Rust when built, the same count in Python otherwise
 
 
-def mark_image(image: Image.Image, marker: Callable[[Image.Image], list[Mark]]) -> tuple[Image.Image, str]:
-    """The picture the brain sees, with the numbered marks drawn on it, and the words that explain them (the engine's own steps)."""
+def mark_image_full(image: Image.Image, marker: Callable[[Image.Image], list[Mark]]) -> tuple[Image.Image, str, list[Mark]]:
+    """The marked picture, the words that explain the marks, and the labelled marks themselves (ME first)."""
     marks = marker(image)
     me = next((m for m in marks if m.kind == "me"), None)
     labelled = label_marks([m for m in marks if m.kind != "me"], me)
     if not labelled:
-        return image, ""
-    return draw_marks(image, labelled), legend(labelled)
+        return image, "", []
+    return draw_marks(image, labelled), legend(labelled), labelled
+
+
+def mark_image(image: Image.Image, marker: Callable[[Image.Image], list[Mark]]) -> tuple[Image.Image, str]:
+    """The picture the brain sees, with the numbered marks drawn on it, and the words that explain them (the engine's own steps)."""
+    marked, words, _ = mark_image_full(image, marker)
+    return marked, words
 
 
 def parse_boxes(text: str) -> list[tuple[tuple[float, float, float, float], tuple[float, float]]]:
