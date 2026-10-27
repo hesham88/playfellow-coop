@@ -80,8 +80,9 @@ def _default_connect(url: str, **kw):
 
 class RealtimeTranscriber:
     def __init__(self, api_key: str, budget: DailyBudget | None = None, connect: Callable = _default_connect,
-                 clock: Callable[[], float] = time.perf_counter, timeout: float = 15.0):
+                 clock: Callable[[], float] = time.perf_counter, timeout: float = 15.0, tracer=None):
         self._key = api_key
+        self.tracer = tracer  # an optional pf-trace/1 writer
         self.budget = budget
         self._connect = connect
         self._clock = clock
@@ -133,10 +134,13 @@ class RealtimeTranscriber:
                     elif text.strip():
                         partials.append(text.strip())
                         on_partial(text.strip())
-        except BrainError:
+        except BrainError as error:
+            self._trace(started, sent_bytes / BYTES_PER_SECOND * 1000.0, first_partial, error=error.key)
             raise
         except Exception as error:  # the connection dropped or spoke nonsense
-            raise _connect_error(error) from None
+            failure = _connect_error(error)
+            self._trace(started, sent_bytes / BYTES_PER_SECOND * 1000.0, first_partial, error=failure.key)
+            raise failure from None
         finally:
             try:
                 connection.close()
@@ -145,9 +149,15 @@ class RealtimeTranscriber:
         measured_ms = audio_ms if audio_ms is not None else sent_bytes / BYTES_PER_SECOND * 1000.0
         if self.budget is not None:
             self.budget.record_cost(measured_ms / 3_600_000.0 * USD_PER_HOUR)
+        self._trace(started, measured_ms, first_partial, cost_usd=measured_ms / 3_600_000.0 * USD_PER_HOUR, parse={"valid": bool(final)})
         if not final:
             raise BrainError("empty_answer")
         return Transcript(final, measured_ms, first_partial, partials)
+
+    def _trace(self, started: float, audio_ms: float, first_partial: float | None, **fields) -> None:
+        if self.tracer is not None:
+            self.tracer.request("voice", model=MODEL, audio_ms=audio_ms, request_ms=(self._clock() - started) * 1000.0,
+                                first_partial_ms=None if first_partial is None else first_partial * 1000.0, **fields)
 
 
 def _event(raw) -> dict:

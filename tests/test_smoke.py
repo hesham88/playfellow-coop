@@ -82,6 +82,7 @@ def go(tmp_path, **kw):
 def test_it_refuses_without_the_key_and_sends_nothing(server, tmp_path):
     code, said = go(tmp_path, environ={})
     assert code == 2 and server.paths == [] and "MODEL_API_KEY" in said[0]
+    assert "docs/owner-live-checks.md" in said[0] and "Credit day: the first real calls" in said[0] and "step 1" in said[0]  # says where to look
 
 
 def test_it_refuses_without_a_typed_yes_and_sends_nothing(server, tmp_path):

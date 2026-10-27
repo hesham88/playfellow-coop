@@ -5,6 +5,7 @@ the keys. Each step sits inside a stage of the StageTimer. While the player has 
 no picture is taken for the AI and no AI is asked. Safety limits, F12 and the mouse corner work exactly as in the engine."""
 from __future__ import annotations
 
+import time
 from typing import Any, Callable
 
 from brain import BrainError
@@ -18,6 +19,7 @@ from playfellow_coop.handover import HandOver
 from playfellow_coop.sam_marks import mark_image_full
 from playfellow_coop.spatial import StuckTracker
 from playfellow_coop.voice import CommandQueue, for_the_planner
+from playfellow_coop import trace
 from playfellow_coop.stage_timer import StageTimer
 
 MEMORY_IMAGE_WIDTH = 320  # older pictures the brain sees again are small: they only remind it what happened
@@ -68,8 +70,16 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
             timer.add(name, seconds)
     else:
         timer.add("request", whole)  # the whole call is one stage: encode and first byte are not separable from outside
+    parsing = time.perf_counter()
     with timer.stage("parse_and_check"):
         reply = parse_reply(raw, parts.card, settings.max_actions_per_step)
+    tracer = getattr(parts, "tracer", None)  # --trace: one line per request, hashes and numbers only
+    if tracer is not None:
+        said = {k: v for k, v in (getattr(parts.brain, "last_request", None) or {}).items() if k in trace.BRAIN_FIELDS}
+        said.setdefault("request_ms", whole * 1000.0)
+        tracer.request("plan", prefix=system, captured_px=getattr(picture, "size", None), sent_px=getattr(image, "size", None),
+                       parse_ms=(time.perf_counter() - parsing) * 1000.0,
+                       parse={"valid": not reply.confused, "dropped": len(reply.dropped), "actions": len(reply.steps)}, **said)
     on_event("thought", reply.thought)
     if logging:
         on_event("buddy_line", reply.say)  # "say" is the hand-over line, so the buddy's own line has its own kind
@@ -84,6 +94,8 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
                 latency.key_pressed()
                 latency = None
     on_event("actions", reply.action_names())
+    if tracer is not None:
+        tracer.turn(actions=reply.action_names())
     if stuck is not None:
         stuck.acted(reply.action_names())
     parts.memory.add(Moment(shrink(image, MEMORY_IMAGE_WIDTH), reply.thought, tuple(reply.action_names()), reply.say))
@@ -148,6 +160,8 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                 break
             except BrainError as error:
                 timer.end_turn()
+                if getattr(parts, "tracer", None) is not None:
+                    parts.tracer.request("plan", prefix=system, error=error.key, parse={"valid": False})
                 errors += 1
                 on_event("status", error.friendly())
                 if not error.retry:

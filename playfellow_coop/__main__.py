@@ -24,7 +24,8 @@ from playfellow_coop.budget import DailyBudget
 from playfellow_coop.handover import HandOver, taken_line
 from playfellow_coop.muse_brain import MuseBrain
 from playfellow_coop.push_to_talk import VoiceLatency
-from playfellow_coop.session_log import SessionLog, make_header, resolve_log_path
+from playfellow_coop.session_log import SessionLog, git_commit, make_header, resolve_log_path
+from playfellow_coop.trace import Trace
 from playfellow_coop.voice import CommandQueue, typed_listener
 from playfellow_coop.session import play_session
 from playfellow_coop.stage_timer import StageTimer
@@ -96,6 +97,11 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--log", type=Path, default=None,
                         help="write a raw session log (what the buddy said, the marks it saw, the keys it pressed) for the replay recorder; "
                              "off unless you give a new file name (a bare name goes under ./session-logs/, which git ignores); it never holds keys, pictures, paths, names or your own words")
+    parser.add_argument("--trace", type=Path, default=None,
+                        help="write a pf-trace/1 file: one line per request (model, tokens in/cached/out, prefix hash, latency, finish reason, cost, "
+                             "whether the answer parsed) and per turn; numbers and hashes only, never a picture, a word, a key or a path; "
+                             "off unless you give a new file name (a bare name goes under ./session-logs/)")
+    parser.add_argument("--trial", default="trial", help="with --trace: a short name for this trial (letters, digits, dot, dash, underscore)")
     parser.add_argument("--log-level", default=None, help="with --log: the web page's level id this run corresponds to (for example garden)")
     args = parser.parse_args(argv)
     cfg = load_settings(args.settings)
@@ -108,6 +114,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise
     parts.overlay, parts.summon_key = args.overlay, args.summon_key
     parts.marks_source = marks
+    if args.trace:
+        parts.trace_plan = {"path": resolve_log_path(args.trace), "trial": args.trial}
     if args.log:
         model = args.model or ("muse-spark" if args.brain == "muse" else "builtin" if args.brain == "builtin" else None)
         parts.session_log_plan = {"path": resolve_log_path(args.log), "brain": args.brain, "model": model, "level": args.log_level}
@@ -150,6 +158,25 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
             say(tr(f"The --log file cannot be created ({type(error).__name__}).", f"لا يمكن إنشاء ملف --log ({type(error).__name__})."))
             return 2
         parts.session_log_on = True  # the session now reports the marks and the buddy's lines (and does not otherwise)
+    tracer = None
+    trace_plan = getattr(parts, "trace_plan", None)
+    if trace_plan:  # --trace: opened before anything starts, and never over an existing file
+        try:
+            tracer = Trace(trace_plan["path"], trace_plan["trial"], commit=git_commit())
+        except FileExistsError:
+            say(tr("That --trace file already exists: nothing was overwritten. Pick a new file name.",
+                   "ملف --trace موجود بالفعل: لم يُكتب فوقه شيء. اختر اسم ملف جديدًا."))
+            return 2
+        except ValueError:
+            say(tr("The --trial name must be 1 to 40 letters, digits, dots, dashes or underscores.",
+                   "اسم --trial يجب أن يكون من ١ إلى ٤٠ حرفًا أو رقمًا أو نقطة أو شرطة."))
+            return 2
+        except OSError as error:
+            say(tr(f"The --trace file cannot be created ({type(error).__name__}).", f"لا يمكن إنشاء ملف --trace ({type(error).__name__})."))
+            return 2
+        parts.tracer = tracer
+        if getattr(parts, "marker", None) is not None:
+            parts.marker.tracer = tracer
     make_dpi_aware()
     if getattr(parts, "marks_source", "off") == "fake":
         say(FAKE_MARKS_BANNER)
@@ -170,7 +197,7 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
             from playfellow_coop.push_to_talk import PushToTalk, listen_hold
             from playfellow_coop.realtime_voice import RealtimeTranscriber
 
-            talker = PushToTalk(Microphone(), RealtimeTranscriber(key, budget=parts.voice_budget),
+            talker = PushToTalk(Microphone(), RealtimeTranscriber(key, budget=parts.voice_budget, tracer=tracer),
                                 commands, say, card=parts.card, language=cfg.language, latency=latency)
             listen_hold(talk_key, talker.key_down, talker.key_up)
     overlay = None
@@ -221,6 +248,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         reason = outcome.get("reason", "stopped")
     if log is not None:
         log.close()
+    if tracer is not None:
+        tracer.close()
     say(msg(reason, minutes=cfg.max_minutes, calls=cfg.max_ai_calls))
     if getattr(parts, "marks_source", "off") == "fake":
         say(FAKE_MARKS_BANNER)  # said again at the end, so a log or a recording can never miss it

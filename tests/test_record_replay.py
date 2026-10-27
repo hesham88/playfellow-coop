@@ -174,7 +174,7 @@ def test_nothing_private_ends_up_in_the_output(tmp_path):
 
 
 def test_a_private_looking_header_value_refuses_the_log(tmp_path):
-    for changes in ({"model": "C:" + "\\Users\\zed\\m.gguf"}, {"model": "x@y.com"}, {"model": "a" * 100}):
+    for changes in ({"model": "C:" + "\\Users\\zed\\m.gguf"}, {"model": "x@example.com"}, {"model": "a" * 100}):
         with pytest.raises(rr.Refused):
             rr.build(rr.read_log(write_log(tmp_path, header(brain="local-open", **changes), [turn()])))
 

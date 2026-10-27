@@ -252,7 +252,8 @@ def run(environ: dict | None = None, confirm: Callable[[str], str] = input, say:
     env = os.environ if environ is None else environ
     key = (env.get("MODEL_API_KEY") or "").strip()
     if not key:
-        say("Refusing to run: MODEL_API_KEY is not set in the environment. Nothing was sent.")
+        say("Refusing to run: MODEL_API_KEY is not set in the environment (see docs/owner-live-checks.md, 'Credit day: the first real calls', step 1). "
+            "Nothing was sent.")
         return 2
     plan = (f"This makes 5 real calls and may spend up to ${total_cap:.2f} in total (in practice under a cent):\n"
             f"  1. Muse Spark: one Practice Arena frame and a fixed prompt\n  2. SAM 3.1: the same frame and the phrase {SAM_PHRASE!r}\n"

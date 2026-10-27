@@ -41,9 +41,14 @@ Repeat check 2 over SuperTux in borderless mode, and watch that not one key is d
 
 ## Credit day: the first real calls (about 5 minutes, under one cent in practice, never more than 10 dollars)
 
-1. In a terminal, put the key in the environment for this window only (it is never read from a file): `$env:MODEL_API_KEY = "<your key>"`.
+1. In a terminal, open PowerShell 7 ("pwsh"), not "Windows PowerShell" (the Start menu usually opens the old one, where the next line gives an error). Put the key in the environment for this window only (it is never read from a file): `$env:MODEL_API_KEY = Read-Host -MaskInput "Meta key"`. You paste the key at the prompt and it is not shown on screen; do not paste the key into any chat, file or message.
+   If you can only use Windows PowerShell 5.1, use this instead (it asks the same way):
+
+   `$s = Read-Host -AsSecureString "Meta key"; $env:MODEL_API_KEY = [Net.NetworkCredential]::new('', $s).Password; Remove-Variable s`
+
+   The key is never typed on the command line itself: PSReadLine saves command lines to disk, while text typed at a `Read-Host` prompt is not saved.
 2. Run `python demo/first_real_calls.py`. It prints its plan (five calls: one chat, SAM twice, one voice file, one short realtime voice stream of at most 5 seconds) and waits. It sends nothing until you type `YES`; it refuses to run without the key, and it stops at the 10 dollar cap.
 3. It prints one line per call, `OK` or `DIFFERS`, and where it saved the raw answers (the key is replaced by `***`). Send those lines to the supervisor exactly as they are.
 4. Run `python demo/scrub_fixtures.py`. It replaces ids, e-mail addresses, key shapes and paths in the saved files with fixed placeholders of the same kind (it prints how many, never a value) and changes nothing else.
 5. The files are in `tests/fixtures/real/`: `muse_chat.json`, `sam_responses.json`, `sam_no_match.json`, `voice_transcribe.json`, `realtime_voice.json`. Do not commit the fixture files; tell the supervisor. The architect reads all of them before anything is committed.
-6. Close the terminal window, so the key is gone from the environment.
+6. Clear the key: `Remove-Item Env:MODEL_API_KEY`, then close the window.

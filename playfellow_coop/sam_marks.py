@@ -87,8 +87,10 @@ class SamMarker:
     """marker(image) -> list[Mark]: the engine's `Parts.marker` shape."""
 
     def __init__(self, api_key: str, prompts: dict[str, str] | None = None, budget: DailyBudget | None = None,
-                 client: httpx.Client | None = None, clock: Callable[[], float] = time.perf_counter):
+                 client: httpx.Client | None = None, clock: Callable[[], float] = time.perf_counter, tracer=None):
         self._key = api_key
+        self.tracer = tracer  # an optional pf-trace/1 writer
+        self._png_bytes = 0
         self.prompts = dict(prompts or DEFAULT_PROMPTS)
         self.budget = budget
         self._client = client or _http.new_client()
@@ -117,6 +119,7 @@ class SamMarker:
             return list(self._marks)
         buffer = io.BytesIO()
         image.convert("RGB").save(buffer, format="PNG")  # the picture is encoded ONCE, then shared by every phrase
+        self._png_bytes = len(buffer.getvalue())
         data = base64.standard_b64encode(buffer.getvalue()).decode("ascii")
         started = self._clock()
         marks: list[Mark] = []
@@ -144,9 +147,10 @@ class SamMarker:
             self.calls += 1
         try:
             response = _http.post(self._client, ENDPOINTS["sam"] + "/responses", self._key, body)
-        except BrainError:
+        except BrainError as error:
             with self._lock:
                 self.failed_calls += 1  # never reached the service: nothing is charged
+            self._trace(started, error=error.key, parse={"valid": False})
             raise
         self.latencies.append(self._clock() - started)
         if 200 <= response.status_code < 300:
@@ -155,9 +159,18 @@ class SamMarker:
         else:
             with self._lock:
                 self.failed_calls += 1  # a wrong key (401), a rate limit (429) or a server error is not billed, so not charged here
+            self._trace(started, status=response.status_code, parse={"valid": False})
             _http.check_status(response.status_code)
         try:
             text = answer_text(response.json())
         except ValueError:
+            self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": False})
             raise BrainError("brain_trouble", detail="the answer was not in the expected shape") from None
-        return [mark_from_box(kind, box, size) for box, size in parse_boxes(text)]
+        boxes = parse_boxes(text)
+        self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": bool(boxes), "boxes": len(boxes)})
+        return [mark_from_box(kind, box, size) for box, size in boxes]
+
+    def _trace(self, started: float, **fields) -> None:
+        if self.tracer is not None:
+            self.tracer.request("marks", model=MODEL, images=1, image_bytes=self._png_bytes, request_ms=(self._clock() - started) * 1000.0,
+                                **fields)

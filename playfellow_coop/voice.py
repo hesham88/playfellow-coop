@@ -10,6 +10,7 @@ from __future__ import annotations
 import io
 import json
 import threading
+import time
 import wave
 from collections import deque
 from typing import Callable
@@ -47,10 +48,11 @@ def check_wav(data: bytes) -> float:
 
 
 class MuseVoiceTranscriber:
-    def __init__(self, api_key: str, budget: DailyBudget | None = None, client: httpx.Client | None = None):
+    def __init__(self, api_key: str, budget: DailyBudget | None = None, client: httpx.Client | None = None, tracer=None):
         self._key = api_key
         self.budget = budget
         self._client = client or _http.new_client()
+        self.tracer = tracer  # an optional pf-trace/1 writer
 
     def __repr__(self) -> str:
         return "<MuseVoiceTranscriber>"
@@ -65,20 +67,36 @@ class MuseVoiceTranscriber:
         request = {"model": MODEL, "audioEncoding": "WAV", "mode": "PUSH_TO_TALK",
                    "languageBias": [LANGUAGES.get(language, "English")], "keywords": keywords or []}
         files = {"request": (None, json.dumps(request), "application/json"), "audio": ("command.wav", wav, "audio/wav")}
-        response = _http.post_files(self._client, ENDPOINTS["voice"] + "/asr/transcribe", self._key, files)
-        _http.check_status(response.status_code)
+        started = time.perf_counter()
+        try:
+            response = _http.post_files(self._client, ENDPOINTS["voice"] + "/asr/transcribe", self._key, files)
+        except BrainError as error:
+            self._trace(started, seconds, error=error.key)
+            raise
+        try:
+            _http.check_status(response.status_code)
+        except BrainError as error:
+            self._trace(started, seconds, status=response.status_code, error=error.key)
+            raise
         try:
             body = response.json()
             text = body["transcript"]
         except (ValueError, KeyError, TypeError):
+            self._trace(started, seconds, status=response.status_code, parse={"valid": False})
             raise BrainError("brain_trouble", detail="the answer was not in the expected shape") from None
+        duration = body.get("audioDurationMs") if isinstance(body, dict) else None
+        measured = (duration / 1000.0) if isinstance(duration, (int, float)) else seconds  # the provider's own length first
         if self.budget is not None:
-            duration = body.get("audioDurationMs") if isinstance(body, dict) else None
-            measured = (duration / 1000.0) if isinstance(duration, (int, float)) else seconds  # the provider's own length first
             self.budget.record_cost(measured / 3600.0 * USD_PER_HOUR)
-        if not isinstance(text, str) or not text.strip():
+        valid = isinstance(text, str) and bool(text.strip())
+        self._trace(started, measured, status=response.status_code, cost_usd=measured / 3600.0 * USD_PER_HOUR, parse={"valid": valid})
+        if not valid:
             raise BrainError("empty_answer")
         return text.strip()
+
+    def _trace(self, started: float, seconds: float, **fields) -> None:
+        if self.tracer is not None:
+            self.tracer.request("voice", model=MODEL, audio_ms=seconds * 1000.0, request_ms=(time.perf_counter() - started) * 1000.0, **fields)
 
 
 class CommandQueue:
