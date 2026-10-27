@@ -10,12 +10,13 @@ This repository was built by one person with AI coding assistance, including Met
 ## Acknowledgements
 Inspired by research such as Google DeepMind's SIMA 2 and NVIDIA's NitroGen. No code, weights or data from either is used, and there is no affiliation or endorsement.
 
-Method ideas we studied and re-implemented in our own code, with thanks to the authors (both Apache-2.0; no code is copied, there is no affiliation or endorsement):
+Method ideas we studied and re-implemented in our own code, with thanks to the authors (all Apache-2.0; no code is copied, there is no affiliation or endorsement):
 
 | Work | What we took from it | Where it shows |
 |---|---|---|
 | [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (Google) | The working method: one side holds the project context and drafts, a fresh reviewer who has not seen the conversation checks the document, and the person decides | `docs/` review notes; how our specs and contracts were reviewed |
 | [Harness²](https://github.com/google-research/harness2) (Google Research; paper: arXiv 2610.14224) | Propose, probe and compose: edit the harness around a fixed model, test the edits on the same task, and keep what the contrasts support, with a memory of lessons that carries to the next task | `playfellow_coop/harness_loop.py`, the credit-day experiment protocol |
+| [Perfetto](https://github.com/google/perfetto) (Google) | The trace format and viewer: we export our own trace as a Chrome-trace file that Perfetto opens, and the admin panel can open it there. No Perfetto code is in this repository | `playfellow_coop/trace_perfetto.py`, `demo/trace_to_perfetto.py` |
 
 Fonts shipped in the Windows app (not in this repository): Baloo Bhaijaan 2 and Rubik, both SIL Open Font License 1.1.
 
