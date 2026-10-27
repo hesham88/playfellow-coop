@@ -5,11 +5,13 @@ import data from './data.mjs';
 import { WebArena } from './arena.mjs';
 import { Session, eventFor } from './session.mjs';
 import { draw, canvasSize } from './render.mjs';
+import replayData from './replay.mjs';
+import { validate, labelFor, ReplayPlayer } from './replay_player.mjs';
 
 const WORDS = {
-  english: { stop: 'Stop (F12)', handover: 'Hand over (F9)', restart: 'Play again (R)', holder: { buddy: 'Fello has the controls', player: 'You have the controls', stopped: 'Stopped' },
+  english: { replay: 'Watch Fello play (recorded)', stop: 'Stop (F12)', handover: 'Hand over (F9)', restart: 'Play again (R)', holder: { buddy: 'Fello has the controls', player: 'You have the controls', stopped: 'Stopped' },
     note: 'This is the web arena. The Windows app plays your own games.', dir: 'ltr' },
-  arabic: { stop: 'إيقاف (F12)', handover: 'تسليم (F9)', restart: 'العب مرة أخرى (R)', holder: { buddy: 'فيلو يملك التحكم', player: 'أنت تملك التحكم', stopped: 'متوقف' },
+  arabic: { replay: 'شاهد فيلو يلعب (مسجّل)', stop: 'إيقاف (F12)', handover: 'تسليم (F9)', restart: 'العب مرة أخرى (R)', holder: { buddy: 'فيلو يملك التحكم', player: 'أنت تملك التحكم', stopped: 'متوقف' },
     note: 'هذه ساحة الويب. تطبيق ويندوز يلعب ألعابك أنت.', dir: 'rtl' },
 };
 
@@ -26,6 +28,18 @@ export function startPage(doc = document, options = {}) {
   // every visible word comes from the chosen language, so the page is never a mix of the two
   const labels = { F9: WORDS[language].handover, F12: WORDS[language].stop, r: WORDS[language].restart };
   for (const button of doc.querySelectorAll('[data-key]')) if (labels[button.dataset.key]) button.textContent = labels[button.dataset.key];
+  // A recorded REAL session can be replayed (labelled as recorded, never as live); until one exists the page says so and you play by hand.
+  const recording = options.recording !== undefined ? options.recording : replayData;
+  const usable = recording && validate(recording, data.levels.map((l) => l.id)) === null ? recording : null;
+  const modeLine = doc.getElementById('mode');
+  if (modeLine) modeLine.textContent = labelFor(usable, language);
+  const replayButton = doc.getElementById('replay');
+  if (replayButton) {
+    replayButton.textContent = WORDS[language].replay;
+    replayButton.hidden = !usable;
+  }
+  let player = null;
+  let timer = null;
   const note = doc.getElementById('note');
   if (note) note.textContent = WORDS[language].note;
 
@@ -33,8 +47,8 @@ export function startPage(doc = document, options = {}) {
     const size = canvasSize(arena);
     canvas.width = size.width;
     canvas.height = size.height;
-    draw(ctx, arena, data.texts[language], language === 'arabic');
-    status.textContent = `${data.levels[levelIndex].title[language]} · ${WORDS[language].holder[session.holder]}`;
+    draw(ctx, arena, data.texts[language], language === 'arabic', player ? player.marks : []);
+    status.textContent = `${data.levels[levelIndex].title[language]} · ${WORDS[language].holder[session.holder]}${player && player.say ? ' · ' + player.say : ''}`;
   }
 
   function act(event) {
@@ -55,6 +69,30 @@ export function startPage(doc = document, options = {}) {
     levelIndex = Number(e.target.value);
     act({ type: 'restart' });
   });
+  function tick() {
+    const result = player.step();
+    if (result.done && timer !== null) {
+      (options.clearInterval || clearInterval)(timer);
+      timer = null;
+    }
+    paint();
+    return result;
+  }
+  function toggleReplay() {
+    if (!usable) return false;
+    if (timer !== null) {
+      (options.clearInterval || clearInterval)(timer);
+      timer = null;
+      return false;
+    }
+    levelIndex = data.levels.findIndex((l) => l.id === usable.level);
+    act({ type: 'restart' });
+    player = new ReplayPlayer(session, usable);
+    timer = (options.setInterval || setInterval)(tick, 450);
+    paint();
+    return true;
+  }
+  replayButton?.addEventListener('click', toggleReplay);
   paint();
-  return { session, get arena() { return arena; }, act, paint };
+  return { session, get arena() { return arena; }, act, paint, replay: { toggle: toggleReplay, tick, get player() { return player; }, get usable() { return usable; } } };
 }

@@ -18,7 +18,7 @@ function circle(ctx, cx, cy, r, fill) {
 }
 
 /** Draw the whole arena: the banner (score, coins left, key, the line the game just said) and the maze. Returns the number of tiles drawn. */
-export function draw(ctx, arena, labels, rtl = false) {
+export function draw(ctx, arena, labels, rtl = false, marks = []) {
   const { width, height } = canvasSize(arena);
   ctx.fillStyle = COLOURS.background;
   ctx.fillRect(0, 0, width, height);
@@ -53,5 +53,23 @@ export function draw(ctx, arena, labels, rtl = false) {
   circle(ctx, px, py, TILE * 0.32, COLOURS.me);
   circle(ctx, px - 6, py - 4, 4, COLOURS.eye);
   circle(ctx, px + 6, py - 4, 4, COLOURS.eye);
+  drawMarks(ctx, marks, width, height);
   return tiles;
+}
+
+/** Numbered marks from a recorded session: positions are on the 0-1000 grid (the same grid the engine's marks use), mapped onto the maze area. */
+export function drawMarks(ctx, marks, width, height) {
+  for (const mark of marks) {
+    const cx = (mark.x / 1000) * width;
+    const cy = BANNER + (mark.y / 1000) * (height - BANNER);
+    ctx.strokeStyle = '#22e4ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, TILE * 0.4, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#22e4ff';
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(mark.tag, cx, cy - TILE * 0.45);
+  }
 }
