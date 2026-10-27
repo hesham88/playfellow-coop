@@ -17,19 +17,25 @@ class FocusResult:
     opens: int
     focus_losses: int
     foreground_before: int
+    others: tuple = ()  # every different window that was in front after a toggle, in the order first seen
+    losses_by: dict | None = None  # window handle -> how many toggles ended with that window in front
 
 
 def measure_focus_loss(opens: int, toggle: Callable[[], None], foreground: Callable[[], int], settle: Callable[[], None] = lambda: None) -> FocusResult:
     """Toggle the panel `opens` times (open and close each count as one) and count how often the foreground window changed from
     the one it started with. `foreground` returns a window handle; `settle` lets Windows finish between toggles."""
     before = foreground()
-    losses = 0
+    losses, others, by = 0, [], {}
     for _ in range(opens):
         toggle()
         settle()
-        if foreground() != before:
+        now = foreground()
+        if now != before:
             losses += 1
-    return FocusResult(opens, losses, before)
+            by[now] = by.get(now, 0) + 1
+            if now not in others:
+                others.append(now)
+    return FocusResult(opens, losses, before, tuple(others), by)
 
 
 def panel_pixels_in_capture(frame_with_panel: Image.Image, reference_frame: Image.Image, rect: tuple[int, int, int, int],
@@ -40,7 +46,7 @@ def panel_pixels_in_capture(frame_with_panel: Image.Image, reference_frame: Imag
     a = frame_with_panel.convert("RGB").crop(rect)
     b = reference_frame.convert("RGB").crop(rect)
     diff = ImageChops.difference(a, b).convert("L")
-    return sum(1 for value in diff.getdata() if value > tolerance)
+    return diff.point(lambda value: 255 if value > tolerance else 0).histogram()[255]  # how many pixels changed by more than the tolerance
 
 
 def capture_check(grab: Callable[[], Image.Image], open_panel: Callable[[], None], close_panel: Callable[[], None],

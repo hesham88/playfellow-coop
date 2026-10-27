@@ -20,6 +20,12 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+try:  # the engine is normally pip-installed; without that, use PLAYFELLOW_ENGINE or the clone beside this repo
+    import messages  # noqa: F401
+except ImportError:
+    import os
+
+    sys.path.insert(0, str(Path(os.environ.get("PLAYFELLOW_ENGINE") or Path(__file__).resolve().parents[2] / "playfellow" / "software")))
 
 from playfellow_coop.overlay import winstyle  # noqa: E402
 from playfellow_coop.overlay.panel import PanelModel  # noqa: E402
@@ -34,6 +40,12 @@ def foreground() -> int:
     return int(user32.GetForegroundWindow() or 0)
 
 
+def title_of(hwnd: int) -> str:
+    buffer = ctypes.create_unicode_buffer(256)
+    user32.GetWindowTextW(hwnd, buffer, 256)
+    return buffer.value or f"(no title, handle {hwnd})"
+
+
 def find_game(title: str) -> int:
     return int(user32.FindWindowW(None, title) or 0)
 
@@ -42,6 +54,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--game-title", default="PlayFellow Practice Arena")
     parser.add_argument("--opens", type=int, default=50)
+    parser.add_argument("--show-in-recordings", action="store_true",
+                        help="CONTROL run: lift the capture exclusion, so the panel SHOULD be found in the capture (proves the count can see it)")
+    parser.add_argument("--baseline", action="store_true",
+                        help="CONTROL run: do the same loop but never toggle the panel, to see whether focus is lost anyway (for example to a console window)")
     parser.add_argument("--dry-run", action="store_true",
                         help="rehearse over a plain window this script opens itself: no game needed, only the panel's own rectangle is looked at")
     parser.add_argument("--out", type=Path, default=Path(__file__).resolve().parents[1] / "results")
@@ -78,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
 
     state = winstyle.full_screen_state()
     model = PanelModel(CommandQueue())
-    overlay = TkOverlay(model, root=__import__("tkinter").Toplevel(host) if host is not None else None)
+    overlay = TkOverlay(model, show_in_recordings=args.show_in_recordings, root=__import__("tkinter").Toplevel(host) if host is not None else None)
     overlay.start()
     root = overlay.root
 
@@ -88,7 +104,11 @@ def main(argv: list[str] | None = None) -> int:
         root.update()
 
     settle()
-    focus = measure_focus_loss(args.opens, model.toggle, foreground, settle)
+    own = {int(overlay.root.winfo_id()), int(user32.GetParent(overlay.root.winfo_id()) or 0), int(overlay.hwnd or 0)}
+    own |= {int(user32.GetAncestor(h, 2) or 0) for h in list(own)}  # GA_ROOT: the top-level window the panel really is
+    own.discard(0)
+    own.discard(game)  # the stand-in or the game is the thing we want to keep in front
+    focus = measure_focus_loss(args.opens, (lambda: None) if args.baseline else model.toggle, foreground, settle)
     model.hide()
     settle()
     # the panel's rectangle on the screen, taken while it is open
@@ -105,9 +125,12 @@ def main(argv: list[str] | None = None) -> int:
     pixels = capture_check(lambda: ImageGrab.grab(bbox=rect, all_screens=True), model.show, model.hide, (0, 0, width, height), settle)
     hwnd_style = overlay.applied
     result = {
-        "tool": "overlay_live_check", "dry_run": bool(args.dry_run), "started": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "tool": "overlay_live_check", "dry_run": bool(args.dry_run), "show_in_recordings": bool(args.show_in_recordings), "baseline_no_toggle": bool(args.baseline), "started": datetime.now().astimezone().isoformat(timespec="seconds"),
         "game_title": args.game_title, "windows_full_screen_state": state,
-        "focus": {"opens": focus.opens, "focus_losses": focus.focus_losses, "game_window_was_foreground_at_start": focus.foreground_before == game},
+        "focus": {"opens": focus.opens, "focus_losses": focus.focus_losses, "game_window_was_foreground_at_start": focus.foreground_before == game,
+                  "other_windows_that_took_the_front": [title_of(h) for h in focus.others],
+                  "focus_taken_by_the_panel_itself": sum(count for handle, count in (focus.losses_by or {}).items() if handle in own),
+                  "focus_taken_by_something_else": sum(count for handle, count in (focus.losses_by or {}).items() if handle not in own)},
         "capture": {"panel_pixels_found_in_capture": pixels, "rectangle": list(rect),
                     "note": "0 means the panel is absent from this capture; the game keeps moving, so a small count can be the game itself"},
         "style": {"excluded_from_capture": getattr(hwnd_style, "excluded_from_capture", "not measured"),
