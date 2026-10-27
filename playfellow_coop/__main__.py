@@ -9,6 +9,7 @@ import argparse
 import dataclasses
 import os
 import sys
+import threading
 from pathlib import Path
 from typing import Callable
 
@@ -83,6 +84,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                         help="numbered marks on the picture: sam = SAM 3.1 (needs a key), fake = a fake server for a pipeline demo; "
                              "fake marks are NEVER SAM output and never belong in results or the video. "
                              "Default: sam with --brain muse, off otherwise")
+    parser.add_argument("--overlay", action="store_true",
+                        help="the floating command center over the game (a small chat panel: summon and hide with one key)")
+    parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
     parser.add_argument("--budget-file", type=Path, default=Path.home() / ".playfellow-coop" / "budget.json")
@@ -95,6 +99,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise
+    parts.overlay, parts.summon_key = args.overlay, args.summon_key
     parts.marks_source = marks
     if marks != "off":
         attach_marks(parts, marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
@@ -107,7 +112,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
 
 
 def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: Callable = listen_for_key,
-         listen_stop: Callable = listen_for_f12, run: Callable = play_session, say: Callable = print) -> int:
+         listen_stop: Callable = listen_for_f12, run: Callable = play_session, say: Callable = print,
+         overlay_builder: Callable | None = None) -> int:
     try:
         parts, cfg = build_fn(argv)
     except BrainError as error:
@@ -122,6 +128,7 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         typed_listener(commands, input)
     latency = VoiceLatency()
     talk_key = getattr(parts, "talk_key", "")
+    talker = None
     if talk_key:
         key = load_muse_key()
         if not key:
@@ -135,14 +142,50 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
             talker = PushToTalk(Microphone(), RealtimeTranscriber(key, budget=parts.voice_budget),
                                 commands, say, card=parts.card, language=cfg.language, latency=latency)
             listen_hold(talk_key, talker.key_down, talker.key_up)
+    overlay = None
+    if getattr(parts, "overlay", False):
+        from playfellow_coop.overlay.hotkey import HotkeyError
+
+        if overlay_builder is None:
+            from playfellow_coop.overlay.runner import build_overlay as overlay_builder
+        try:
+            overlay = overlay_builder(parts, commands, handover, getattr(parts, "summon_key", "ctrl+alt+p"),
+                                      talker.key_down if talker else (lambda: None), talker.key_up if talker else (lambda: None))
+        except HotkeyError as error:
+            say(str(error))
+            return 2
     timer = StageTimer()
     listen_stop(lambda: parts.safety.stop("stopped_f12"))
     listen_key("f9", lambda: say(handover.toggle() or taken_line()))
     say(tr(f"Playing '{cfg.game_window}'. F9 takes the controls, F9 again gives them back. F12 or the mouse in the top-left "
            "corner stops at once.",
            f"ألعب '{cfg.game_window}'. F9 يأخذ التحكم، وF9 مرة أخرى يعيده. F12 أو الفأرة في الزاوية العلوية اليسرى يوقف فورًا."))
-    reason = run(parts, cfg, play.system_for(parts, cfg), timer, handover, on_event=lambda kind, data: say(data) if kind == "say" and data else None,
-                 commands=commands, latency=latency)
+    def on_event(kind, data):
+        if kind == "say" and data:
+            say(data)
+        if overlay is not None:
+            overlay.event(kind, data)
+
+    def run_session():
+        return run(parts, cfg, play_system, timer, handover, on_event=on_event, commands=commands, latency=latency)
+
+    play_system = play.system_for(parts, cfg)
+    if overlay is None:
+        reason = run_session()
+    else:  # the window loop owns this thread; the game session runs on another
+        outcome: dict = {}
+
+        def session_thread():
+            try:
+                outcome["reason"] = run_session()
+            finally:
+                overlay.finish()
+
+        worker = threading.Thread(target=session_thread, name="session", daemon=True)
+        worker.start()
+        overlay.run()
+        worker.join()
+        reason = outcome.get("reason", "stopped")
     say(msg(reason, minutes=cfg.max_minutes, calls=cfg.max_ai_calls))
     if getattr(parts, "marks_source", "off") == "fake":
         say(FAKE_MARKS_BANNER)  # said again at the end, so a log or a recording can never miss it

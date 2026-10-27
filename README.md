@@ -57,6 +57,7 @@ To use the Muse brain, put your own key in the environment as `MODEL_API_KEY` (M
 
 ```
 python -m playfellow_coop --brain muse --marks sam  # F9 takes the controls, F9 again gives them back, F12 stops
+python -m playfellow_coop --overlay                # the floating command center (Ctrl+Alt+P opens and closes it); built, offline-tested, NOT yet run live: see docs/owner-live-checks.md
 python -m playfellow_coop                     # the same with the engine's built-in brain (no key, no network)
 ```
 
