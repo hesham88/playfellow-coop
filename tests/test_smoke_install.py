@@ -16,8 +16,12 @@ ENGINE_REPO = ROOT.parent / "playfellow"  # the engine checkout beside this repo
 
 PROBE = '''
 import json, site, sys
+before = list(sys.path)
 for folder in sys.argv[1:3]:
     site.addsitedir(folder)
+# addsitedir appends; put the fresh install FIRST so an engine already installed editable in this environment (the README's own
+# route) cannot shadow the tagged clone this test just made
+sys.path[:] = [p for p in sys.path if p not in before] + before
 from pathlib import Path
 from PIL import Image
 import play, controls, settings
