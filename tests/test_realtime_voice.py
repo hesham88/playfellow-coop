@@ -312,3 +312,32 @@ def test_no_test_can_reach_a_real_microphone():
 
     with pytest.raises(OSError):
         mic.Microphone(NoDevice()).start()
+
+
+def test_the_connection_is_opened_on_a_socket_of_our_own_so_no_library_version_can_follow_a_redirect(monkeypatch):
+    """websockets 17 follows redirects inside connect() unless it was given a socket (then it refuses); 16 never follows. Giving it the
+    socket makes the refusal hold on both, before any audio or the key is sent."""
+    import socket
+
+    import websockets.sync.client as ws_client
+
+    seen = {}
+
+    def fake_connect(url, **kw):
+        seen["url"], seen["kw"] = url, kw
+        raise OSError("stop here")
+
+    monkeypatch.setattr(ws_client, "connect", fake_connect)
+    with socket.create_server(("127.0.0.1", 0)) as listener:  # only has to accept the connection; no websocket server is involved
+        with pytest.raises(OSError):
+            realtime_voice._default_connect(f"ws://127.0.0.1:{listener.getsockname()[1]}/x", proxy=None, ssl=None, open_timeout=3)
+    assert isinstance(seen["kw"]["sock"], socket.socket) and seen["kw"]["proxy"] is None
+    assert seen["kw"]["sock"].fileno() == -1  # the socket was closed again when the connection failed: nothing is left open
+
+
+def test_the_websockets_range_in_pyproject_is_the_tested_one():
+    """Tested on 16.1.1 and 17.3 (the refusal of a redirect depends on the library's behaviour, so only tested versions are allowed)."""
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"websockets>=16,<18"' in text

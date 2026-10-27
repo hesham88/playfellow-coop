@@ -70,6 +70,8 @@ python -m playfellow_coop                     # the same with the engine's built
 
 Without the optional Rust DLL (see `rust/README.md`), the tests that compare it with its Python twin are skipped, not failed. Every test runs offline: a fake server on 127.0.0.1 stands in for the Meta API, and nothing presses a key, grabs the screen or spends money.
 
+The realtime voice socket refuses a redirect (the key is never sent to wherever a server points): that holds on websockets 16.1.1 and 17.3, the two versions it is tested on, so `pyproject.toml` allows only `websockets>=16,<18`.
+
 ## What this does and does not do
 
 It plays and talks with you. It does not judge or score the player. The demo uses our own Practice Arena, the arena pack and one open-source game.

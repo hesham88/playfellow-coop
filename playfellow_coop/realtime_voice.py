@@ -11,14 +11,17 @@ UNVERIFIED until the first real call, which must save the real frames as a fixtu
   answer     events with a "transcript" (partial), then one with "final": true
 
 The key travels ONLY in the handshake frame: never in the address, a header, a log or an error. The connection ignores proxy
-variables, trusts only our own certificate roots (certifi) and never follows a redirect."""
+variables, trusts only our own certificate roots (certifi) and never follows a redirect (the socket is opened here, so no websockets version can follow one)."""
 from __future__ import annotations
 
+import inspect
 import json
+import socket
 import ssl
 import time
 from dataclasses import dataclass, field
 from typing import Callable, Iterable
+from urllib.parse import urlparse
 
 import certifi
 
@@ -59,9 +62,20 @@ def _ssl_context() -> ssl.SSLContext:
 
 
 def _default_connect(url: str, **kw):
+    """Open the connection on a socket of OUR OWN. Why: websockets 17 follows a 3xx redirect inside connect(), which would send the key
+    to wherever the server points; given a socket, it refuses to follow instead (and 16 never follows). So the refusal holds on both."""
     from websockets.sync.client import connect
 
-    return connect(url, **kw)
+    parsed = urlparse(url)
+    port = parsed.port or (443 if parsed.scheme == "wss" else 80)
+    sock = socket.create_connection((parsed.hostname, port), timeout=kw.get("open_timeout") or 10)  # direct: no proxy is consulted
+    if "legacy" in inspect.signature(connect).parameters:  # websockets 17: connect() warns unless used as a context manager or told legacy=True
+        kw.setdefault("legacy", True)
+    try:
+        return connect(url, sock=sock, **kw)
+    except BaseException:
+        sock.close()
+        raise
 
 
 class RealtimeTranscriber:
