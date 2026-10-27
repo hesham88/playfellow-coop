@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BANNED = ("coach", "analyz", "analys", "sports", "football", "soccer", "basketball", "war game", "warfare", "military",
           "dashboard", "streamlit")  # the last two: banned project types (kickoff slides); bench results are README tables
 # folders that are not our code: a virtual environment, a build, installed packages, a scratch result
-SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", "results", ".venv", "venv", "build", "node_modules"}
+SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", "results", ".venv", "venv", "build", "node_modules", "target", "engine"}  # engine = the engine clone CI puts beside the code; target = the Rust build
 # test files that hold the banned words AS DATA, in order to scan for them (they are the scanners, not the offenders)
 RULE_FILES = {"test_repo_rules.py", "test_web_arena_parity.py"}
 ENGINE_MODULES = {"play.py", "settings.py", "safety.py", "hands.py", "eyes.py", "reply.py", "grounding.py", "controls.py"}
