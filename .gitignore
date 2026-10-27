@@ -13,3 +13,6 @@ rust/fastpath/target/
 
 # handoff notes hold paths and internal state: they live in the private team inbox, never in this repo
 docs/HANDOFF-*
+
+# raw session logs for the replay recorder: local files, never committed
+session-logs/

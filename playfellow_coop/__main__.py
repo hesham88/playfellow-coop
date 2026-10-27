@@ -24,7 +24,7 @@ from playfellow_coop.budget import DailyBudget
 from playfellow_coop.handover import HandOver, taken_line
 from playfellow_coop.muse_brain import MuseBrain
 from playfellow_coop.push_to_talk import VoiceLatency
-from playfellow_coop.session_log import SessionLog, make_header
+from playfellow_coop.session_log import SessionLog, make_header, resolve_log_path
 from playfellow_coop.voice import CommandQueue, typed_listener
 from playfellow_coop.session import play_session
 from playfellow_coop.stage_timer import StageTimer
@@ -95,7 +95,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--budget-file", type=Path, default=Path.home() / ".playfellow-coop" / "budget.json")
     parser.add_argument("--log", type=Path, default=None,
                         help="write a raw session log (what the buddy said, the marks it saw, the keys it pressed) for the replay recorder; "
-                             "off unless you give a new file name; it never holds keys, pictures, paths, names or your own words")
+                             "off unless you give a new file name (a bare name goes under ./session-logs/, which git ignores); it never holds keys, pictures, paths, names or your own words")
     parser.add_argument("--log-level", default=None, help="with --log: the web page's level id this run corresponds to (for example garden)")
     args = parser.parse_args(argv)
     cfg = load_settings(args.settings)
@@ -110,7 +110,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parts.marks_source = marks
     if args.log:
         model = args.model or ("muse-spark" if args.brain == "muse" else "builtin" if args.brain == "builtin" else None)
-        parts.session_log_plan = {"path": args.log, "brain": args.brain, "model": model, "level": args.log_level}
+        parts.session_log_plan = {"path": resolve_log_path(args.log), "brain": args.brain, "model": model, "level": args.log_level}
     if marks != "off":
         attach_marks(parts, marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
     if args.brain == "local-open":
@@ -149,6 +149,7 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         except OSError as error:
             say(tr(f"The --log file cannot be created ({type(error).__name__}).", f"لا يمكن إنشاء ملف --log ({type(error).__name__})."))
             return 2
+        parts.session_log_on = True  # the session now reports the marks and the buddy's lines (and does not otherwise)
     make_dpi_aware()
     if getattr(parts, "marks_source", "off") == "fake":
         say(FAKE_MARKS_BANNER)

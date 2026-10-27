@@ -34,7 +34,8 @@ class Talker(Brain):
         return SAYING
 
 
-def one_turn_events(parts, cfg, marker_tmp=None):
+def one_turn_events(parts, cfg, logging=True):
+    parts.session_log_on = logging  # what main sets when --log is given
     seen = []
     parts.safety.start()
     timer = StageTimer()
@@ -67,10 +68,22 @@ def test_a_marked_turn_tells_on_event_the_marks_and_the_buddys_line_before_the_a
 
 def test_without_marks_there_is_no_marks_event_and_play_is_the_same():
     parts, cfg = make(Talker())
-    seen = one_turn_events(parts, cfg)
+    seen = one_turn_events(parts, cfg, logging=True)
     assert "marks" not in [kind for kind, _ in seen]
     assert parts.hands.pressed == [MOVE]
     assert [kind for kind, _ in seen if kind not in ("buddy_line",)] == ["thought", "actions"]  # exactly the events it had before
+
+
+def test_without_the_log_on_event_never_receives_the_two_new_kinds_even_with_marks(tmp_path, monkeypatch):
+    with FakeSam(ArenaGame(), DEFAULT_PROMPTS) as fake:
+        parts, cfg = make(Talker())
+        with_sam(parts, tmp_path, monkeypatch, fake)
+        seen = one_turn_events(parts, cfg, logging=False)
+        parts.marker.close()
+    assert [kind for kind, _ in seen] == ["thought", "actions"]  # exactly the events it had before
+    plain, plain_cfg = make(Talker())
+    assert [kind for kind, _ in one_turn_events(plain, plain_cfg, logging=False)] == ["thought", "actions"]
+    assert not hasattr(make(Talker())[0], "session_log_on")  # nothing sets the flag by itself
 
 
 def test_a_session_without_a_log_presses_the_same_keys_and_writes_no_file(tmp_path, monkeypatch):
@@ -136,6 +149,7 @@ def test_a_whole_session_logs_no_player_words_no_key_no_picture_and_no_path(tmp_
     path = tmp_path / "private-folder" / "s.jsonl"
     path.parent.mkdir()
     parts, cfg = make(Talker())
+    parts.session_log_on = True
     log = session_log.SessionLog(path, head())
     session.play_session(parts, cfg, "system", StageTimer(), on_event=log, commands=q, max_turns=2, wait=lambda s: False)
     log.close()
@@ -250,3 +264,66 @@ def test_main_refuses_to_overwrite_an_existing_log_and_says_so(tmp_path):
 
     assert entry.main([], build_fn=build, listen_key=lambda *a: None, listen_stop=lambda cb: None, run=run, say=said.append) == 2
     assert path.read_text(encoding="utf-8") == "mine" and any("already exists" in line for line in said)
+
+
+# ---- where the log goes ------------------------------------------------------------------------------------------------
+def test_a_bare_file_name_goes_under_session_logs_and_a_path_is_kept(tmp_path):
+    assert session_log.resolve_log_path("s.jsonl") == Path("session-logs") / "s.jsonl"
+    assert session_log.resolve_log_path(Path("s.jsonl")) == Path("session-logs") / "s.jsonl"
+    assert session_log.resolve_log_path(tmp_path / "s.jsonl") == tmp_path / "s.jsonl"
+    assert session_log.resolve_log_path("mine/s.jsonl") == Path("mine") / "s.jsonl"
+
+
+def test_the_default_folder_is_created_when_missing_and_no_other_folder_is(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    session_log.SessionLog(session_log.resolve_log_path("s.jsonl"), head()).close()
+    assert (tmp_path / "session-logs" / "s.jsonl").exists()
+    with pytest.raises(FileNotFoundError):
+        session_log.SessionLog(tmp_path / "nowhere" / "s.jsonl", head())  # only the default folder is made for you
+
+
+def test_build_puts_a_bare_log_name_under_session_logs():
+    parts, _ = entry.build(["--log", "run1.jsonl"], build_parts=_builder, key_loader=lambda: None)
+    assert parts.session_log_plan["path"] == Path("session-logs") / "run1.jsonl"
+
+
+def test_a_session_log_is_never_committed():
+    root = Path(__file__).resolve().parents[1]
+    assert "session-logs/" in (root / ".gitignore").read_text(encoding="utf-8").splitlines()
+    import subprocess
+
+    done = subprocess.run(["git", "check-ignore", "-q", "session-logs/run1.jsonl"], cwd=root)
+    assert done.returncode == 0
+
+
+def test_main_turns_the_events_on_only_when_there_is_a_plan(tmp_path, monkeypatch):
+    monkeypatch.setattr(session_log, "git_commit", lambda: "abcdef0123")
+    flags = []
+
+    def make_build(with_plan):
+        def build(argv):
+            import settings
+
+            parts = Parts()
+            parts.marks_source = "off"
+            if with_plan:
+                parts.session_log_plan = plan(path=tmp_path / "s.jsonl", brain="builtin", model="builtin")
+            return parts, settings.Settings()
+
+        return build
+
+    def run(p, cfg, system, timer, handover, on_event, commands=None, latency=None):
+        flags.append(getattr(p, "session_log_on", False))
+        return "round_done"
+
+    for with_plan in (False, True):
+        entry.main([], build_fn=make_build(with_plan), listen_key=lambda *a: None, listen_stop=lambda cb: None, run=run, say=lambda *a: None)
+    assert flags == [False, True]
+
+
+# ---- the owner's checklist ---------------------------------------------------------------------------------------------
+def test_the_owner_checklist_says_who_looks_at_a_real_recording_before_it_ships_and_gives_the_two_commands():
+    text = (Path(__file__).resolve().parents[1] / "docs" / "owner-live-checks.md").read_text(encoding="utf-8")
+    assert "ONLY after the architect has looked at the file" in text
+    assert "--brain muse --log run1.jsonl --log-level garden" in text
+    assert "python demo/record_replay.py session-logs/run1.jsonl" in text

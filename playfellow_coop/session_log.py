@@ -24,7 +24,14 @@ MODEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-/]{0,59}$")
 COMMIT = re.compile(r"^[0-9a-f]{7,40}$")
 PRIVATE_SHAPES = re.compile(
     r"[A-Za-z]:[\\/]|\\|~/|\.\./|(?:^|[\s(\"'])/(?:home|users|etc|var|tmp|mnt|root)\b|@|sk-|AIza|pdl_|https?://|[A-Za-z0-9_\-]{24,}", re.I)
+DEFAULT_DIR = "session-logs"  # a bare file name goes here; the folder is git-ignored, so a log is never committed by a tool
 HEADER_FIELDS = ("brain", "model", "marks", "marks_endpoint", "fake_server", "commit", "recorded", "level")
+
+
+def resolve_log_path(name) -> Path:
+    """A bare file name goes under ./session-logs/; anything with a folder in it is kept as the user gave it."""
+    path = Path(name)
+    return Path(DEFAULT_DIR) / path if len(path.parts) == 1 else path
 
 
 def private_words(extra=()) -> list[str]:
@@ -75,6 +82,8 @@ class SessionLog:
     """An on_event listener that writes the log. Never overwrites a file (FileExistsError); every line is flushed as it is written."""
 
     def __init__(self, path, header: dict):
+        if Path(path).parent.name == DEFAULT_DIR:
+            Path(path).parent.mkdir(parents=True, exist_ok=True)  # the default folder is made for you; no other folder is
         self._file = open(path, "x", encoding="utf-8", newline="\n")  # noqa: SIM115 (closed by close())
         self._lock = threading.Lock()
         self._words = private_words()
