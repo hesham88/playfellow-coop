@@ -18,13 +18,18 @@ function circle(ctx, cx, cy, r, fill) {
 }
 
 /** Draw the whole arena: the banner (score, coins left, key, the line the game just said) and the maze. Returns the number of tiles drawn. */
-export function draw(ctx, arena, labels) {
+export function draw(ctx, arena, labels, rtl = false) {
   const { width, height } = canvasSize(arena);
   ctx.fillStyle = COLOURS.background;
   ctx.fillRect(0, 0, width, height);
   ctx.fillStyle = COLOURS.text;
-  ctx.fillText(`${labels.score}: ${arena.score}   ${labels.coins_left}: ${arena.coinsLeft}   ${labels.key}: ${arena.hasKey ? 'YES' : 'no'}`, 12, 28);
-  ctx.fillText(arena.message, 12, 56);
+  ctx.font = '18px system-ui, sans-serif';
+  // Arabic reads from the right: the text is anchored at the right edge and the canvas is told so (a page set to rtl would otherwise push it off the left edge)
+  ctx.direction = rtl ? 'rtl' : 'ltr';
+  ctx.textAlign = rtl ? 'right' : 'left';
+  const x = rtl ? width - 12 : 12;
+  ctx.fillText(`${labels.score}: ${arena.score}   ${labels.coins_left}: ${arena.coinsLeft}   ${labels.key}: ${arena.hasKey ? labels.yes_no.split(' / ')[0] : labels.yes_no.split(' / ')[1]}`, x, 28);
+  ctx.fillText(arena.message, x, 56);
   let tiles = 0;
   for (let y = 0; y < arena.height; y += 1) {
     for (let x = 0; x < arena.width; x += 1) {

@@ -250,3 +250,45 @@ test('the page data holds the mazes and the lines but NOT the winning keys', () 
   assert.doesNotMatch(text, /"keys"|expected|final_score/);
   assert.match(text, /garden/);
 });
+
+test('Arabic text is anchored at the right edge so it cannot run off the left; English at the left', () => {
+  const arena = fresh('garden', 'arabic');
+  for (const [rtl, align] of [[true, 'right'], [false, 'left']]) {
+    const sets = {};
+    const calls = [];
+    const ctx = new Proxy({}, { get: (_t, name) => (...args) => calls.push([name, ...args]), set: (_t, name, value) => { sets[name] = value; return true; } });
+    draw(ctx, arena, texts[rtl ? 'arabic' : 'english'], rtl);
+    const { width } = canvasSize(arena);
+    assert.equal(sets.textAlign, align);
+    assert.equal(sets.direction, rtl ? 'rtl' : 'ltr');
+    const text = calls.filter((c) => c[0] === 'fillText');
+    assert.ok(text.length >= 2);
+    for (const c of text) assert.equal(c[2], rtl ? width - 12 : 12);
+  }
+});
+
+test('the key line uses the language own yes and no', () => {
+  const arena = fresh('garden', 'arabic');
+  const calls = [];
+  const ctx = new Proxy({}, { get: (_t, name) => (...args) => calls.push([name, ...args]), set: () => true });
+  draw(ctx, arena, texts.arabic, true);
+  assert.match(calls.find((c) => c[0] === 'fillText')[1], /لا$/);
+  assert.doesNotMatch(calls.find((c) => c[0] === 'fillText')[1], /no|YES/);
+});
+
+test('the page in Arabic has no English word left: buttons and the note are in Arabic', async () => {
+  const { startPage } = await import('./page.mjs');
+  const doc = fakeDocument();
+  startPage(doc, { language: 'arabic' });
+  for (const button of doc.keyButtons.filter((b) => ['F9', 'F12', 'r'].includes(b.dataset.key))) assert.match(button.textContent, /[؀-ۿ]/);
+  assert.match(doc.nodes.note.textContent, /[؀-ۿ]/);
+  assert.doesNotMatch(doc.nodes.note.textContent, /[A-Za-z]/);
+});
+
+test('the page in English keeps English buttons and note', async () => {
+  const { startPage } = await import('./page.mjs');
+  const doc = fakeDocument();
+  startPage(doc, { language: 'english' });
+  assert.equal(doc.keyButtons.find((b) => b.dataset.key === 'F12').textContent, 'Stop (F12)');
+  assert.match(doc.nodes.note.textContent, /web arena/);
+});

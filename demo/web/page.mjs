@@ -23,12 +23,17 @@ export function startPage(doc = document, options = {}) {
   const ctx = canvas.getContext('2d');
   doc.documentElement.lang = language === 'arabic' ? 'ar' : 'en';
   doc.documentElement.dir = WORDS[language].dir;
+  // every visible word comes from the chosen language, so the page is never a mix of the two
+  const labels = { F9: WORDS[language].handover, F12: WORDS[language].stop, r: WORDS[language].restart };
+  for (const button of doc.querySelectorAll('[data-key]')) if (labels[button.dataset.key]) button.textContent = labels[button.dataset.key];
+  const note = doc.getElementById('note');
+  if (note) note.textContent = WORDS[language].note;
 
   function paint() {
     const size = canvasSize(arena);
     canvas.width = size.width;
     canvas.height = size.height;
-    draw(ctx, arena, data.texts[language]);
+    draw(ctx, arena, data.texts[language], language === 'arabic');
     status.textContent = `${data.levels[levelIndex].title[language]} · ${WORDS[language].holder[session.holder]}`;
   }
 
