@@ -36,9 +36,24 @@ def marker(tmp_path, **kw):
 
 
 def test_the_box_tokens_of_the_docs_are_parsed():
-    text = "<1f>1<|box;x1=10;y1=20;x2=30;y2=60;w=100;h=200|><|mask;one_bit|> <1f>2<|box;x1=1.5;y1=2.5;x2=3;y2=4;w=100;h=200|>"
-    assert parse_boxes(text) == [((10.0, 20.0, 30.0, 60.0), (100.0, 200.0)), ((1.5, 2.5, 3.0, 4.0), (100.0, 200.0))]
+    text = "<0f>1<|box;x1=10;y1=20;x2=30;y2=60;w=100;h=200|><|mask;x=0;y=0;data=5,5,!!!!|> <0f>2<|box;x1=1;y1=2;x2=3;y2=4;w=100;h=200|>"
+    assert parse_boxes(text) == [((10.0, 20.0, 31.0, 61.0), (100.0, 200.0)), ((1.0, 2.0, 4.0, 5.0), (100.0, 200.0))]  # x2 and y2 are inclusive: right = x2 + 1
     assert parse_boxes("no boxes here") == []
+
+
+def test_the_published_protocol_rules_fields_by_name_confidence_order_payload_text_and_bad_tokens():
+    """github.com/meta-models/meta-sam protocol/sam3.md: fields are read by name in any order, an optional c is the confidence, a mask payload may hold text like
+    'c=' that must not be taken for a field, and a malformed or outside-the-picture box is skipped."""
+    from playfellow_coop.sam_marks import parse_records
+    text = ("<7f>0<|box;h=80;w=100;y2=24;x2=14;y1=20;x1=10;c=0.75|><|mask;x=0;y=0;c=0.75;data=5,5,~!c=9;x1=1!!(QO|>"
+            "<7f>1,<|mask;x=0;y=0;data=1,1,!!!!|><|box;x1=0;y1=0;x2=0;y2=0;w=10;h=10|>"      # the comma and the order of box and mask are free
+            "<7f>2<|box;x1=a;y1=0;x2=3;y2=3;w=10;h=10|>"                                   # not a number: skipped
+            "<7f>3<|box;x1=0;y1=0;x2=10;y2=3;w=10;h=10|>"                                   # runs outside the picture: skipped
+            "<7f>4<|box;x1=1;y1=1;x2=2;y2=2;w=0;h=10|>")                                    # zero width: skipped
+    records = parse_records(text)
+    assert [r["confidence"] for r in records] == [0.75, None]
+    assert records[0]["box"] == (10.0, 20.0, 15.0, 25.0) and records[0]["size"] == (100.0, 80.0)
+    assert records[1]["box"] == (0.0, 0.0, 1.0, 1.0)
 
 
 def test_both_answer_wrappers_are_read():
@@ -229,7 +244,7 @@ def test_specks_are_dropped_and_real_objects_kept():
     text = ("<0f>0<|box;x1=492;y1=132;x2=516;y2=156;w=576;h=504|><|mask;x=0;y=0;data=x|>"
             "<0f>1<|box;x1=510;y1=332;x2=516;y2=339;w=576;h=504|><|mask;x=0;y=0;data=y|>")
     kept = big_enough(parse_boxes(text))
-    assert [box for box, _ in kept] == [(492.0, 132.0, 516.0, 156.0)]
+    assert [box for box, _ in kept] == [(492.0, 132.0, 517.0, 157.0)]
 
 
 def test_the_default_phrases_are_the_visible_descriptions_the_real_service_answers():

@@ -134,6 +134,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
         if not key:
             raise BrainError("no_key")
         parts.brain = MuseBrain(args.model or DEFAULT_MODEL, key, budget=DailyBudget(args.budget_file, args.daily_usd, args.daily_calls))
+        if not parts.card.uses_clicks:  # key cards: the reply is held to a schema whose actions are exactly the card's keys (a click card keeps free text)
+            parts.brain.set_actions(parts.card.actions)
     return parts, cfg
 
 

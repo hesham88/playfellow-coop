@@ -25,6 +25,12 @@ DEFAULT_MODEL = "muse-spark-1.3"
 # tokens in 3 to 5 s (and at max_tokens 1000 it sometimes ran out and answered nothing); "minimal" used about 170 tokens in 1.4 s with the same answer.
 EFFORTS = ("minimal", "low", "medium", "high", "xhigh", "max")
 DEFAULT_EFFORT = "minimal"
+# Measured on credit day (27 Oct) on a real Practice Arena frame, same prompt: asked in plain words the answer came back as "down, down, down" and no JSON at all
+# in 12.6 s; with response_format json_schema it was valid JSON in 3.4 s every time. And with a stable prompt_cache_key the second call served 881 of 971
+# prompt tokens from the cache (about 91 percent; cached input costs $0.15 per million against $1.25). The cookbook's rules: stable content first, one shared
+# key per shared prefix (never one per user), retention 24h for bursty play.
+CACHE_KEY = "playfellow-coop-plan-v1"
+CACHE_RETENTION = "24h"
 REQUEST_TIMEOUT = 25.0
 MAX_TOKENS = 1000
 
@@ -46,10 +52,12 @@ class MuseBrain:
     name = "muse"
 
     def __init__(self, model: str, api_key: str, budget: DailyBudget | None = None, client: httpx.Client | None = None,
-                 effort: str = DEFAULT_EFFORT):
+                 effort: str = DEFAULT_EFFORT, cache_key: str | None = CACHE_KEY):
         if effort not in EFFORTS:
             raise ValueError(f"effort must be one of {EFFORTS}")
         self.effort = effort
+        self.cache_key = cache_key
+        self.actions: tuple[str, ...] | None = None
         if "contributor" in model.lower():
             raise ValueError("a contributor model is trained on what it is sent; it is never used for play data")
         self.model = model
@@ -62,6 +70,20 @@ class MuseBrain:
 
     def __repr__(self) -> str:
         return f"<MuseBrain model={self.model!r}>"
+
+    def set_actions(self, names) -> None:
+        """The keys the active controls card allows. With them set, the reply is constrained to {thought, say, actions[]} by a JSON schema, so a plan
+        always parses and can only name an allowed key (the card still filters afterwards; this is a second wall, not the first)."""
+        clean = tuple(dict.fromkeys(str(n) for n in names if isinstance(n, str) and 0 < len(n) <= 24 and "<" not in n))
+        self.actions = clean or None
+
+    def _schema(self) -> dict | None:
+        if not self.actions:
+            return None
+        return {"type": "json_schema", "json_schema": {"name": "plan", "strict": True, "schema": {
+            "type": "object", "additionalProperties": False, "required": ["thought", "say", "actions"],
+            "properties": {"thought": {"type": "string"}, "say": {"type": "string"},
+                           "actions": {"type": "array", "items": {"type": "string", "enum": list(self.actions)}, "maxItems": 8}}}}}
 
     @staticmethod
     def endpoint() -> str:
@@ -84,6 +106,12 @@ class MuseBrain:
         encoded = time.perf_counter()
         request = {"model": self.model, "max_tokens": MAX_TOKENS, "reasoning_effort": self.effort,
                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}]}
+        schema = self._schema()
+        if schema is not None:
+            request["response_format"] = schema
+        if self.cache_key:
+            request["prompt_cache_key"] = self.cache_key
+            request["prompt_cache_retention"] = CACHE_RETENTION
         response = _http.post(self._client, ENDPOINTS["muse"] + "/chat/completions", self._key, request)
         self.last_timings = {"encode": encoded - started, "request": time.perf_counter() - encoded}  # measured here, inside
         _http.check_status(response.status_code)

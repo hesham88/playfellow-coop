@@ -311,3 +311,25 @@ def test_the_request_asks_for_minimal_reasoning_and_a_bad_effort_is_refused():
     assert seen[0]["reasoning_effort"] == "minimal"
     with pytest.raises(ValueError):
         MuseBrain("muse-spark-1.3", "k", effort="none")
+
+
+def test_with_the_cards_keys_set_the_reply_is_held_to_a_json_schema_and_the_cache_key_is_sent():
+    """Credit day: plain words came back as 'down, down, down' (no JSON, 12.6 s); a schema gave valid JSON in 3.4 s; a stable cache key served 881 of 971 tokens."""
+    import httpx
+    seen = []
+
+    def handler(request):
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": "{}"}}], "usage": {"prompt_tokens": 1, "completion_tokens": 1}})
+
+    brain = MuseBrain("muse-spark-1.3", "k", client=httpx.Client(transport=httpx.MockTransport(handler)))
+    brain.ask("system", "text", [])
+    assert "response_format" not in seen[0] and seen[0]["prompt_cache_key"] == "playfellow-coop-plan-v1" and seen[0]["prompt_cache_retention"] == "24h"
+    brain.set_actions(["UP", "DOWN", "UP", "x<y", ""])
+    brain.ask("system", "text", [])
+    schema = seen[1]["response_format"]["json_schema"]["schema"]
+    assert schema["properties"]["actions"]["items"]["enum"] == ["UP", "DOWN"] and schema["additionalProperties"] is False
+    assert seen[1]["response_format"]["json_schema"]["strict"] is True
+    brain.set_actions([])
+    brain.ask("system", "text", [])
+    assert "response_format" not in seen[2]

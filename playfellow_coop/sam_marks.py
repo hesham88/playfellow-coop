@@ -35,7 +35,6 @@ USD_PER_IMAGE = 2.50 / 1000  # the published price: $2.50 per 1,000 images
 # own look, never from this table (see the plan: the planner names what it sees, SAM finds it).
 DEFAULT_PROMPTS = {"me": "blue circle", "reward": "yellow circle", "hazard": "red circle", "door": "brown box"}
 MIN_BOX = 0.015  # a box shorter than this share of the picture's shorter side is a speck (the door's knob came back as a "yellow circle"): dropped
-BOX = re.compile(r"<\|box;x1=([\d.]+);y1=([\d.]+);x2=([\d.]+);y2=([\d.]+);w=([\d.]+);h=([\d.]+)\|>")
 CELL_CHANGE = 20  # grey-level change (0-255) that makes one thumbnail cell "different"
 CELLS_NEEDED = 2  # a mover leaves one cell and enters another, so two different cells mean "something moved"
 
@@ -65,13 +64,46 @@ def mark_image(image: Image.Image, marker: Callable[[Image.Image], list[Mark]]) 
     return marked, words
 
 
+TOKEN = re.compile(r"<\|([A-Za-z][A-Za-z0-9_.-]*)(?:;([^|<>]*))?\|>")  # a payload never holds < > or |, so a token ends at the first |>
+INT = re.compile(r"-?\d+")
+UINT = re.compile(r"\d+")
+
+
+def parse_records(text: str) -> list[dict]:
+    """Every box token in a SAM answer, read the way the published protocol says (github.com/meta-models/meta-sam, protocol/sam3.md): fields are found by
+    NAME after splitting on ';' (never by searching for 'x1=' in the text, because a mask payload may contain letters and '='), their order does not
+    matter, a field without a value is ignored, x2 and y2 are INCLUSIVE in the source so the half-open right and bottom edges are x2+1 and y2+1, w and h
+    are the picture's size, and an optional `c` is the model's confidence. A token with a missing or malformed required field is skipped, never guessed."""
+    records = []
+    for match in TOKEN.finditer(text or ""):
+        if match.group(1) != "box":
+            continue
+        fields = {}
+        for part in (match.group(2) or "").split(";"):
+            key, sep, value = part.partition("=")
+            if sep and key.strip():
+                fields[key.strip()] = value.strip()
+        try:
+            if not all(INT.fullmatch(fields.get(k, "")) for k in ("x1", "y1", "x2", "y2")) or not all(UINT.fullmatch(fields.get(k, "")) for k in ("w", "h")):
+                continue
+            x1, y1, x2, y2, w, h = (int(fields[k]) for k in ("x1", "y1", "x2", "y2", "w", "h"))
+        except ValueError:
+            continue
+        if w <= 0 or h <= 0 or not (0 <= x1 <= x2 < w and 0 <= y1 <= y2 < h):
+            continue  # the whole inclusive box must lie inside the picture
+        confidence = None
+        if "c" in fields:
+            try:
+                confidence = float(fields["c"])
+            except ValueError:
+                confidence = None
+        records.append({"box": (float(x1), float(y1), float(x2 + 1), float(y2 + 1)), "size": (float(w), float(h)), "confidence": confidence})
+    return records
+
+
 def parse_boxes(text: str) -> list[tuple[tuple[float, float, float, float], tuple[float, float]]]:
-    """Every box in a SAM answer as ((x1, y1, x2, y2), (width, height))."""
-    out = []
-    for match in BOX.finditer(text or ""):
-        x1, y1, x2, y2, w, h = (float(v) for v in match.groups())
-        out.append(((x1, y1, x2, y2), (w, h)))
-    return out
+    """Every box in a SAM answer as ((left, top, right, bottom), (width, height)) with the half-open right and bottom edges."""
+    return [(r["box"], r["size"]) for r in parse_records(text)]
 
 
 def big_enough(boxes: list) -> list:
