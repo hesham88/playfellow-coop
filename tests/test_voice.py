@@ -177,8 +177,8 @@ def test_the_typed_listener_ends_quietly_at_end_of_input():
 
 
 def test_personal_details_are_masked_before_the_planner_sees_a_command():
-    out = for_the_planner(["go left, mail me at someone@realmail.co", "grab the coins"])
-    assert "someone@realmail.co" not in out[0] and out[1] == "grab the coins"
+    out = for_the_planner(["go left, mail me at someone@example.com", "grab the coins"])
+    assert "someone@example.com" not in out[0] and out[1] == "grab the coins"
 
 
 # ---- the command reaches the planner, and only card keys are pressed ------------------------------------------------
