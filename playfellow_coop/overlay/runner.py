@@ -83,12 +83,16 @@ class OverlayRunner:
         self.view.mainloop()
 
 
+class OverlayUnavailableError(RuntimeError):
+    """The overlay cannot open, said in plain words (for example Qt missing)."""
+
+
 def build_overlay(parts, commands, handover, summon_key: str = "ctrl+alt+p", on_talk_down: Callable[[], None] = lambda: None,
                   on_talk_up: Callable[[], None] = lambda: None) -> OverlayRunner:
-    """The real thing: the Qt glass view when PySide6 is installed (the Tk
-    view otherwise), the panel model, and the summon hotkey (refused if the
-    game's controls card uses that key). Imports the toolkit here, so
-    nothing else needs it."""
+    """The real thing: the Qt glass view, the panel model, and the summon
+    hotkey (refused if the game's controls card uses that key). The overlay
+    is Qt only: when PySide6 is not installed it says so and does not open
+    any window. Imports the toolkit here, so nothing else needs it."""
     from playfellow_coop.overlay.hotkey import Hotkey
     from playfellow_coop.overlay.pump import HotkeyPump
 
@@ -98,11 +102,10 @@ def build_overlay(parts, commands, handover, summon_key: str = "ctrl+alt+p", on_
 
         view = QtOverlay(model, on_talk_down=on_talk_down, on_talk_up=on_talk_up,
                          on_stop=lambda: parts.safety.stop("stopped_button"), on_hand_over=lambda: handover.toggle())
-    except ImportError:
-        from playfellow_coop.overlay.tk_view import TkOverlay
-
-        view = TkOverlay(model, on_talk_down=on_talk_down, on_talk_up=on_talk_up,
-                         on_stop=lambda: parts.safety.stop("stopped_button"), on_hand_over=lambda: handover.toggle())
+    except ImportError as error:
+        raise OverlayUnavailableError(
+            "The command center needs Qt (PySide6), which is not installed, so it cannot open."
+        ) from error
     runner = OverlayRunner(model, view, handover=handover, safety=parts.safety)
     runner.pump = HotkeyPump(Hotkey(summon_key, card=parts.card), on_press=runner.summon)
     return runner

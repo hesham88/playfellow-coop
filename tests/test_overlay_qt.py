@@ -96,6 +96,21 @@ def test_hold_to_talk_and_hand_over_and_stop_fire_their_callbacks(app):
     assert calls == ["down", "up", "hand", "stop"]
 
 
+def test_without_qt_the_overlay_says_so_and_opens_nothing(app, monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    from playfellow_coop.overlay.runner import OverlayUnavailableError, build_overlay
+
+    monkeypatch.setitem(sys.modules, "PySide6", None)
+    monkeypatch.setitem(sys.modules, "PySide6.QtCore", None)
+    monkeypatch.setitem(sys.modules, "PySide6.QtWidgets", None)
+    parts = SimpleNamespace(safety=SimpleNamespace(stop=lambda reason: None), card=None)
+    handover = SimpleNamespace(toggle=lambda: None)
+    with pytest.raises(OverlayUnavailableError, match="PySide6"):
+        build_overlay(parts, CommandQueue(), handover)
+
+
 def test_opacity_and_chat_lines_follow_the_model(app):
     view, model, _ = build()
     model.set_opacity(0.55)

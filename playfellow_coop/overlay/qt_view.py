@@ -7,8 +7,9 @@ topmost, a tool window, and it never takes focus: opening it must not steal
 the keyboard from the game. winstyle excludes it from screen capture and
 makes it click-through while only the pill is showing.
 
-PySide6 is an optional dependency: this module imports it lazily, and the
-runner falls back to the Tk view when Qt is not installed.
+PySide6 is imported lazily, so importing this module never fails; the
+runner refuses to open the overlay (with a plain message) when Qt is not
+installed. There is no Tk fallback in the product path.
 
 Run it only from a real desktop session. Tests build it offscreen."""
 from __future__ import annotations
