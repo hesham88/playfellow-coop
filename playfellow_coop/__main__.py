@@ -73,8 +73,10 @@ def attach_marks(parts, mode: str, key_loader: Callable, budget_file: Path, dail
 def build(argv: list[str] | None = None, build_parts: Callable = play.build_parts, key_loader: Callable = load_muse_key):
     parser = argparse.ArgumentParser(description="Play a game with the buddy: F9 takes over, F9 hands back, F12 stops.")
     parser.add_argument("--settings", type=Path, default=Path(play.SOFTWARE) / "settings.yaml")
-    parser.add_argument("--brain", choices=("builtin", "muse"), default="builtin")
-    parser.add_argument("--model", default="muse-spark")
+    parser.add_argument("--brain", choices=("builtin", "muse", "local-open"), default="builtin",
+                        help="builtin = no AI, no key; muse = a Muse model on the Meta Model API; "
+                             "local-open = an open model served on THIS PC by LM Studio (give its id with --model)")
+    parser.add_argument("--model", default=None, help="the model: muse-spark by default for --brain muse; required for local-open")
     parser.add_argument("--window", help="the game window's title (default: the Practice Arena)")
     parser.add_argument("--card", help="the controls card name (default: from the settings)")
     parser.add_argument("--minutes", type=int)
@@ -103,11 +105,19 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parts.marks_source = marks
     if marks != "off":
         attach_marks(parts, marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
+    if args.brain == "local-open":
+        # The engine's own LM Studio brain: loopback only, no proxy, and the memory check that refuses a model that will not fit
+        # BEFORE it is loaded (the reason a laptop is not frozen). Never routed through MuseBrain, which would skip that check.
+        from brain.lmstudio import LMStudioBrain
+
+        if not args.model:
+            raise BrainError("brain_trouble", detail="--brain local-open needs the model's id as shown in LM Studio: add --model <id>")
+        parts.brain = LMStudioBrain(args.model)
     if args.brain == "muse":
         key = key_loader()
         if not key:
             raise BrainError("no_key")
-        parts.brain = MuseBrain(args.model, key, budget=DailyBudget(args.budget_file, args.daily_usd, args.daily_calls))
+        parts.brain = MuseBrain(args.model or "muse-spark", key, budget=DailyBudget(args.budget_file, args.daily_usd, args.daily_calls))
     return parts, cfg
 
 

@@ -23,7 +23,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=HERE / "results")
     args, rest = parser.parse_known_args(argv)  # the rest goes to the game and brain options of `python -m playfellow_coop`
     parts, cfg = build(rest)
-    brain = "muse" if "muse" in rest else "builtin"
+    brain = "muse" if "muse" in rest else "local-open" if "local-open" in rest else "builtin"
     path = run_bench(parts, cfg, play.system_for(parts, cfg), args.turns, args.out, brain, getattr(parts.brain, "model", "none"))
     print(path)
     return 0

@@ -171,3 +171,21 @@ def test_the_hand_over_confirmations_are_said_out_loud_not_dropped():
 
     assert entry.main([], build_fn=build, listen_key=lambda n, cb: None, listen_stop=lambda cb: None, run=run, say=said.append) == 0
     assert "I've got it." in said and "private reasoning" not in said and said.count("") == 0
+
+# ---- --brain local-open: an open model on THIS PC through the engine's LM Studio brain (its memory check included) ----------
+def test_local_open_uses_the_engines_lm_studio_brain_needs_no_key_and_a_model_name():
+    from brain.lmstudio import LMStudioBrain
+
+    parts, _ = entry.build(["--brain", "local-open", "--model", "some-open-model"], build_parts=_parts_builder, key_loader=lambda: None)
+    assert isinstance(parts.brain, LMStudioBrain) and parts.brain.model == "some-open-model"
+    assert parts.marks_source == "off" and not hasattr(parts, "marker")  # SAM costs money and needs a key: only on request
+    with pytest.raises(BrainError) as caught:
+        entry.build(["--brain", "local-open"], build_parts=_parts_builder, key_loader=lambda: None)
+    assert "--model" in caught.value.friendly()
+
+
+def test_the_muse_brain_still_defaults_to_its_own_model_name(tmp_path):
+    parts, _ = entry.build(["--brain", "muse", "--marks", "off", "--budget-file", str(tmp_path / "b.json")], build_parts=_parts_builder,
+                           key_loader=lambda: "unique-key-VALUE-3")
+    assert parts.brain.model == "muse-spark"
+    parts.brain.close()
