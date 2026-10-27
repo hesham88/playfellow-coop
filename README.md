@@ -22,13 +22,19 @@ Items marked planned are not built: a row changes only when a dated commit shows
 
 ## Install and run
 
+Python 3.11 or newer. Put the engine and this repository **side by side in one folder** (the tests look for the engine next to this repository, or at the folder named in `PLAYFELLOW_ENGINE`), and use one virtual environment for both:
+
 ```
+python -m venv .venv
+.venv\Scripts\activate
 git clone --branch pre-hackathon https://github.com/hesham88/playfellow.git
 pip install -e playfellow
+cd <this repository's folder>
 pip install -e .
+pip install pytest setuptools
 ```
 
-The engine's controls cards and settings files sit next to its code, so the engine is installed editable (`-e`), from a clone of the tag.
+The engine's controls cards and settings files sit next to its code, so the engine is installed editable (`-e`), from a clone of the tag. `pytest` is not installed by the package, and `setuptools` is needed by one install test on Python 3.12 and newer.
 
 ## How to run the demo (no microphone needed)
 
@@ -62,7 +68,7 @@ python -m playfellow_coop --overlay                # the floating command center
 python -m playfellow_coop                     # the same with the engine's built-in brain (no key, no network)
 ```
 
-Every test runs offline: a fake server on 127.0.0.1 stands in for the Meta API, and nothing presses a key, grabs the screen or spends money.
+Without the optional Rust DLL (see `rust/README.md`), the tests that compare it with its Python twin are skipped, not failed. Every test runs offline: a fake server on 127.0.0.1 stands in for the Meta API, and nothing presses a key, grabs the screen or spends money.
 
 ## What this does and does not do
 
