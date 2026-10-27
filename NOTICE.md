@@ -5,7 +5,7 @@ Event work for the PlayFellow engine. Copyright (c) 2026 Hesham Aboul-Fetouh. Se
 The PlayFellow engine (`hesham88/playfellow`, tags `before-kickoff` and `pre-hackathon`) is a **separate, pre-existing project** with its own licence file. It is installed from a clone of the tag and is not copied into this repository.
 
 ## Built with AI assistance
-This repository was built by one person with AI coding assistance, including Muse Code. AI-generated art and music used in the demo are disclosed in the demo's description.
+This repository was built by one person with AI coding assistance, including Meta's Muse Code. AI-generated art and music used in the demo are disclosed in the demo's description.
 
 ## Acknowledgements
 Inspired by research such as Google DeepMind's SIMA 2 and NVIDIA's NitroGen. No code, weights or data from either is used, and there is no affiliation or endorsement.

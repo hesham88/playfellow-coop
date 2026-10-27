@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -199,3 +200,43 @@ def test_no_commit_message_names_an_ai_assistant_or_carries_its_trailer():
     banned = re.compile(r"claude|anthropic|sonnet|\bopus\b|chatgpt|copilot|antigravity|\bgemini\b|co-authored-by|claude-session", re.I)
     for message in out.stdout.split("\x00"):
         assert not banned.search(message), message.strip().splitlines()[0] if message.strip() else message
+
+
+# Owner, 2026-10-27: no public text names our AI agents or their makers; the only tool credited is "Meta's Muse Code", in one sentence.
+AGENT_NAMES = re.compile(r"\b(argon|antigravity|claude|anthropic|sonnet|opus|omni)\b|(?<!Meta's )Muse Code", re.I)
+# the only files that may hold those words, by exact path: the vendor-name filter of the training data, its tests, and this scanner
+AGENT_NAME_FILES = {"train/dataset.py", "tests/test_train_dataset.py", "tests/test_train_baseline.py", "tests/test_repo_rules.py"}
+CREDIT = "with AI coding assistance, including Meta's Muse Code."
+
+
+def _agent_name_hits(files):
+    hits = []
+    for path in files:
+        relative = path.relative_to(ROOT).as_posix()
+        if relative in AGENT_NAME_FILES:
+            continue
+        found = AGENT_NAMES.search(path.read_text(encoding="utf-8", errors="replace"))
+        if found:
+            hits.append(f"{relative}: {found.group(0)}")
+    return hits
+
+
+def test_no_public_text_names_an_ai_agent_or_its_maker():
+    assert _agent_name_hits(_files()) == []
+
+
+def test_the_agent_name_scan_catches_a_planted_file_and_spares_the_credit_line(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys.modules[__name__], "ROOT", tmp_path)
+    for name, text in (("a.md", "written by Claude"), ("b.md", "the Muse Code agent session"), ("c.md", "by Anthropic's Sonnet"),
+                       ("d.md", "Opus and Argon and Antigravity"), ("e.md", "Omni wrote it")):
+        (tmp_path / name).write_text(text, encoding="utf-8")
+    (tmp_path / "ok.md").write_text(f"Built {CREDIT} A jargon-free page, an omnibus of Spark and Voice Transcribe.", encoding="utf-8")
+    hits = _agent_name_hits(sorted(tmp_path.glob("*.md")))
+    assert sorted(h.split(":")[0] for h in hits) == ["a.md", "b.md", "c.md", "d.md", "e.md"]
+
+
+def test_the_credit_sentence_is_exactly_the_owners_in_the_readme_and_the_notice():
+    for name in ("README.md", "NOTICE.md"):
+        text = (ROOT / name).read_text(encoding="utf-8")
+        assert text.count(CREDIT) == 1, name
+        assert text.count("Muse Code") == 1, name  # named nowhere else
