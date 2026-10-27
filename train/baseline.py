@@ -65,18 +65,26 @@ def replay(walk: list[str]) -> ArenaGame:
     return game
 
 
+def engine_dir() -> Path:
+    """Where the engine's controls cards are: PLAYFELLOW_ENGINE when set, otherwise the installed engine's own folder
+    (an unset variable used to mean the current folder, which crashed with FileNotFoundError)."""
+    import play
+
+    return Path(os.environ.get("PLAYFELLOW_ENGINE") or play.SOFTWARE)
+
+
 def default_factory():
     """A fresh built-in navigator for the Practice Arena's card (needs the engine on the path, as the tests and the plugin have it)."""
     from brain.builtin_nav import BuiltinNavBrain
     from controls import load_card
-    engine = Path(os.environ.get("PLAYFELLOW_ENGINE", ""))
+    engine = engine_dir()
     return BuiltinNavBrain(load_card(engine / "controls" / "practice_arena.yaml"), "english")
 
 
 def ask_once(brain, game: ArenaGame) -> str:
     from reply import parse_reply
     from controls import load_card
-    engine = Path(os.environ.get("PLAYFELLOW_ENGINE", ""))
+    engine = engine_dir()
     card = load_card(engine / "controls" / "practice_arena.yaml")
     raw = brain.ask("", "", [game.render().convert("RGB")])
     reply = parse_reply(raw, card, 1) if raw else None

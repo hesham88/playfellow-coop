@@ -19,7 +19,9 @@ Inspired by research such as Google DeepMind's SIMA 2 and NVIDIA's NitroGen. No 
 | Pillow | MIT-CMU (HPND) |
 | websockets | BSD-3-Clause |
 | sounddevice | MIT |
+| pynput | LGPL-3.0 (used through a normal pip install, not bundled) |
 | pytest (tests) | MIT |
+| Rust fast path (`rust/fastpath`) | our own code, written during the event; no Rust dependencies |
 | the PlayFellow engine and its own dependencies | see its NOTICE |
 
 Using an AI provider also means accepting that provider's own terms. Several of them, including the Meta Model API, require users to be 18 or older.

@@ -23,7 +23,7 @@ from PIL import Image
 from brain import BrainError
 from grounding import Mark, draw_marks, label_marks, legend, mark_from_box
 
-from playfellow_coop import _http
+from playfellow_coop import _http, fastpath
 from playfellow_coop.budget import DailyBudget
 
 ENDPOINTS = {"sam": "https://api.meta.ai/v1"}  # pinned on purpose
@@ -41,7 +41,7 @@ def _signature(image: Image.Image) -> bytes:
 
 def _changed(a: bytes | None, b: bytes) -> bool:
     """True when the picture differs enough from the last keyframe: at least CELLS_NEEDED of its 32x32 cells changed."""
-    return a is None or sum(abs(x - y) > CELL_CHANGE for x, y in zip(a, b)) >= CELLS_NEEDED
+    return a is None or fastpath.changed_cells(a, b, CELL_CHANGE) >= CELLS_NEEDED  # Rust when built, the same count in Python otherwise
 
 
 def mark_image(image: Image.Image, marker: Callable[[Image.Image], list[Mark]]) -> tuple[Image.Image, str]:

@@ -108,6 +108,8 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
             if commands is not None:
                 for action in commands.take_controls():
                     _apply_control(action, parts, handover, on_event)
+                    if latency is not None:
+                        latency.discard()  # this phrase never reaches the planner, so its voice stopwatch must not linger
                 if safety.check() is not None:
                     break
             if handover is not None and handover.human_has_controls:

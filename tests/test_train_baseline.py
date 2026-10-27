@@ -166,3 +166,11 @@ def test_the_baseline_names_no_model_and_reaches_no_network():
             imported.add((node.module or "").split(".")[0])
     assert not imported & {"urllib", "http", "httpx", "requests", "socket", "websockets", "subprocess", "keyring"}
     assert not re.search(r"\b(muse|gemini|claude|openai|glimmer)\b", text, re.IGNORECASE)
+
+
+def test_an_unset_engine_variable_falls_back_to_the_installed_engine(monkeypatch):
+    from train import baseline
+
+    monkeypatch.delenv("PLAYFELLOW_ENGINE", raising=False)
+    assert (baseline.engine_dir() / "controls" / "practice_arena.yaml").is_file()
+    assert baseline.default_factory() is not None

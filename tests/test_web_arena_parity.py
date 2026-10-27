@@ -1,6 +1,7 @@
 """D-2: the web arena twin. Its levels, lines and winning keys are MADE from the Python Practice Arena, so the two cannot drift; the browser code
 is tested in Node against them. Skipped (not failed) only when Node is missing."""
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -68,7 +69,7 @@ def test_the_page_module_data_never_carries_the_answer():
     assert "final_score" not in text and '"keys"' not in text
 
 
-@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+@pytest.mark.skipif(shutil.which("node") is None and not os.environ.get("PF_REQUIRE_NODE"), reason="Node is not installed (CI sets PF_REQUIRE_NODE=1, which makes this a failure instead of a skip)")
 def test_the_browser_code_passes_its_own_tests_in_node():
     done = subprocess.run(["node", "--test", "arena.test.mjs"], cwd=WEB, capture_output=True, text=True, timeout=120)
     assert done.returncode == 0, done.stdout[-1500:] + done.stderr[-500:]

@@ -29,6 +29,13 @@ class VoiceLatency:
         with self._lock:
             self._released.append(self._clock())
 
+    def discard(self) -> None:
+        """A spoken control phrase ("you take it") was used up without the AI: forget its release, so the next real command is not
+        paired with it."""
+        with self._lock:
+            if self._released:
+                self._released.pop(0)
+
     def key_pressed(self) -> None:
         """Called by the loop right after the buddy presses a key in a turn that acted on a spoken command."""
         with self._lock:

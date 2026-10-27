@@ -79,9 +79,10 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--minutes", type=int)
     parser.add_argument("--typed", action="store_true", help="type commands in this window, one per line (no microphone needed)")
     parser.add_argument("--talk-key", default="", help="hold this key (for example f8) to talk to the buddy; needs a Muse key and a microphone")
-    parser.add_argument("--marks", choices=("off", "sam", "fake"), default="off",
+    parser.add_argument("--marks", choices=("off", "sam", "fake"), default=None,
                         help="numbered marks on the picture: sam = SAM 3.1 (needs a key), fake = a fake server for a pipeline demo; "
-                             "fake marks are NEVER SAM output and never belong in results or the video")
+                             "fake marks are NEVER SAM output and never belong in results or the video. "
+                             "Default: sam with --brain muse, off otherwise")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
     parser.add_argument("--budget-file", type=Path, default=Path.home() / ".playfellow-coop" / "budget.json")
@@ -93,9 +94,10 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parts.typed = args.typed
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
-    parts.marks_source = args.marks
-    if args.marks != "off":
-        attach_marks(parts, args.marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
+    marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise
+    parts.marks_source = marks
+    if marks != "off":
+        attach_marks(parts, marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
     if args.brain == "muse":
         key = key_loader()
         if not key:
@@ -139,7 +141,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     say(tr(f"Playing '{cfg.game_window}'. F9 takes the controls, F9 again gives them back. F12 or the mouse in the top-left "
            "corner stops at once.",
            f"ألعب '{cfg.game_window}'. F9 يأخذ التحكم، وF9 مرة أخرى يعيده. F12 أو الفأرة في الزاوية العلوية اليسرى يوقف فورًا."))
-    reason = run(parts, cfg, play.system_for(parts, cfg), timer, handover, on_event=lambda kind, data: None, commands=commands, latency=latency)
+    reason = run(parts, cfg, play.system_for(parts, cfg), timer, handover, on_event=lambda kind, data: say(data) if kind == "say" and data else None,
+                 commands=commands, latency=latency)
     say(msg(reason, minutes=cfg.max_minutes, calls=cfg.max_ai_calls))
     if getattr(parts, "marks_source", "off") == "fake":
         say(FAKE_MARKS_BANNER)  # said again at the end, so a log or a recording can never miss it

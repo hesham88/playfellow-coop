@@ -140,3 +140,34 @@ def test_a_fake_marks_bench_run_is_labelled_a_diagnostic_and_names_its_marks(tmp
     path = bench.run_bench(parts, cfg, "system", 2, tmp_path, "builtin", "none", git=("a" * 40, False), wait=lambda s: False)
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["metrics"]["marks"] == "fake" and data["metrics"]["label"] == "diagnostic: FAKE marks, not SAM output"
+
+# ---- the gaps found in review: SAM on by default with the Muse brain; the hand-over lines are spoken -----------------------
+def test_the_muse_brain_turns_sam_marks_on_unless_told_otherwise(tmp_path):
+    from playfellow_coop.sam_marks import SamMarker
+
+    common = ["--budget-file", str(tmp_path / "b.json")]
+    parts, _ = entry.build(["--brain", "muse", *common], build_parts=_parts_builder, key_loader=lambda: "unique-key-VALUE-5")
+    assert parts.marks_source == "sam" and isinstance(parts.marker, SamMarker)
+    parts.marker.close()
+    parts.brain.close()
+    off, _ = entry.build(["--brain", "muse", "--marks", "off", *common], build_parts=_parts_builder, key_loader=lambda: "unique-key-VALUE-5")
+    assert off.marks_source == "off" and not hasattr(off, "marker")
+    off.brain.close()
+
+
+def test_the_hand_over_confirmations_are_said_out_loud_not_dropped():
+    parts, said = Parts(), []
+
+    def build(argv):
+        import settings
+
+        return parts, settings.Settings()
+
+    def run(p, cfg, system, timer, handover, on_event, commands=None, latency=None):
+        on_event("say", "I've got it.")  # what the session emits when the player hands a part over
+        on_event("say", "")  # an empty line is not said
+        on_event("thought", "private reasoning")  # thoughts stay out of the voice
+        return "round_done"
+
+    assert entry.main([], build_fn=build, listen_key=lambda n, cb: None, listen_stop=lambda cb: None, run=run, say=said.append) == 0
+    assert "I've got it." in said and "private reasoning" not in said and said.count("") == 0

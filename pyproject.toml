@@ -5,13 +5,17 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "playfellow-coop"
 version = "0.1.0.dev0"
-description = "Event work for the PlayFellow engine: a Muse brain with a daily spending cap"
+description = "An accessibility co-op for gamers whose hands cannot keep up: voice commands in English or Arabic, a one-key hand-over, a Muse brain, SAM marks, an optional Rust fast path. Event work for the PlayFellow engine."
 requires-python = ">=3.11"
-dependencies = ["httpx>=0.27", "certifi", "Pillow>=10.1", "websockets>=13", "sounddevice>=0.4"]
+dependencies = ["httpx>=0.27", "certifi", "Pillow>=10.1", "websockets>=13", "sounddevice>=0.4", "pynput>=1.7"]
 # The engine itself is installed first, from a clone of the tag (see the README); it is not a dependency pulled from here.
 
 [tool.setuptools]
-packages = ["playfellow_coop", "train"]
+packages = ["playfellow_coop", "playfellow_coop.overlay", "train"]
+
+[tool.setuptools.package-data]
+# the optional Rust fast path: built by rust/build.ps1 into this folder; without it the Python twin runs
+playfellow_coop = ["_native/*.dll"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

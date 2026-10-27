@@ -6,3 +6,10 @@ build/
 .venv/
 .env
 secrets/
+
+# the compiled Rust fast path and its build folder (built locally or in CI, never committed)
+playfellow_coop/_native/
+rust/fastpath/target/
+
+# handoff notes hold paths and internal state: they live in the private team inbox, never in this repo
+docs/HANDOFF-*

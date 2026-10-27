@@ -15,6 +15,7 @@ PlayFellow is an open-source engine that plays a PC game *with* you: it watches 
 | `playfellow_coop/sam_marks.py`, `sam_eval.py` | SAM 3.1 marks: where things are on screen, drawn as numbered labels on the picture the buddy sees, with the engine's own legend. Asked again only when the picture changes; every request is gated by the daily budget | built and tested against a **fake server** built from the Practice Arena's own truth. **No real SAM call yet**: the response wrapper is unverified. The scores from the fake server check the harness only and say nothing about SAM's accuracy |
 | `playfellow_coop/voice.py` | Voice commands ("grab the coins on the left") with Muse Voice Transcribe in file mode (push-to-talk), and **typed commands as the fallback**, so the demo never needs a microphone. The command goes to the planner next to the marks; only keys on the controls card are pressed | written; tests pending (they run before this row says "built"). No real voice call yet |
 | `playfellow_coop/realtime_voice.py`, `push_to_talk.py`, `microphone.py` | **Hold a key, speak, release.** The microphone streams to Muse Voice Transcribe over a WebSocket; partial text shows live; the final words become a command; a typed line works the same. The key goes only in the handshake frame. It also measures the time from letting go of the talk key to the buddy's first game key | built and tested against a **fake WebSocket server** and a pretend microphone. **Not yet run against the real service or a real microphone**: the frame format comes from our notes, so the first real call saves the real frames as a fixture before anything else builds on them. The measured key-release-to-first-key time is "not measured" until a live run |
+| `rust/fastpath`, `playfellow_coop/fastpath.py`, `bench/fastpath_bench.py` | An **optional Rust fast path** (grid search and the thumbnail change test) with an identical Python twin; tests require identical answers; the speed-up is measured by the bench | built during the event; see `rust/README.md` |
 | Split controls ("you block, I heal") | Share the keys between you and the buddy | planned, a stretch goal |
 
 Items marked planned are not built: a row changes only when a dated commit shows it.
@@ -38,7 +39,7 @@ The engine's controls cards and settings files sit next to its code, so the engi
    python -m playfellow_coop --typed
    ```
 
-   With a Muse key in `MODEL_API_KEY`, add `--brain muse`. To talk instead of typing, add `--talk-key f8` and hold F8 while you speak.
+   With a Muse key in `MODEL_API_KEY`, add `--brain muse` (SAM marks are then on by default; `--marks off` turns them off). To talk instead of typing, add `--talk-key f8` and hold F8 while you speak.
 3. Click the arena window so it is in front: the buddy presses keys only while the game is in front.
 4. **You take over, I take over.** Press **F9**: the buddy lets go of every key and waits, asking no AI. Play yourself. Press **F9** again: the buddy takes the controls back and says in one line how long you played and how many turns it waited out.
 5. Type a command in the terminal, for example `grab the coins on the left`, and press Enter. It goes to the planner on the buddy's next turn.
@@ -55,7 +56,7 @@ python -m pytest -q
 To use the Muse brain, put your own key in the environment as `MODEL_API_KEY` (Meta's name for it) or in the Windows credential manager. It is never read from a file in this repo, and it is never printed. Then:
 
 ```
-python -m playfellow_coop --brain muse        # F9 takes the controls, F9 again gives them back, F12 stops
+python -m playfellow_coop --brain muse --marks sam  # F9 takes the controls, F9 again gives them back, F12 stops
 python -m playfellow_coop                     # the same with the engine's built-in brain (no key, no network)
 ```
 

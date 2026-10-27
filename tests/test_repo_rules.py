@@ -29,7 +29,7 @@ def _walk(pattern: str = "*"):
 def _files():
     for path in ROOT.rglob("*"):
         parts = set(path.relative_to(ROOT).parts)
-        if path.is_file() and not parts & SKIP_DIRS and not any(p.endswith(".egg-info") for p in parts) and path.suffix in (".py", ".md", ".toml", ".txt", ".yaml"):
+        if path.is_file() and not parts & SKIP_DIRS and not any(p.endswith(".egg-info") for p in parts) and path.suffix in (".py", ".md", ".toml", ".txt", ".yaml", ".yml", ".mjs", ".html", ".json", ".rs", ".ps1", ".sql", ".css", ".js"):
             yield path
 
 
@@ -74,11 +74,19 @@ def test_the_old_repo_name_is_nowhere_in_the_repo():
     assert hits == []
 
 
-def test_the_package_and_the_training_folder_are_both_listed_for_install():
+def test_every_package_folder_is_listed_for_install():
+    """A package folder missing from pyproject.toml is dropped from a normal (non-editable) install: the overlay once was."""
     import tomllib
 
     config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert config["project"]["name"] == "playfellow-coop" and config["tool"]["setuptools"]["packages"] == ["playfellow_coop", "train"]
+    assert config["project"]["name"] == "playfellow-coop"
+    found = set()
+    for top in ("playfellow_coop", "train"):
+        for init in (ROOT / top).rglob("__init__.py"):
+            if "__pycache__" not in init.parts:
+                found.add(".".join(init.parent.relative_to(ROOT).parts))
+    assert found == set(config["tool"]["setuptools"]["packages"])
+    assert "pynput" in " ".join(config["project"]["dependencies"])  # imported by the push-to-talk key listener
 
 
 def test_no_judge_pass_link_or_code_is_in_any_file():
@@ -161,3 +169,10 @@ def test_the_readme_opens_with_the_disclosure():
     first = (ROOT / "README.md").read_text(encoding="utf-8").splitlines()[:4]
     text = " ".join(first)
     assert "Built on the PlayFellow engine" in text and "pre-hackathon" in text and "Everything in this repo was built during the event" in text
+
+def test_the_readme_and_the_video_script_open_with_the_two_tag_disclosure():
+    """The organisers asked for one line, first: what was pre-existing and what was built. Both tags and their commits are named."""
+    for name in ("README.md", "docs/video-script.md"):
+        top = " ".join((ROOT / name).read_text(encoding="utf-8").splitlines()[:6])
+        assert "before-kickoff" in top and "b7b72a8" in top and "pre-hackathon" in top and "d63c1b4" in top, name
+        assert "no new features" not in top.lower(), name
