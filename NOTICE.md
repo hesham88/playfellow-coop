@@ -15,7 +15,7 @@ Method ideas we studied and re-implemented in our own code, with thanks to the a
 | Work | What we took from it | Where it shows |
 |---|---|---|
 | [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (Google) | The working method: one side holds the project context and drafts, a fresh reviewer who has not seen the conversation checks the document, and the person decides | `docs/` review notes; how our specs and contracts were reviewed |
-| [Harness²](https://github.com/google-research/harness2) (Google Research; paper: arXiv 2610.14224) | Propose, probe and compose: edit the harness around a fixed model, test the edits on the same task, and keep what the contrasts support, with a memory of lessons that carries to the next task | `bench/harness_loop.py`, the credit-day experiment protocol |
+| [Harness²](https://github.com/google-research/harness2) (Google Research; paper: arXiv 2610.14224) | Propose, probe and compose: edit the harness around a fixed model, test the edits on the same task, and keep what the contrasts support, with a memory of lessons that carries to the next task | `playfellow_coop/harness_loop.py`, the credit-day experiment protocol |
 
 Fonts shipped in the Windows app (not in this repository): Baloo Bhaijaan 2 and Rubik, both SIL Open Font License 1.1.
 
