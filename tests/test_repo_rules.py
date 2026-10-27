@@ -111,7 +111,7 @@ def test_the_readme_points_judges_to_the_submission_note_and_names_no_code():
 def test_nothing_routes_traffic_to_a_partner_gpu_service():
     """Partner credits are for the owner's own recorded runs, the bench and partner verification only: no code here may send
     public or judge traffic to Baseten or Modal. Mentioning the names in a doc is fine; importing or calling them is not."""
-    code = [p for p in _walk("*.py") if p.name != "test_repo_rules.py"]
+    code = [p for p in _walk("*.py") if p.name != "test_repo_rules.py" and p.relative_to(ROOT).as_posix() != "bench/open_weights_brain.py"]  # the one narrow exception
     hits = []
     for path in code:
         text = path.read_text(encoding="utf-8", errors="ignore").lower()
@@ -240,3 +240,15 @@ def test_the_credit_sentence_is_exactly_the_owners_in_the_readme_and_the_notice(
         text = (ROOT / name).read_text(encoding="utf-8")
         assert text.count(CREDIT) == 1, name
         assert text.count("Muse Code") == 1, name  # named nowhere else
+
+
+def test_the_open_weights_bench_brain_is_reached_only_from_bench_and_its_tests():
+    """The exception above is safe only while nothing public can reach it: no module of the package, the demo or the train folder imports it."""
+    offenders = []
+    for path in _walk("*.py"):
+        rel = path.relative_to(ROOT).as_posix()
+        if rel.startswith(("bench/", "tests/")):
+            continue
+        if "open_weights_brain" in path.read_text(encoding="utf-8", errors="ignore"):
+            offenders.append(rel)
+    assert offenders == []

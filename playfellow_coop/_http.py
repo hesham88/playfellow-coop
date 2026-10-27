@@ -18,10 +18,10 @@ def new_client() -> httpx.Client:
                         verify=ssl.create_default_context(cafile=certifi.where()))
 
 
-def post(client: httpx.Client, url: str, key: str, body: dict) -> httpx.Response:
+def post(client: httpx.Client, url: str, key: str, body: dict, scheme: str = "Bearer") -> httpx.Response:
     """POST JSON with the key as a header. A network failure becomes a BrainError that never quotes the request."""
     try:
-        return client.post(url, json=body, headers={"Authorization": f"Bearer {key}"})
+        return client.post(url, json=body, headers={"Authorization": f"{scheme} {key}"})
     except httpx.TimeoutException:
         raise BrainError("busy", retry=True, wait_seconds=5) from None
     except httpx.HTTPError:

@@ -52,11 +52,17 @@ class MuseBrain:
     name = "muse"
 
     def __init__(self, model: str, api_key: str, budget: DailyBudget | None = None, client: httpx.Client | None = None,
-                 effort: str = DEFAULT_EFFORT, cache_key: str | None = CACHE_KEY):
+                 effort: str = DEFAULT_EFFORT, cache_key: str | None = CACHE_KEY, base_url: str | None = None, auth_scheme: str = "Bearer"):
         if effort not in EFFORTS:
             raise ValueError(f"effort must be one of {EFFORTS}")
         self.effort = effort
         self.cache_key = cache_key
+        # A subclass may name another pinned address (the open-weights bench brain does); a caller cannot pass one from the command line, and an address that is
+        # not https is refused. The default is the pinned Meta address.
+        self.base = base_url or ENDPOINTS["muse"]
+        if (base_url is not None and not base_url.startswith("https://")) or auth_scheme not in ("Bearer", "Api-Key"):
+            raise ValueError("a brain address must be https, and the key goes as Bearer or Api-Key")
+        self.auth_scheme = auth_scheme
         self.actions: tuple[str, ...] | None = None
         if "contributor" in model.lower():
             raise ValueError("a contributor model is trained on what it is sent; it is never used for play data")
@@ -112,7 +118,7 @@ class MuseBrain:
         if self.cache_key:
             request["prompt_cache_key"] = self.cache_key
             request["prompt_cache_retention"] = CACHE_RETENTION
-        response = _http.post(self._client, ENDPOINTS["muse"] + "/chat/completions", self._key, request)
+        response = _http.post(self._client, self.base + "/chat/completions", self._key, request, scheme=self.auth_scheme)
         self.last_timings = {"encode": encoded - started, "request": time.perf_counter() - encoded}  # measured here, inside
         _http.check_status(response.status_code)
         try:
