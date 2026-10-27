@@ -34,4 +34,5 @@ jobs:
         env:
           PF_REQUIRE_NATIVE: "1"
           PF_REQUIRE_NODE: "1"
+          PLAYFELLOW_ENGINE: ${{ github.workspace }}/engine/software
         run: python -m pytest -q -W error
