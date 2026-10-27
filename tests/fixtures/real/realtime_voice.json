@@ -1,0 +1,303 @@
+{
+  "path": "/v1/asr/realtime",
+  "status": 101,
+  "content_type": "websocket",
+  "body": {
+    "sent": [
+      {
+        "direction": "sent",
+        "type": "text",
+        "at_ms": 0,
+        "json": {
+          "authorization": {
+            "accessToken": "Bearer ***"
+          },
+          "audioEncoding": "PCM_24KHZ",
+          "model": "muse-voice-transcribe-1.0",
+          "mode": "PUSH_TO_TALK",
+          "languageBias": [
+            "English"
+          ],
+          "keywords": [
+            "coins"
+          ]
+        }
+      },
+      {
+        "direction": "sent",
+        "type": "binary",
+        "frames": 18,
+        "bytes": 85896
+      },
+      {
+        "direction": "sent",
+        "type": "text",
+        "at_ms": 1811,
+        "json": {
+          "type": "endStream"
+        }
+      }
+    ],
+    "received": [
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1811,
+        "json": {
+          "sessionId": "***"
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 80
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 160
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 240
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 320
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 400
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 480
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 560
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 640
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 720
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 800
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "transcript",
+          "transcript": "grab",
+          "final": false,
+          "audioProcessedMs": 800
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 880
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 960
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1040
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1120
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1200
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "transcript",
+          "transcript": "grab the",
+          "final": false,
+          "audioProcessedMs": 1200
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1280
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1360
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1440
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1520
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1600
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1812,
+        "json": {
+          "type": "transcript",
+          "transcript": "grab the coins",
+          "final": false,
+          "audioProcessedMs": 1600
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1967,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1680
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 1989,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1760
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 2075,
+        "json": {
+          "type": "audioProgress",
+          "audioProcessedMs": 1840
+        }
+      },
+      {
+        "direction": "received",
+        "type": "text",
+        "at_ms": 2075,
+        "json": {
+          "type": "transcript",
+          "transcript": "grab the coins",
+          "final": true,
+          "audioProcessedMs": 1840
+        }
+      }
+    ]
+  }
+}

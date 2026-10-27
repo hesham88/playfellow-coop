@@ -187,5 +187,5 @@ def test_local_open_uses_the_engines_lm_studio_brain_needs_no_key_and_a_model_na
 def test_the_muse_brain_still_defaults_to_its_own_model_name(tmp_path):
     parts, _ = entry.build(["--brain", "muse", "--marks", "off", "--budget-file", str(tmp_path / "b.json")], build_parts=_parts_builder,
                            key_loader=lambda: "unique-key-VALUE-3")
-    assert parts.brain.model == "muse-spark"
+    assert parts.brain.model == "muse-spark-1.3"
     parts.brain.close()

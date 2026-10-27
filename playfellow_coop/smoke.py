@@ -24,14 +24,14 @@ import httpx
 from brain import BrainError
 from playfellow_coop import _http, muse_brain, realtime_voice, sam_marks, voice
 from playfellow_coop.budget import DailyBudget
-from playfellow_coop.muse_brain import MuseBrain
+from playfellow_coop.muse_brain import DEFAULT_MODEL, MuseBrain
 from playfellow_coop.realtime_voice import BYTES_PER_SECOND, RealtimeTranscriber
 from playfellow_coop.sam_marks import SamMarker, answer_text, parse_boxes
 from playfellow_coop.voice import MuseVoiceTranscriber
 
 TOTAL_CAP_USD = 10.0
 MUSE_PROMPT = 'You see one frame of a small maze game. Reply with JSON only: {"thought": "...", "say": "...", "actions": []}'
-SAM_PHRASE = "coin"
+SAM_PHRASE = "yellow circle"  # the plain word "coin" answers nothing on the real service (found on credit day)
 SAM_NO_MATCH_PHRASE = "a purple elephant"  # nothing like it is in the Practice Arena frame: what does the service answer then?
 REALTIME_MAX_SECONDS = 5.0  # a hard cap on the audio sent over the realtime socket (about $0.00025)
 REALTIME_CHUNK_SECONDS = 0.1  # audio is sent in 100 ms pieces, one every 100 ms: real-time pace
@@ -285,7 +285,7 @@ def run(environ: dict | None = None, confirm: Callable[[str], str] = input, say:
         else:
             results.append((name, problems_for(record["body"])))
 
-    muse = MuseBrain("muse-spark", key, budget=budget, client=recording_client(recorder))
+    muse = MuseBrain(DEFAULT_MODEL, key, budget=budget, client=recording_client(recorder))
     try:
         muse.ask(MUSE_PROMPT, "Where is the nearest coin?", [frame])
         finish("muse", "muse_chat.json", problems_chat)

@@ -1,0 +1,11 @@
+{
+  "path": "/v1/asr/transcribe",
+  "status": 200,
+  "content_type": "application/json",
+  "body": {
+    "sessionId": "***",
+    "transcript": "grab the coins",
+    "audioDurationMs": 1840,
+    "turns": []
+  }
+}

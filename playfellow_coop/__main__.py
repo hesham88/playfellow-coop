@@ -22,7 +22,7 @@ from settings import load_settings
 
 from playfellow_coop.budget import DailyBudget
 from playfellow_coop.handover import HandOver, taken_line
-from playfellow_coop.muse_brain import MuseBrain
+from playfellow_coop.muse_brain import DEFAULT_MODEL, MuseBrain
 from playfellow_coop.push_to_talk import VoiceLatency
 from playfellow_coop.session_log import SessionLog, git_commit, make_header, resolve_log_path
 from playfellow_coop.trace import Trace
@@ -78,7 +78,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--brain", choices=("builtin", "muse", "local-open"), default="builtin",
                         help="builtin = no AI, no key; muse = a Muse model on the Meta Model API; "
                              "local-open = an open model served on THIS PC by LM Studio (give its id with --model)")
-    parser.add_argument("--model", default=None, help="the model: muse-spark by default for --brain muse; required for local-open")
+    parser.add_argument("--model", default=None, help="the model: muse-spark-1.3 by default for --brain muse; required for local-open")
     parser.add_argument("--window", help="the game window's title (default: the Practice Arena)")
     parser.add_argument("--card", help="the controls card name (default: from the settings)")
     parser.add_argument("--minutes", type=int)
@@ -117,7 +117,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     if args.trace:
         parts.trace_plan = {"path": resolve_log_path(args.trace), "trial": args.trial}
     if args.log:
-        model = args.model or ("muse-spark" if args.brain == "muse" else "builtin" if args.brain == "builtin" else None)
+        model = args.model or (DEFAULT_MODEL if args.brain == "muse" else "builtin" if args.brain == "builtin" else None)
         parts.session_log_plan = {"path": resolve_log_path(args.log), "brain": args.brain, "model": model, "level": args.log_level}
     if marks != "off":
         attach_marks(parts, marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
@@ -133,7 +133,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
         key = key_loader()
         if not key:
             raise BrainError("no_key")
-        parts.brain = MuseBrain(args.model or "muse-spark", key, budget=DailyBudget(args.budget_file, args.daily_usd, args.daily_calls))
+        parts.brain = MuseBrain(args.model or DEFAULT_MODEL, key, budget=DailyBudget(args.budget_file, args.daily_usd, args.daily_calls))
     return parts, cfg
 
 

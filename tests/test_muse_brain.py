@@ -284,3 +284,30 @@ def test_a_proxy_variable_is_not_even_offered_the_connection_to_a_named_host(mon
     finally:
         b.close()
         listener.close()
+
+
+def test_the_default_model_is_the_standard_one_the_service_lists_and_a_contributor_model_is_refused():
+    """Credit day, 27 Oct: the plain name 'muse-spark' answered 404 model_not_found; the service lists muse-spark-1.3. The '-contributor' models are cheaper
+    because Meta trains on what is sent, so they must never carry play data (terms s.6.2)."""
+    from playfellow_coop.muse_brain import DEFAULT_MODEL
+    assert DEFAULT_MODEL == "muse-spark-1.3"
+    for bad in ("muse-spark-1.3-contributor", "Muse-Spark-1.2-Contributor"):
+        with pytest.raises(ValueError):
+            MuseBrain(bad, "k")
+
+
+def test_the_request_asks_for_minimal_reasoning_and_a_bad_effort_is_refused():
+    """Credit day, 27 Oct: the same small request took 3 to 5 s and 600 to 1000 tokens at the default effort (and sometimes returned nothing at
+    max_tokens 1000) against 1.4 s and about 170 tokens at 'minimal'."""
+    import httpx
+    seen = []
+
+    def handler(request):
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": "{}"}}], "usage": {"prompt_tokens": 1, "completion_tokens": 1}})
+
+    brain = MuseBrain("muse-spark-1.3", "k", client=httpx.Client(transport=httpx.MockTransport(handler)))
+    brain.ask("system", "text", [])
+    assert seen[0]["reasoning_effort"] == "minimal"
+    with pytest.raises(ValueError):
+        MuseBrain("muse-spark-1.3", "k", effort="none")

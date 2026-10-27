@@ -25,7 +25,7 @@ from playfellow_coop import realtime_voice, smoke, voice
 from playfellow_coop.budget import DailyBudget
 from playfellow_coop.muse_brain import MuseBrain
 from playfellow_coop.realtime_voice import RealtimeTranscriber
-from playfellow_coop.sam_marks import SamMarker, answer_text, parse_boxes
+from playfellow_coop.sam_marks import SamMarker, answer_text, big_enough, parse_boxes
 from playfellow_coop.voice import MuseVoiceTranscriber
 from reply import parse_reply
 from tests.test_session_and_handover import CARD
@@ -92,7 +92,7 @@ def check_sam(root: Path, server, tmp_path) -> None:  # noqa: F811
         marks = marker(Image.new("RGB", (int(boxes[0][1][0]), int(boxes[0][1][1])), (10, 90, 40)))
     finally:
         marker.close()
-    assert marker.last_error is None and len(marks) == len(boxes)
+    assert marker.last_error is None and len(marks) == len(big_enough(boxes))  # specks (the door knob) are dropped
     assert all(m.kind == "reward" and 0 <= m.x <= 1000 and 0 <= m.y <= 1000 for m in marks)
 
 

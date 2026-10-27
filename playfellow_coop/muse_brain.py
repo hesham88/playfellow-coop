@@ -18,6 +18,13 @@ from playfellow_coop import _http
 from playfellow_coop.budget import INPUT_USD_PER_TOKEN, OUTPUT_USD_PER_TOKEN, DailyBudget
 
 ENDPOINTS = {"muse": "https://api.meta.ai/v1"}  # pinned on purpose, like the engine's own brains
+# The model the API really serves in Standard mode (found on credit day: the plain name "muse-spark" answers 404 model_not_found). The "-contributor"
+# variants are cheaper because Meta trains on what is sent: never for play data (terms s.6.2), so they are refused below.
+DEFAULT_MODEL = "muse-spark-1.3"
+# muse-spark-1.3 thinks before it answers, and the thinking is billed as output. Credit day measured the same small request: default effort used 600 to 1000
+# tokens in 3 to 5 s (and at max_tokens 1000 it sometimes ran out and answered nothing); "minimal" used about 170 tokens in 1.4 s with the same answer.
+EFFORTS = ("minimal", "low", "medium", "high", "xhigh", "max")
+DEFAULT_EFFORT = "minimal"
 REQUEST_TIMEOUT = 25.0
 MAX_TOKENS = 1000
 
@@ -38,7 +45,13 @@ def cached_tokens(usage) -> int | None:
 class MuseBrain:
     name = "muse"
 
-    def __init__(self, model: str, api_key: str, budget: DailyBudget | None = None, client: httpx.Client | None = None):
+    def __init__(self, model: str, api_key: str, budget: DailyBudget | None = None, client: httpx.Client | None = None,
+                 effort: str = DEFAULT_EFFORT):
+        if effort not in EFFORTS:
+            raise ValueError(f"effort must be one of {EFFORTS}")
+        self.effort = effort
+        if "contributor" in model.lower():
+            raise ValueError("a contributor model is trained on what it is sent; it is never used for play data")
         self.model = model
         self._key = api_key  # never shown: see __repr__
         self.budget = budget
@@ -69,7 +82,7 @@ class MuseBrain:
             data = base64.standard_b64encode(jpeg).decode("ascii")
             content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{data}"}})
         encoded = time.perf_counter()
-        request = {"model": self.model, "max_tokens": MAX_TOKENS,
+        request = {"model": self.model, "max_tokens": MAX_TOKENS, "reasoning_effort": self.effort,
                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}]}
         response = _http.post(self._client, ENDPOINTS["muse"] + "/chat/completions", self._key, request)
         self.last_timings = {"encode": encoded - started, "request": time.perf_counter() - encoded}  # measured here, inside

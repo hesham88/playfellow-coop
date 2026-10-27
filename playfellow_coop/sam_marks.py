@@ -29,7 +29,12 @@ from playfellow_coop.budget import DailyBudget
 ENDPOINTS = {"sam": "https://api.meta.ai/v1"}  # pinned on purpose
 MODEL = "sam-3.1"
 USD_PER_IMAGE = 2.50 / 1000  # the published price: $2.50 per 1,000 images
-DEFAULT_PROMPTS = {"me": "the player character", "reward": "coin or collectible item", "hazard": "hazard or enemy", "door": "door or exit"}
+# Credit day, 27 Oct, on the real service: SAM answers short, concrete, VISIBLE descriptions ("blue circle", "yellow circle", "key", "brown box") and answers
+# nothing to game words ("coin", "player", "door", "wall") or to broad phrases ("the player character", "coin or collectible item", "door or exit").
+# These three are checked live on the Practice Arena; the hazard phrase is not yet (that arena has no hazard). For another game the phrases come from its
+# own look, never from this table (see the plan: the planner names what it sees, SAM finds it).
+DEFAULT_PROMPTS = {"me": "blue circle", "reward": "yellow circle", "hazard": "red circle", "door": "brown box"}
+MIN_BOX = 0.015  # a box shorter than this share of the picture's shorter side is a speck (the door's knob came back as a "yellow circle"): dropped
 BOX = re.compile(r"<\|box;x1=([\d.]+);y1=([\d.]+);x2=([\d.]+);y2=([\d.]+);w=([\d.]+);h=([\d.]+)\|>")
 CELL_CHANGE = 20  # grey-level change (0-255) that makes one thumbnail cell "different"
 CELLS_NEEDED = 2  # a mover leaves one cell and enters another, so two different cells mean "something moved"
@@ -67,6 +72,11 @@ def parse_boxes(text: str) -> list[tuple[tuple[float, float, float, float], tupl
         x1, y1, x2, y2, w, h = (float(v) for v in match.groups())
         out.append(((x1, y1, x2, y2), (w, h)))
     return out
+
+
+def big_enough(boxes: list) -> list:
+    """Drop specks: boxes whose width or height is under MIN_BOX of the picture's shorter side."""
+    return [(box, size) for box, size in boxes if min(box[2] - box[0], box[3] - box[1]) >= MIN_BOX * min(size)]
 
 
 def answer_text(body: object) -> str:
@@ -166,7 +176,7 @@ class SamMarker:
         except ValueError:
             self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": False})
             raise BrainError("brain_trouble", detail="the answer was not in the expected shape") from None
-        boxes = parse_boxes(text)
+        boxes = big_enough(parse_boxes(text))
         self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": bool(boxes), "boxes": len(boxes)})
         return [mark_from_box(kind, box, size) for box, size in boxes]
 

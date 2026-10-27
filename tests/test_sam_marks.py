@@ -221,3 +221,18 @@ def test_the_budget_file_survives_four_answers_arriving_at_once(game, fake, tmp_
         m(game.render())
     saved = json.loads((tmp_path / "sam.json").read_text(encoding="utf-8"))
     assert saved["calls"] == m.calls - m.failed_calls and saved["spent_usd"] == pytest.approx(saved["calls"] * 2.50 / 1000)
+
+
+def test_specks_are_dropped_and_real_objects_kept():
+    """Real answer, credit day 27 Oct: 'yellow circle' on the Practice Arena returned the five coins and a 6x7 px speck (the door's knob)."""
+    from playfellow_coop.sam_marks import big_enough
+    text = ("<0f>0<|box;x1=492;y1=132;x2=516;y2=156;w=576;h=504|><|mask;x=0;y=0;data=x|>"
+            "<0f>1<|box;x1=510;y1=332;x2=516;y2=339;w=576;h=504|><|mask;x=0;y=0;data=y|>")
+    kept = big_enough(parse_boxes(text))
+    assert [box for box, _ in kept] == [(492.0, 132.0, 516.0, 156.0)]
+
+
+def test_the_default_phrases_are_the_visible_descriptions_the_real_service_answers():
+    assert DEFAULT_PROMPTS["me"] == "blue circle" and DEFAULT_PROMPTS["reward"] == "yellow circle" and DEFAULT_PROMPTS["door"] == "brown box"
+    for vague in ("the player character", "coin or collectible item", "door or exit", "hazard or enemy"):
+        assert vague not in DEFAULT_PROMPTS.values()

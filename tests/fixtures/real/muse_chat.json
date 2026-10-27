@@ -1,0 +1,34 @@
+{
+  "path": "/v1/chat/completions",
+  "status": 200,
+  "content_type": "application/json",
+  "body": {
+    "id": "***",
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "{\"thought\": \"Player at top-left. Left column coin 2 steps down is closest by maze distance.\", \"say\": \"The nearest coin is directly below you - go DOWN 2 squares on the left edge!\", \"actions\": []}",
+          "refusal": null,
+          "role": "assistant"
+        },
+        "logprobs": null
+      }
+    ],
+    "created": 1793111526,
+    "model": "muse-spark-1.3",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 430,
+      "prompt_tokens": 428,
+      "total_tokens": 858,
+      "completion_tokens_details": {
+        "reasoning_tokens": 372
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  }
+}
