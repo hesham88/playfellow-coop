@@ -176,3 +176,14 @@ def test_the_readme_and_the_video_script_open_with_the_two_tag_disclosure():
         top = " ".join((ROOT / name).read_text(encoding="utf-8").splitlines()[:6])
         assert "before-kickoff" in top and "b7b72a8" in top and "pre-hackathon" in top and "d63c1b4" in top, name
         assert "no new features" not in top.lower(), name
+
+def test_every_commit_is_by_the_noreply_identity():
+    """A repo-local git setting once held the literal text "user.name" as the e-mail: every author and committer must be the noreply address."""
+    import subprocess
+
+    out = subprocess.run(["git", "log", "--format=%ae|%ce"], cwd=ROOT, capture_output=True, text=True, timeout=60)
+    if out.returncode != 0:  # not a git checkout (an exported tarball): nothing to check
+        return
+    for line in out.stdout.split():
+        for address in line.split("|"):
+            assert address.endswith("@users.noreply.github.com"), address
