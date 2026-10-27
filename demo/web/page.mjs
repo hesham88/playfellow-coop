@@ -49,6 +49,8 @@ export function startPage(doc = document, options = {}) {
     canvas.height = size.height;
     draw(ctx, arena, data.texts[language], language === 'arabic', player ? player.marks : []);
     status.textContent = `${data.levels[levelIndex].title[language]} · ${WORDS[language].holder[session.holder]}${player && player.say ? ' · ' + player.say : ''}`;
+    const face = doc.getElementById('fello');  // Fello's expression follows who holds the controls (the portraits are the library's four faces)
+    if (typeof face?.setAttribute === 'function') face.setAttribute('src', `art/fello-${player ? 'thinking' : { buddy: 'determined', player: 'smile', stopped: 'neutral' }[session.holder] || 'neutral'}.jpg`);
   }
 
   function act(event) {

@@ -11,6 +11,10 @@ from pathlib import Path
 class Handler(http.server.SimpleHTTPRequestHandler):
     extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map, ".mjs": "text/javascript", ".js": "text/javascript", ".json": "application/json"}
 
+    def end_headers(self):  # a local test server: never let the browser keep an old copy of a script
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(Path(__file__).resolve().parent), **kwargs)
 

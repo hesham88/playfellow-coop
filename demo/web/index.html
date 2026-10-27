@@ -3,40 +3,95 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Web arena</title>
+<title>Playfellow arena</title>
+<link rel="icon" href="art/fello-smile.jpg">
 <style>
-  :root { --bg: #0b0b1a; --panel: #15172e; --text: #f2f3ff; --accent: #7c5cff; --go: #4ade80; }
-  body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
-  main { max-width: 640px; margin: 0 auto; display: grid; gap: 12px; }
-  canvas { width: 100%; height: auto; background: var(--panel); border-radius: 12px; }
+  /* Glass look from the Playfellow design system: deep indigo ground, frosted panels with a cyan-to-violet light edge. Logical properties, so Arabic mirrors. */
+  :root {
+    --bg: #04061a; --ink: #eaf0ff; --ink2: #aab4e6; --ink3: #7480b8; --cyan: #43e3ff; --violet: #9b6bff; --go: #3ddc97; --bad: #ff6b81;
+    --line: rgba(170, 180, 255, .28); --r: 22px;
+    --font: "Segoe UI", system-ui, -apple-system, "Noto Sans Arabic", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); font: 400 15px/1.55 var(--font); background: var(--bg) url("art/bg.jpg") center / cover fixed; }
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(900px 520px at 12% -10%, rgba(67, 227, 255, .12), transparent 60%), radial-gradient(900px 600px at 100% 8%, rgba(155, 107, 255, .18), transparent 60%), linear-gradient(180deg, rgba(4, 6, 26, .3), rgba(4, 6, 26, .78)); }
+  .glass { position: relative; background: linear-gradient(180deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .04)); backdrop-filter: blur(20px) saturate(150%);
+    border-radius: var(--r); box-shadow: 0 18px 50px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .1); }
+  .glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.2px; pointer-events: none;
+    background: linear-gradient(135deg, rgba(67, 227, 255, .75), rgba(155, 107, 255, .25) 45%, rgba(155, 107, 255, .75));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .wrap { position: relative; max-width: 1180px; margin: 0 auto; padding: 16px max(16px, env(safe-area-inset-left)) 32px; display: grid; gap: 16px; }
+  header.top { display: flex; align-items: center; gap: 12px; padding: 12px 22px; }
+  .brand { font-weight: 800; font-size: 20px; letter-spacing: .01em; } .brand i { font-style: normal; color: var(--ink3); font-weight: 500; }
+  .grow { flex: 1; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); color: var(--ink2); font-size: 12.5px; text-decoration: none; }
+  .pill.on { color: #fff; background: linear-gradient(120deg, rgba(67, 227, 255, .3), rgba(155, 107, 255, .3)); }
+  .play { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; }
+  @media (max-width: 880px) { .play { grid-template-columns: 1fr; } }
+  .stage { padding: 14px; border-radius: var(--r); }
+  .stage::before { background: linear-gradient(135deg, rgba(67, 227, 255, .95), rgba(155, 107, 255, .55)); padding: 2px; }
+  canvas { display: block; width: 100%; height: auto; border-radius: 14px; background: #0a1030; box-shadow: 0 0 40px rgba(67, 227, 255, .18); }
+  .side { display: grid; gap: 16px; }
+  .buddy { padding: 14px; display: grid; gap: 10px; }
+  .buddy img { width: 100%; max-height: 220px; object-fit: cover; object-position: 50% 30%; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 0 30px rgba(155, 107, 255, .35); }
+  #status { color: var(--go); font-weight: 600; } #mode { color: var(--ink2); font-size: 13px; }
+  .ctl { padding: 14px; display: grid; gap: 12px; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  button, select { background: var(--panel); color: var(--text); border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; font-size: 16px; }
+  button, select { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, .07); color: var(--ink); font: 500 15px var(--font); cursor: pointer;
+    transition: transform .15s, background .15s, box-shadow .15s; }
+  button:hover { background: rgba(255, 255, 255, .13); transform: translateY(-1px); }
+  button[data-key="F9"] { border: 0; color: #05061c; font-weight: 700; background: linear-gradient(120deg, var(--cyan), var(--violet)); box-shadow: 0 0 28px rgba(155, 107, 255, .4); }
+  button[data-key="F12"] { border-color: rgba(255, 107, 129, .55); color: #ffb3c0; }
+  button:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+  select option { background: #0a1030; }
   .pad { display: grid; grid-template-columns: repeat(3, 56px); gap: 6px; justify-content: center; }
-  .pad button { height: 56px; }
-  #status { color: var(--go); }
+  .pad button { height: 56px; padding: 0; border-radius: 16px; font-size: 20px; }
+  #note { color: var(--ink3); font-size: 13px; margin: 0; }
 </style>
 </head>
 <body>
-<main>
-  <div id="status" role="status"></div>
-  <div id="mode" role="note"></div>
-  <canvas id="arena" width="576" height="504" aria-label="The web arena"></canvas>
-  <div class="row">
-    <button type="button" data-key="F9">Hand over (F9)</button>
-    <button type="button" data-key="F12">Stop (F12)</button>
-    <button type="button" data-key="r">Play again (R)</button>
-    <button type="button" id="replay" hidden>Watch Fello play (recorded)</button>
-    <select id="level" aria-label="Level"><option value="0">1</option><option value="1">2</option><option value="2">3</option></select>
+<div class="wrap">
+  <header class="top glass">
+    <div class="brand">Playfellow <i>/arena</i></div>
+    <div class="grow"></div>
+    <span class="pill">18+</span>
+    <a class="pill" id="lang-en" href="?lang=en">EN</a><a class="pill" id="lang-ar" href="?lang=ar">AR</a>
+  </header>
+  <div class="play">
+    <section class="stage glass">
+      <canvas id="arena" width="576" height="504" aria-label="The web arena"></canvas>
+    </section>
+    <aside class="side">
+      <div class="buddy glass">
+        <img id="fello" src="art/fello-neutral.jpg" alt="Fello" width="640" height="640">
+        <div id="status" role="status"></div>
+        <div id="mode" role="note"></div>
+      </div>
+      <div class="ctl glass">
+        <div class="row">
+          <button type="button" data-key="F9">Hand over (F9)</button>
+          <button type="button" data-key="F12">Stop (F12)</button>
+        </div>
+        <div class="row">
+          <button type="button" data-key="r">Play again (R)</button>
+          <button type="button" id="replay" hidden>Watch Fello play (recorded)</button>
+          <select id="level" aria-label="Level"><option value="0">1</option><option value="1">2</option><option value="2">3</option></select>
+        </div>
+        <div class="pad">
+          <span></span><button type="button" data-key="up" aria-label="Up">↑</button><span></span>
+          <button type="button" data-key="left" aria-label="Left">←</button><button type="button" data-key="down" aria-label="Down">↓</button><button type="button" data-key="right" aria-label="Right">→</button>
+        </div>
+        <p id="note">This is the web arena. The Windows app plays your own games.</p>
+      </div>
+    </aside>
   </div>
-  <div class="pad">
-    <span></span><button type="button" data-key="up" aria-label="Up">↑</button><span></span>
-    <button type="button" data-key="left" aria-label="Left">←</button><button type="button" data-key="down" aria-label="Down">↓</button><button type="button" data-key="right" aria-label="Right">→</button>
-  </div>
-  <p id="note">This is the web arena. The Windows app plays your own games.</p>
-</main>
+</div>
 <script type="module">
   import { startPage } from './page.mjs';
-  startPage(document, { language: new URLSearchParams(location.search).get('lang') === 'ar' ? 'arabic' : 'english' });
+  const arabic = new URLSearchParams(location.search).get('lang') === 'ar';
+  document.getElementById(arabic ? 'lang-ar' : 'lang-en').classList.add('on');
+  startPage(document, { language: arabic ? 'arabic' : 'english' });
 </script>
 </body>
 </html>
