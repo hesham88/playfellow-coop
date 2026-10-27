@@ -17,6 +17,7 @@ from reply import Reply, parse_reply
 
 from playfellow_coop.handover import HandOver
 from playfellow_coop.sam_marks import mark_image_full
+from playfellow_coop.skills.book import NONE as NO_SKILL
 from playfellow_coop.spatial import StuckTracker
 from playfellow_coop.voice import CommandQueue, for_the_planner
 from playfellow_coop import trace
@@ -73,6 +74,17 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     parsing = time.perf_counter()
     with timer.stage("parse_and_check"):
         reply = parse_reply(raw, parts.card, settings.max_actions_per_step)
+    skills = getattr(parts, "skills", None)
+    chosen = _chosen_skill(raw) if skills is not None else None
+    if chosen not in (None, NO_SKILL):  # the model chose a skill: it presses the keys for many steps, reading the picture itself, with no more model calls
+        with timer.stage("skill"):
+            ran = skills.run(chosen, parts, box, lambda: _skill_must_stop(parts, settings), max_steps=getattr(parts, "skill_max_steps", None))
+        if ran is not None:
+            on_event("thought", reply.thought)
+            on_event("skill", {"name": chosen, "steps": ran.steps, "stopped": ran.stopped})
+            reply.event = f"skill:{chosen}:{ran.stopped}"
+            parts.memory.add(Moment(shrink(image, MEMORY_IMAGE_WIDTH), reply.thought, (f"skill {chosen}",), reply.say))
+            return reply
     tracer = getattr(parts, "tracer", None)  # --trace: one line per request, hashes and numbers only
     if tracer is not None:
         said = {k: v for k, v in (getattr(parts.brain, "last_request", None) or {}).items() if k in trace.BRAIN_FIELDS}
@@ -100,6 +112,23 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         stuck.acted(reply.action_names())
     parts.memory.add(Moment(shrink(image, MEMORY_IMAGE_WIDTH), reply.thought, tuple(reply.action_names()), reply.say))
     return reply
+
+
+def _chosen_skill(raw: str) -> str | None:
+    from reply import extract_json
+    data = extract_json(raw)
+    name = data.get("skill") if isinstance(data, dict) else None
+    return name if isinstance(name, str) else None
+
+
+def _skill_must_stop(parts, settings) -> bool:
+    """True when a running skill has to let go at once: a stop (F12, the corner, a limit), the player has the controls, the window is not in front, or the game is over."""
+    if parts.safety.stopped or not parts.screen.in_front(settings.game_window):
+        return True
+    handover = getattr(parts, "handover", None)
+    if handover is not None and handover.human_has_controls:
+        return True
+    return bool(getattr(parts, "skill_stop", lambda: False)())
 
 
 def _apply_control(action: str, parts, handover: HandOver | None, on_event: Callable[[str, Any], None]) -> None:

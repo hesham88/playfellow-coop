@@ -93,3 +93,29 @@ def test_a_random_run_now_reports_a_progress_number_not_none():
     keys = card_keys("snake")
     episode = ar.run_episode("snake", 0, ar.RandomBrain(keys), max_turns=15, engine_dir=ENGINE)
     assert episode.progress is not None and 0.0 <= episode.progress <= 1.0
+
+
+def test_the_spend_cap_stops_before_the_next_model_call_and_sam_requests_are_counted():
+    class FakeMarker:
+        calls = 0
+
+        def __call__(self, image):
+            FakeMarker.calls += 2  # two phrases asked for this picture
+            return []
+
+    class Pricey:
+        def __init__(self, keys):
+            self.keys, self.last_request = keys, {}
+
+        def ask(self, system, text, images):
+            self.last_request = {"tokens_in": 10, "tokens_out": 5, "cost_usd": 0.03}
+            return json.dumps({"thought": "", "say": "", "actions": [self.keys[0]]})
+
+    episode = ar.run_episode("snake", 0, Pricey(card_keys("snake")), max_turns=20, max_calls=20, marker=FakeMarker(), engine_dir=ENGINE, max_usd=0.05)
+    assert episode.ended == "cap" and episode.turns <= 2
+    assert episode.extra["sam_requests"] == FakeMarker.calls and episode.cost_usd == pytest.approx(0.03 * episode.turns + FakeMarker.calls * 2.5 / 1000)
+
+
+def test_a_skill_turn_counts_as_a_valid_plan_and_records_its_steps():
+    episode = ar.run_episode("snake", 1, ar.ScriptedChooser("chase_food"), max_turns=2, max_calls=2, engine_dir=ENGINE, skills=True)
+    assert episode.won and episode.invalid_plans == 0 and episode.extra["skill_steps"] > 50

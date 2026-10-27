@@ -13,7 +13,7 @@ class Clock:
 
 
 def test_the_stage_list_is_the_one_list_and_has_no_change_test():
-    assert STAGES == ("capture", "shrink", "mark", "encode", "request", "parse_and_check", "key_down")
+    assert STAGES == ("capture", "shrink", "mark", "encode", "request", "parse_and_check", "key_down", "skill")
     assert "change_test" not in STAGES and "first_byte" not in STAGES
 
 

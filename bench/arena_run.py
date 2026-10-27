@@ -119,6 +119,13 @@ class Episode:
     extra: dict = field(default_factory=dict)
 
 
+def _sam_usd(marker, before: int) -> float:
+    if marker is None:
+        return 0.0
+    from playfellow_coop.sam_marks import USD_PER_IMAGE
+    return (marker.calls - before) * USD_PER_IMAGE
+
+
 def load_game(key: str, seed: int):
     import importlib
     module, cls = GAMES[key]
@@ -126,7 +133,7 @@ def load_game(key: str, seed: int):
 
 
 def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_calls: int = 30, settings=None, system: str | None = None,
-                marker=None, tracer=None, engine_dir: Path | None = None) -> Episode:
+                marker=None, tracer=None, engine_dir: Path | None = None, skills: bool = False, max_usd: float | None = None) -> Episode:
     import controls
     import settings as engine_settings
     from brain.prompts import system_prompt
@@ -146,28 +153,48 @@ def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_cal
         parts.marker = marker
     if tracer is not None:
         parts.tracer = tracer
+    if skills:  # the model may start a local skill (many steps from one decision); the skill reads pictures only
+        from playfellow_coop.skills.book import SkillBook
+        parts.skills = SkillBook(game_key)
+        parts.skill_stop = lambda: game.done
+        parts.skill_idle = lambda: game.step(None)
+        if hasattr(brain, "set_skills"):
+            brain.set_skills(parts.skills.names)
     sys_text = system or system_prompt(cfg, card)
+    if skills:
+        sys_text += parts.skills.system_text()
     timer = StageTimer()
     episode = Episode(game_key, seed)
     parts.safety.start()
     p0 = dict(game.progress())
     started = time.perf_counter()
+    sam_before = getattr(marker, "calls", 0) if marker is not None else 0
     while not game.done and episode.turns < max_turns and parts.safety.check() is None:
+        if max_usd is not None and episode.cost_usd + _sam_usd(marker, sam_before) >= max_usd:  # a hard money stop, checked before every model call
+            episode.ended = "cap"
+            break
         timer.begin_turn()
         try:
             reply = session.take_turn(parts, cfg, sys_text, timer)
         except Exception as error:  # a brain error ends the episode, and says so
             episode.ended = "error:" + type(error).__name__
+            episode.extra["error"] = str(error)[:300]
             break
         timer.end_turn()
         episode.turns += 1
-        if reply is None or reply.confused or not reply.steps:
+        if reply is None or reply.confused or (not reply.steps and not str(getattr(reply, "event", "")).startswith("skill:")):
             episode.invalid_plans += 1
         usage = getattr(brain, "last_request", None) or {}
         episode.tokens_in += usage.get("tokens_in") or 0
         episode.tokens_cached += usage.get("tokens_cached") or 0
         episode.tokens_out += usage.get("tokens_out") or 0
         episode.cost_usd += usage.get("cost_usd") or 0.0
+    if marker is not None:  # SAM is paid by the image: count every request made in this episode (an upper bound, failed ones included)
+        from playfellow_coop.sam_marks import USD_PER_IMAGE
+        episode.extra["sam_requests"] = marker.calls - sam_before
+        episode.cost_usd += episode.extra["sam_requests"] * USD_PER_IMAGE
+    if skills:
+        episode.extra["skill_steps"] = getattr(getattr(parts.skills, "last", None), "steps", 0)
     episode.calls = getattr(parts.safety, "ai_calls", episode.turns)
     episode.seconds = round(time.perf_counter() - started, 2)
     episode.won, episode.lost, episode.ticks = bool(game.is_won()), bool(game.is_lost()), int(game.ticks)
@@ -178,6 +205,16 @@ def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_cal
         episode.progress = None
     episode.ended = episode.ended or ("won" if episode.won else "lost" if episode.lost else "turn_cap")
     return episode
+
+
+class ScriptedChooser:
+    """A stand-in for the model that always answers with the one skill of the game: it tests the wiring and the skills for free. It is NOT a model result."""
+
+    def __init__(self, skill_name):
+        self.skill_name, self.last_request = skill_name, {}
+
+    def ask(self, system, text, images):
+        return json.dumps({"thought": "use the skill", "say": "", "actions": [], "skill": self.skill_name})
 
 
 class RandomBrain:

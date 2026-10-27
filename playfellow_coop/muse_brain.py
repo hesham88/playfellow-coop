@@ -56,6 +56,7 @@ class MuseBrain:
         if effort not in EFFORTS:
             raise ValueError(f"effort must be one of {EFFORTS}")
         self.effort = effort
+        self.max_tokens = MAX_TOKENS  # a model that always reasons spends part of this on thinking; a subclass may raise it
         self.cache_key = cache_key
         # A subclass may name another pinned address (the open-weights bench brain does); a caller cannot pass one from the command line, and an address that is
         # not https is refused. The default is the pinned Meta address.
@@ -64,6 +65,7 @@ class MuseBrain:
             raise ValueError("a brain address must be https, and the key goes as Bearer or Api-Key")
         self.auth_scheme = auth_scheme
         self.actions: tuple[str, ...] | None = None
+        self.skills: tuple[str, ...] | None = None  # the skill names the model may answer with (see playfellow_coop/skills)
         if "contributor" in model.lower():
             raise ValueError("a contributor model is trained on what it is sent; it is never used for play data")
         self.model = model
@@ -83,13 +85,19 @@ class MuseBrain:
         clean = tuple(dict.fromkeys(str(n) for n in names if isinstance(n, str) and 0 < len(n) <= 24 and "<" not in n))
         self.actions = clean or None
 
+    def set_skills(self, names) -> None:
+        """Tell the brain which skill names exist for this game; its answers may then carry one (strict schema)."""
+        self.skills = tuple(names)
+
     def _schema(self) -> dict | None:
         if not self.actions:
             return None
+        properties = {"thought": {"type": "string"}, "say": {"type": "string"},
+                      "actions": {"type": "array", "items": {"type": "string", "enum": list(self.actions)}, "maxItems": 8}}
+        if self.skills:
+            properties["skill"] = {"type": "string", "enum": list(self.skills)}
         return {"type": "json_schema", "json_schema": {"name": "plan", "strict": True, "schema": {
-            "type": "object", "additionalProperties": False, "required": ["thought", "say", "actions"],
-            "properties": {"thought": {"type": "string"}, "say": {"type": "string"},
-                           "actions": {"type": "array", "items": {"type": "string", "enum": list(self.actions)}, "maxItems": 8}}}}}
+            "type": "object", "additionalProperties": False, "required": list(properties), "properties": properties}}}
 
     @staticmethod
     def endpoint() -> str:
@@ -110,7 +118,7 @@ class MuseBrain:
             data = base64.standard_b64encode(jpeg).decode("ascii")
             content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{data}"}})
         encoded = time.perf_counter()
-        request = {"model": self.model, "max_tokens": MAX_TOKENS, "reasoning_effort": self.effort,
+        request = {"model": self.model, "max_tokens": self.max_tokens, "reasoning_effort": self.effort,
                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": content}]}
         schema = self._schema()
         if schema is not None:

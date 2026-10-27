@@ -90,6 +90,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                              "Default: sam with --brain muse, off otherwise")
     parser.add_argument("--overlay", action="store_true",
                         help="the floating command center over the game (a small chat panel: summon and hide with one key)")
+    parser.add_argument("--skills", choices=("on", "off"), default="on",
+                        help="on: the model may start a skill (a local controller that plays many steps for it) when the game has one; off: the model presses every key")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
@@ -136,7 +138,19 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
         parts.brain = MuseBrain(args.model or DEFAULT_MODEL, key, budget=DailyBudget(args.budget_file, args.daily_usd, args.daily_calls))
         if not parts.card.uses_clicks:  # key cards: the reply is held to a schema whose actions are exactly the card's keys (a click card keeps free text)
             parts.brain.set_actions(parts.card.actions)
+        attach_skills(parts, cfg, args.skills)
     return parts, cfg
+
+
+def attach_skills(parts, cfg, switch: str) -> None:
+    """Give the session a skill book when the game has one (the arena game named by the card, for example arena_snake) and the model may use it."""
+    from playfellow_coop.skills.book import SkillBook
+    from playfellow_coop.skills.registry import SKILLS
+    game = str(cfg.controls_card).removeprefix("arena_")
+    if switch == "off" or game not in SKILLS or not hasattr(parts.brain, "set_skills"):
+        return
+    parts.skills = SkillBook(game)
+    parts.brain.set_skills(parts.skills.names)
 
 
 def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: Callable = listen_for_key,
@@ -183,6 +197,7 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     if getattr(parts, "marks_source", "off") == "fake":
         say(FAKE_MARKS_BANNER)
     handover = HandOver(parts.hands, parts.safety)
+    parts.handover = handover  # a running skill lets go the moment the player takes the controls
     commands = CommandQueue()
     if getattr(parts, "typed", False):
         typed_listener(commands, input)
@@ -232,7 +247,7 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     def run_session():
         return run(parts, cfg, play_system, timer, handover, on_event=on_event, commands=commands, latency=latency)
 
-    play_system = play.system_for(parts, cfg)
+    play_system = play.system_for(parts, cfg) + (parts.skills.system_text() if getattr(parts, "skills", None) else "")
     if overlay is None:
         reason = run_session()
     else:  # the window loop owns this thread; the game session runs on another

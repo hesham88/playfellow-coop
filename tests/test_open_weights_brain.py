@@ -34,3 +34,9 @@ def test_the_default_muse_brain_is_unchanged_and_a_plain_http_address_is_refused
         MuseBrain("m", "k", base_url="http://example.test/v1")
     with pytest.raises(ValueError):
         MuseBrain("m", "k", auth_scheme="Basic")
+
+
+def test_the_open_brain_asks_for_a_bigger_answer_budget_because_its_thinking_counts_against_it():
+    from bench.open_weights_brain import OPEN_MAX_TOKENS, OpenWeightsBrain
+    from playfellow_coop.muse_brain import MAX_TOKENS, MuseBrain
+    assert OpenWeightsBrain("k").max_tokens == OPEN_MAX_TOKENS > MAX_TOKENS == MuseBrain("m", "k").max_tokens
