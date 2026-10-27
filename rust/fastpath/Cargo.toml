@@ -1,0 +1,16 @@
+[package]
+name = "pf_fastpath"
+version = "0.1.0"
+edition = "2021"
+description = "Two small hot paths for playfellow-coop, written during the hackathon: grid A* and a thumbnail change count. No dependencies."
+license = "LicenseRef-OpenRAIL-S"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
