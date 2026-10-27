@@ -1,5 +1,5 @@
-"""The first real calls: three tiny, capped, confirmed requests (Muse Spark, SAM 3.1, Muse Voice Transcribe) that save the RAW
-responses as fixtures and say, in one line each, whether the answer is shaped the way our parsers expect.
+"""The first real calls: five tiny, capped, confirmed requests (Muse Spark; SAM 3.1 twice, the second with a phrase that matches nothing;
+Muse Voice Transcribe once as a file and once over the realtime socket for at most 5 s of audio) that save the RAW answers as fixtures and say, in one line each, whether the answer is shaped the way our parsers expect.
 
 Why: the docs we built from may differ from the real service (they did for a local model engine once). Nothing builds on a
 parser until it has been checked against real text. Rules: it refuses to run without MODEL_API_KEY in the environment; it
@@ -7,26 +7,34 @@ asks for a typed YES before it spends anything; every call sits behind one Daily
 saved (a fixture is scrubbed of it even if a server echoes it back); request bodies (pictures, audio) are never saved."""
 from __future__ import annotations
 
+import io
 import json
 import os
 import subprocess
 import sys
 import tempfile
+import time
+import wave
 from pathlib import Path
+from urllib.parse import urlparse
 from typing import Callable
 
 import httpx
 
 from brain import BrainError
-from playfellow_coop import _http, muse_brain, sam_marks, voice
+from playfellow_coop import _http, muse_brain, realtime_voice, sam_marks, voice
 from playfellow_coop.budget import DailyBudget
 from playfellow_coop.muse_brain import MuseBrain
+from playfellow_coop.realtime_voice import BYTES_PER_SECOND, RealtimeTranscriber
 from playfellow_coop.sam_marks import SamMarker, answer_text, parse_boxes
 from playfellow_coop.voice import MuseVoiceTranscriber
 
 TOTAL_CAP_USD = 10.0
 MUSE_PROMPT = 'You see one frame of a small maze game. Reply with JSON only: {"thought": "...", "say": "...", "actions": []}'
 SAM_PHRASE = "coin"
+SAM_NO_MATCH_PHRASE = "a purple elephant"  # nothing like it is in the Practice Arena frame: what does the service answer then?
+REALTIME_MAX_SECONDS = 5.0  # a hard cap on the audio sent over the realtime socket (about $0.00025)
+REALTIME_CHUNK_SECONDS = 0.1  # audio is sent in 100 ms pieces, one every 100 ms: real-time pace
 SPOKEN = "grab the coins"
 FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "real"
 
@@ -87,6 +95,110 @@ def problems_voice(body: object) -> list[str]:
     return out
 
 
+def problems_sam_no_match(body: object) -> list[str]:
+    """A phrase that matches nothing: any kind of empty answer is fine; a box would mean the service finds things that are not there."""
+    if not isinstance(body, dict):
+        return ["the answer is not a JSON object"]
+    boxes = parse_boxes(answer_text(body))
+    return [f"{len(boxes)} box(es) came back for a phrase that should match nothing"] if boxes else []
+
+
+def problems_realtime(record: dict) -> list[str]:
+    """Does the socket's conversation look the way realtime_voice.py expects: JSON event frames, partials, then ONE final with a transcript?"""
+    received = record.get("body", {}).get("received", [])
+    if not received:
+        return ["no frame came back"]
+    events = [frame.get("json") for frame in received]
+    out = []
+    if any(not isinstance(event, dict) for event in events):
+        return ["a frame was not a JSON object"]
+    if any(event.get("type") == "error" or "error" in event for event in events):
+        out.append("the service sent an error frame")
+    finals = [event for event in events if event.get("final") is True]
+    if len(finals) != 1 or events[-1] is not finals[0]:
+        out.append("expected exactly one frame with final true, and it last")
+    elif not isinstance(finals[0].get("transcript"), str):
+        out.append("the final frame has no string `transcript`")
+    return out
+
+
+class RealtimeTap:
+    """Wraps the realtime socket so every frame is kept (the key replaced by ***; audio only counted, never kept), and gives the
+    conversation a wall-clock end: after `deadline` no frame is waited for."""
+
+    def __init__(self, key: str, clock=time.monotonic, deadline: float = float("inf")):
+        self._key, self._clock, self.deadline = key, clock, deadline
+        self._origin = clock()
+        self._audio: dict | None = None
+        self.record = {"path": "", "status": None, "content_type": "websocket", "body": {"sent": [], "received": []}}
+
+    def _text(self, raw: str) -> dict:
+        text = raw.replace(self._key, "***") if self._key else raw
+        try:
+            return {"json": json.loads(text)}
+        except ValueError:
+            return {"json": None, "text": text}
+
+    def _ms(self) -> int:
+        return int((self._clock() - self._origin) * 1000)
+
+    def connect(self, url: str, **options):
+        connection = realtime_voice._default_connect(url, **options)
+        self.record["path"] = urlparse(url).path
+        self._origin = self._clock()
+        self.record["status"] = getattr(getattr(connection, "response", None), "status_code", None)
+        return _TapConnection(connection, self)
+
+    def sent(self, data) -> None:
+        if isinstance(data, (bytes, bytearray)):
+            if self._audio is None:
+                self._audio = {"direction": "sent", "type": "binary", "frames": 0, "bytes": 0}
+                self.record["body"]["sent"].append(self._audio)
+            self._audio["frames"] += 1
+            self._audio["bytes"] += len(data)
+        else:
+            self.record["body"]["sent"].append({"direction": "sent", "type": "text", "at_ms": self._ms(), **self._text(data)})
+
+    def received(self, raw) -> None:
+        if isinstance(raw, (bytes, bytearray)):
+            self.record["body"]["received"].append({"direction": "received", "type": "binary", "bytes": len(raw), "at_ms": self._ms()})
+        else:
+            self.record["body"]["received"].append({"direction": "received", "type": "text", "at_ms": self._ms(), **self._text(raw)})
+
+
+class _TapConnection:
+    def __init__(self, connection, tap: RealtimeTap):
+        self._connection, self._tap = connection, tap
+
+    def send(self, data) -> None:
+        self._tap.sent(data)
+        self._connection.send(data)
+
+    def recv(self, timeout=None):
+        remaining = self._tap.deadline - self._tap._clock()
+        if remaining <= 0:
+            raise TimeoutError("the realtime call ran out of wall-clock time")
+        raw = self._connection.recv(timeout=remaining if timeout is None else min(timeout, remaining))
+        self._tap.received(raw)
+        return raw
+
+    def close(self) -> None:
+        self._connection.close()
+
+
+def realtime_chunks(wav: bytes, sleep, clock, deadline: float):
+    """At most REALTIME_MAX_SECONDS of the recording's audio, in 100 ms pieces, one piece per 100 ms (real-time pace)."""
+    with wave.open(io.BytesIO(wav)) as clip:
+        pcm = clip.readframes(clip.getnframes())
+    pcm = pcm[: int(REALTIME_MAX_SECONDS * BYTES_PER_SECOND)]
+    size = int(REALTIME_CHUNK_SECONDS * BYTES_PER_SECOND)
+    for start in range(0, len(pcm), size):
+        if clock() > deadline:
+            return
+        yield pcm[start:start + size]
+        sleep(REALTIME_CHUNK_SECONDS)
+
+
 def synth_wav(text: str = SPOKEN) -> bytes | None:
     """A short spoken WAV (mono 16-bit 24 kHz) made by this PC's own speech engine, or None when there is none. Never faked."""
     if sys.platform != "win32":
@@ -109,23 +221,50 @@ def arena_frame():
     return ArenaGame().render()
 
 
+def run_realtime(key: str, wav: bytes, budget: DailyBudget, out_dir: Path, sleep, clock, timeout: float) -> list[str]:
+    """The one capped realtime call. Returns its problems (empty = the frames look the way realtime_voice.py expects)."""
+    try:
+        with wave.open(io.BytesIO(wav)) as clip:
+            ok = (clip.getnchannels(), clip.getsampwidth(), clip.getframerate()) == (1, 2, 24000)
+    except (wave.Error, EOFError):
+        ok = False
+    if not ok:
+        return ["skipped: the recording is not mono 16-bit 24 kHz, which the realtime socket needs (nothing was invented)"]
+    deadline = clock() + REALTIME_MAX_SECONDS + timeout  # the wall-clock end of the whole call
+    tap = RealtimeTap(key, clock, deadline)
+    transcriber = RealtimeTranscriber(key, budget=budget, connect=tap.connect, timeout=timeout)
+    failed: list[str] = []
+    try:
+        transcriber.transcribe(realtime_chunks(wav, sleep, clock, deadline), keywords=["coins"])
+    except BrainError as error:
+        failed = [f"the call failed: {error.key}" + (f" ({error.detail})" if error.detail else "")]
+    if tap.record["path"]:
+        (out_dir / "realtime_voice.json").write_text(json.dumps(tap.record, indent=2, ensure_ascii=False), encoding="utf-8")
+        return failed + problems_realtime(tap.record)
+    return failed or ["no frame was recorded"]
+
+
 def run(environ: dict | None = None, confirm: Callable[[str], str] = input, say: Callable[[str], None] = print,
         out_dir: Path = FIXTURES, budget_file: Path | None = None, wav_source: Callable[[], bytes | None] = synth_wav,
-        frame_source: Callable = arena_frame, total_cap: float = TOTAL_CAP_USD) -> int:
+        frame_source: Callable = arena_frame, total_cap: float = TOTAL_CAP_USD, sleep: Callable[[float], None] = time.sleep,
+        realtime_timeout: float = 15.0, clock: Callable[[], float] = time.monotonic) -> int:
     """Returns 0 when every answer matched, 1 when something differs (read the lines), 2 when it did not run."""
     env = os.environ if environ is None else environ
     key = (env.get("MODEL_API_KEY") or "").strip()
     if not key:
         say("Refusing to run: MODEL_API_KEY is not set in the environment. Nothing was sent.")
         return 2
-    plan = (f"This makes 3 real calls and may spend up to ${total_cap:.2f} in total (in practice a few cents):\n"
+    plan = (f"This makes 5 real calls and may spend up to ${total_cap:.2f} in total (in practice under a cent):\n"
             f"  1. Muse Spark: one Practice Arena frame and a fixed prompt\n  2. SAM 3.1: the same frame and the phrase {SAM_PHRASE!r}\n"
-            f"  3. Muse Voice Transcribe: a short recording of {SPOKEN!r}\nType YES to go ahead: ")
+            f"  3. SAM 3.1 again: the same frame and the phrase {SAM_NO_MATCH_PHRASE!r}, which should match nothing\n"
+            f"  4. Muse Voice Transcribe: a short recording of {SPOKEN!r}\n"
+            f"  5. Muse Voice Transcribe over the realtime socket: the same recording, at most {REALTIME_MAX_SECONDS:g} s of it, at real-time pace\n"
+            "Type YES to go ahead: ")
     if confirm(plan).strip() != "YES":
         say("Not confirmed. Nothing was sent.")
         return 2
     budget_path = budget_file or Path(tempfile.mkdtemp(prefix="pf-smoke-")) / "budget.json"
-    budget = DailyBudget(budget_path, cap_usd=total_cap, max_calls=10)
+    budget = DailyBudget(budget_path, cap_usd=total_cap, max_calls=10)  # 5 calls are made; the dollar cap is the real limit
     out_dir.mkdir(parents=True, exist_ok=True)
     recorder = Recorder(key)
     frame = frame_source()
@@ -166,9 +305,18 @@ def run(environ: dict | None = None, confirm: Callable[[str], str] = input, say:
         sam.close()
 
     recorder.records.clear()
+    none = SamMarker(key, prompts={"reward": SAM_NO_MATCH_PHRASE}, budget=budget, client=recording_client(recorder))
+    try:
+        none(frame)
+        finish("sam no-match", "sam_no_match.json", problems_sam_no_match, none.last_error)
+    finally:
+        none.close()
+
+    recorder.records.clear()
     wav = wav_source()
     if wav is None:
         results.append(("voice", ["skipped: this PC has no speech engine to make a recording (nothing was invented)"]))
+        results.append(("realtime", ["skipped: this PC has no speech engine to make a recording (nothing was invented)"]))
     else:
         transcriber = MuseVoiceTranscriber(key, budget=budget, client=recording_client(recorder))
         try:
@@ -178,6 +326,7 @@ def run(environ: dict | None = None, confirm: Callable[[str], str] = input, say:
             finish("voice", "voice_transcribe.json", problems_voice, error)
         finally:
             transcriber.close()
+        results.append(("realtime", run_realtime(key, wav, budget, out_dir, sleep, clock, realtime_timeout)))
 
     worst = 0
     for name, problems in results:

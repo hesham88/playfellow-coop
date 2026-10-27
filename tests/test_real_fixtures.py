@@ -8,7 +8,10 @@ Each file holds one record {path, status, content_type, body}:
   muse_chat.json       POST /chat/completions   body.choices[0].message.content (the JSON reply as text), body.usage.{prompt,completion}_tokens
   sam_responses.json   POST /responses          body.output_text, or body.output[*].content[*].text holding <|box;x1=..;y1=..;x2=..;y2=..;w=..;h=..|>
   voice_transcribe.json POST /asr/transcribe    body.transcript (text), body.audioDurationMs (number)
-Not captured by first_real_calls.py (so nothing here): the realtime voice socket, error answers (401/429/5xx), a SAM answer with no match."""
+  sam_no_match.json    POST /responses          the same call with a phrase that matches nothing: no box token may be read from it
+  realtime_voice.json  the realtime socket      body.sent / body.received: every text frame in order (key replaced by ***), audio only counted;
+                                                received frames are JSON events: partials {"transcript", "final": false}, then ONE {"final": true}
+Not captured by first_real_calls.py (so nothing here): error answers (401/429/5xx)."""
 from __future__ import annotations
 
 import json
@@ -18,16 +21,19 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from playfellow_coop import smoke, voice
+from playfellow_coop import realtime_voice, smoke, voice
 from playfellow_coop.budget import DailyBudget
 from playfellow_coop.muse_brain import MuseBrain
+from playfellow_coop.realtime_voice import RealtimeTranscriber
 from playfellow_coop.sam_marks import SamMarker, answer_text, parse_boxes
 from playfellow_coop.voice import MuseVoiceTranscriber
 from reply import parse_reply
 from tests.test_session_and_handover import CARD
+from tests.test_realtime_voice import FakeRealtime
 from tests.test_smoke import go, server, wav_bytes  # noqa: F401  (server is a fixture)
 
 REAL = smoke.FIXTURES
+SAM_BODY = {"output": [{"content": [{"type": "output_text", "text": "<1f>1<|box;x1=10;y1=20;x2=58;y2=68;w=480;h=432|>"}]}]}
 
 
 def needs(name: str):
@@ -104,6 +110,64 @@ def check_voice(root: Path, server, tmp_path) -> None:  # noqa: F811
     assert spent(tmp_path) == pytest.approx(body["audioDurationMs"] / 1000.0 / 3600.0 * voice.USD_PER_HOUR)  # the provider's own length
 
 
+def check_sam_no_match(root: Path, server, tmp_path) -> None:  # noqa: F811
+    record = check_envelope(root, "sam_no_match.json", "/responses")
+    body = record["body"]
+    assert isinstance(body, dict)
+    assert parse_boxes(answer_text(body)) == [], "the service found boxes for a phrase that should match nothing"
+    server.answers["/responses"] = [body]
+    marker = SamMarker("k", prompts={"reward": smoke.SAM_NO_MATCH_PHRASE}, budget=budget(tmp_path))
+    try:
+        marks = marker(Image.new("RGB", (64, 64), (10, 90, 40)))
+    finally:
+        marker.close()
+    assert marks == [] and marker.last_error is None  # an empty answer is "nothing found", never an error
+
+
+class Replay(FakeRealtime):
+    """A fake socket that answers an endStream with the RECORDED frames, in order."""
+
+    def __init__(self, frames):
+        super().__init__()
+        self.frames = frames
+
+    def _handle(self, connection):
+        self.connections += 1
+        self.handshakes.append(json.loads(connection.recv(timeout=5)))
+        for message in connection:
+            if isinstance(message, str) and json.loads(message).get("type") == "endStream":
+                for frame in self.frames:
+                    connection.send(json.dumps(frame["json"]))
+                return
+
+
+def check_realtime(root: Path, tmp_path, monkeypatch) -> None:
+    record = load(root, "realtime_voice.json")
+    text = (root / "realtime_voice.json").read_text(encoding="utf-8")
+    assert set(record) == {"path", "status", "content_type", "body"} and record["path"].endswith("/asr/realtime")
+    assert not re.search(r"sk-[A-Za-z0-9_\-]{20,}|AIza[0-9A-Za-z_\-]{20,}", text) and not re.search(r"[A-Za-z0-9+/]{300,}", text)
+    sent, received = record["body"]["sent"], record["body"]["received"]
+    handshake = sent[0]["json"]
+    assert handshake["authorization"] == {"accessToken": "Bearer ***"}  # the key is only ever in this frame, and it is replaced
+    assert (handshake["audioEncoding"], handshake["model"], handshake["mode"]) == ("PCM_24KHZ", realtime_voice.MODEL, "PUSH_TO_TALK")
+    assert sent[-1].get("json") == {"type": "endStream"}
+    audio = [frame for frame in sent if frame["type"] == "binary"]
+    assert len(audio) == 1 and 0 < audio[0]["bytes"] <= smoke.REALTIME_MAX_SECONDS * realtime_voice.BYTES_PER_SECOND
+    assert received and all(isinstance(frame["json"], dict) for frame in received), "a frame was not a JSON object"
+    assert smoke.problems_realtime(record) == []  # one final, last, with a string transcript; no error frame
+    final = received[-1]["json"]
+    # replay the recorded frames through realtime_voice.py itself
+    with Replay(received) as replay:
+        monkeypatch.setitem(realtime_voice.ENDPOINTS, "realtime", replay.url)
+        partials = []
+        result = RealtimeTranscriber("k", budget=budget(tmp_path), timeout=5).transcribe([b"\x00\x00" * 2400] * 3, on_partial=partials.append)
+    assert result.text == final["transcript"].strip()
+    assert result.partials == [f["json"]["transcript"].strip() for f in received[:-1] if f["json"].get("transcript", "").strip()]
+    assert partials == result.partials
+    if isinstance(final.get("audioDurationMs"), (int, float)):
+        assert result.audio_ms == final["audioDurationMs"]
+
+
 # ---- on the REAL files: expected to fail until credit day, real tests after ----------------------------------------------------
 @needs("muse_chat.json")
 def test_the_real_muse_answer_is_read_costed_and_parsed_as_a_reply(server, tmp_path):  # noqa: F811
@@ -118,6 +182,16 @@ def test_the_real_sam_answer_gives_boxes_in_range_and_marks_on_the_grid(server, 
 @needs("voice_transcribe.json")
 def test_the_real_voice_answer_gives_the_transcript_and_the_providers_own_length(server, tmp_path):  # noqa: F811
     check_voice(REAL, server, tmp_path)
+
+
+@needs("sam_no_match.json")
+def test_the_real_sam_no_match_answer_reads_as_no_marks_and_no_error(server, tmp_path):  # noqa: F811
+    check_sam_no_match(REAL, server, tmp_path)
+
+
+@needs("realtime_voice.json")
+def test_the_real_realtime_frames_match_what_realtime_voice_expects(tmp_path, monkeypatch):
+    check_realtime(REAL, tmp_path, monkeypatch)
 
 
 # ---- the same checks on fake-server fixtures, now: proof that the checks themselves work ------------------------------------------
@@ -138,6 +212,43 @@ def test_self_check_sam(fake_made, server, tmp_path):  # noqa: F811
 
 def test_self_check_voice(fake_made, server, tmp_path):  # noqa: F811
     check_voice(fake_made, server, tmp_path)
+
+
+def test_self_check_sam_no_match(fake_made, server, tmp_path):  # noqa: F811
+    check_sam_no_match(fake_made, server, tmp_path)
+
+
+def test_self_check_realtime(fake_made, tmp_path, monkeypatch):
+    check_realtime(fake_made, tmp_path, monkeypatch)
+
+
+def test_self_check_the_realtime_check_catches_a_leaked_key_two_finals_and_an_error_frame(fake_made, tmp_path, monkeypatch):
+    path = fake_made / "realtime_voice.json"
+    good = json.loads(path.read_text(encoding="utf-8"))
+
+    def broken(edit):
+        record = json.loads(json.dumps(good))
+        edit(record)
+        path.write_text(json.dumps(record), encoding="utf-8")
+        with pytest.raises(AssertionError):
+            check_realtime(fake_made, tmp_path, monkeypatch)
+
+    broken(lambda r: r["body"]["sent"][0]["json"]["authorization"].update(accessToken="Bearer abcdef0123456789abcdef"))
+    broken(lambda r: r["body"]["received"].append({**r["body"]["received"][-1]}))  # a second final
+    broken(lambda r: r["body"]["received"].insert(0, {"json": {"type": "error", "message": "x"}}))
+    broken(lambda r: r["body"]["sent"].pop())  # no endStream
+    broken(lambda r: r["body"]["sent"][1].update(bytes=10**7))  # more audio than the cap allows
+    path.write_text(json.dumps(good), encoding="utf-8")
+    check_realtime(fake_made, tmp_path, monkeypatch)
+
+
+def test_self_check_the_no_match_check_catches_a_box(fake_made, server, tmp_path):  # noqa: F811
+    path = fake_made / "sam_no_match.json"
+    record = json.loads(path.read_text(encoding="utf-8"))
+    record["body"] = SAM_BODY
+    path.write_text(json.dumps(record), encoding="utf-8")
+    with pytest.raises(AssertionError):
+        check_sam_no_match(fake_made, server, tmp_path)
 
 
 def test_self_check_the_checks_catch_a_wrong_shape_a_key_and_a_picture(fake_made, server, tmp_path):  # noqa: F811
@@ -166,3 +277,18 @@ def test_self_check_the_checks_catch_a_wrong_shape_a_key_and_a_picture(fake_made
 def test_the_expected_failure_mark_is_on_only_while_the_file_is_missing():
     assert needs("nonexistent.json").args[0] is True
     assert needs("muse_chat.json").args[0] == (not (REAL / "muse_chat.json").is_file())
+
+
+def test_scrubbing_the_fixtures_does_not_break_a_single_check(fake_made, server, tmp_path, monkeypatch):  # noqa: F811
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "demo"))
+    import scrub_fixtures
+
+    assert scrub_fixtures.main([str(fake_made)]) in (0, 1)
+    assert all(scrub_fixtures.leaks(json.loads(p.read_text(encoding="utf-8"))) == [] for p in fake_made.glob("*.json"))
+    check_muse(fake_made, server, tmp_path / "m")
+    check_sam(fake_made, server, tmp_path / "s")
+    check_sam_no_match(fake_made, server, tmp_path / "n")
+    check_voice(fake_made, server, tmp_path / "v")
+    check_realtime(fake_made, tmp_path / "r", monkeypatch)
