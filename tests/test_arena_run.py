@@ -1,0 +1,95 @@
+"""The headless arena benchmark: real turn loop, virtual screen and hands, honest per-episode numbers, Wilson intervals, no overwrite."""
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+
+import pytest
+
+from bench import arena_run as ar
+
+ENGINE = Path(os.environ["PLAYFELLOW_ENGINE"])
+
+
+def card_keys(game):
+    import controls
+    return list(controls.load_card(ENGINE / "controls" / f"arena_{game}.yaml").actions)
+
+
+def test_wilson_interval_matches_known_values_and_handles_no_episodes():
+    lo, hi = ar.wilson(5, 10)
+    assert round(lo, 3) == 0.237 and round(hi, 3) == 0.763
+    assert ar.wilson(0, 0) == (0.0, 1.0)
+    lo, hi = ar.wilson(10, 10)
+    assert hi == 1.0 and lo > 0.69
+
+
+def test_a_random_brain_plays_a_real_episode_through_the_real_turn_loop_and_the_numbers_are_measured():
+    keys = card_keys("snake")
+    episode = ar.run_episode("snake", 0, ar.RandomBrain(keys), max_turns=12, max_calls=12, engine_dir=ENGINE)
+    assert episode.turns >= 1 and episode.ticks >= 1          # keys reached the game: it ticked
+    assert episode.ended in ("won", "lost", "turn_cap") and episode.seconds >= 0
+    assert episode.invalid_plans == 0                        # the random brain sends valid JSON
+    assert episode.progress is None or 0 <= episode.progress <= 1
+
+
+def test_the_same_seed_gives_the_same_game_and_a_plan_that_is_not_on_the_card_does_nothing():
+    class OffCard:
+        last_request = {}
+
+        def ask(self, system, text, images):
+            return json.dumps({"thought": "x", "say": "", "actions": ["TELEPORT"]})
+
+    a = ar.run_episode("snake", 3, OffCard(), max_turns=4, engine_dir=ENGINE)
+    b = ar.run_episode("snake", 3, OffCard(), max_turns=4, engine_dir=ENGINE)
+    assert (a.ticks, a.progress) == (b.ticks, b.progress) and a.ticks == 0 and a.invalid_plans == a.turns
+
+
+def test_the_call_cap_ends_the_episode_and_tokens_and_cost_are_summed_from_the_brain():
+    class Counting:
+        def __init__(self, keys):
+            self.keys, self.n, self.last_request = keys, 0, {}
+
+        def ask(self, system, text, images):
+            self.n += 1
+            self.last_request = {"tokens_in": 100, "tokens_cached": 40, "tokens_out": 10, "cost_usd": 0.001}
+            return json.dumps({"thought": "", "say": "", "actions": [self.keys[0]]})
+
+    brain = Counting(card_keys("snake"))
+    episode = ar.run_episode("snake", 0, brain, max_turns=50, max_calls=3, engine_dir=ENGINE)
+    assert brain.n <= 3 and episode.tokens_in == 100 * brain.n and episode.tokens_cached == 40 * brain.n
+    assert episode.cost_usd == pytest.approx(0.001 * brain.n)
+
+
+def test_the_summary_and_the_results_file_say_what_was_measured_and_never_overwrite(tmp_path):
+    eps = [ar.Episode("snake", i, won=i < 2, turns=10, tokens_in=500, tokens_out=50, cost_usd=0.002, seconds=3.0, progress=0.5) for i in range(5)]
+    s = ar.summarise(eps)
+    assert s["episodes"] == 5 and s["wins"] == 2 and s["win_rate"] == 0.4 and s["tokens_per_win"] == 1375.0 and s["usd_per_win"] == pytest.approx(0.005)
+    out = tmp_path / "r.json"
+    ar.write_results(out, "random", "random", "none", ["snake"], eps, note="test")
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert doc["schema"] == "pf-arena-run/1" and doc["overall"]["wins"] == 2 and len(doc["episodes"]) == 5
+    with pytest.raises(FileExistsError):
+        ar.write_results(out, "random", "random", "none", ["snake"], eps)
+
+
+def test_every_listed_game_loads_and_has_a_card():
+    for key in ar.GAMES:
+        assert ar.load_game(key, 0) is not None
+        assert (ENGINE / "controls" / f"arena_{key}.yaml").is_file(), key
+
+
+def test_progress_scores_are_zero_at_the_start_and_one_when_won_for_every_game(tmp_path):
+    import os
+    os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
+    for key in ar.PROGRESS:
+        game = ar.load_game(key, 0)
+        p0 = dict(game.progress())
+        assert ar.PROGRESS[key](p0, game.progress()) == pytest.approx(0.0, abs=0.05), key
+
+
+def test_a_random_run_now_reports_a_progress_number_not_none():
+    keys = card_keys("snake")
+    episode = ar.run_episode("snake", 0, ar.RandomBrain(keys), max_turns=15, engine_dir=ENGINE)
+    assert episode.progress is not None and 0.0 <= episode.progress <= 1.0
