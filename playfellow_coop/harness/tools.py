@@ -12,6 +12,7 @@ registered the same way and called the same way, so the safety rules apply to al
 """
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
@@ -76,6 +77,27 @@ class ToolRegistry:
         return "\n".join(f"- {n}: {self._tools[n].about}" + (" (may ask the player first)" if self._tools[n].needs_confirm else "") for n in self.names)
 
     @staticmethod
+    def _bad_arguments(tool: Tool, arguments: dict) -> str:
+        """Only declared arguments get through. A name that starts with an underscore is always refused (it could reach a function's own internal parameters), a tool
+        that declares a schema accepts only the names in its properties, and a plain function accepts only the parameters its signature has."""
+        for key in arguments:
+            if not isinstance(key, str) or key.startswith("_"):
+                return f"argument {str(key)[:20]!r} is not allowed"
+        props = (tool.schema or {}).get("properties")
+        if props is not None:
+            extra = [k for k in arguments if k not in props]
+            return f"undeclared argument {extra[0]!r}" if extra else ""
+        if tool.kind != "mcp":
+            try:
+                params = inspect.signature(tool.run).parameters
+            except (TypeError, ValueError):
+                return ""
+            if not any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()):
+                extra = [k for k in arguments if k not in params]
+                return f"undeclared argument {extra[0]!r}" if extra else ""
+        return ""
+
+    @staticmethod
     def _asks(tool: Tool, arguments: dict) -> bool:
         gate = tool.needs_confirm
         if callable(gate):
@@ -93,6 +115,9 @@ class ToolRegistry:
             return self._finish(Outcome(name, False, {"status": "error"}, "unknown_tool"), who)
         if self.allowed is not None and name not in self.allowed:
             return self._finish(Outcome(name, False, {"status": "error"}, "not_allowed"), who)
+        refused = self._bad_arguments(tool, arguments)
+        if refused:
+            return self._finish(Outcome(name, False, {"status": "error"}, f"blocked:{refused}"[:120]), who)
         for guard in self._guards:
             try:
                 reason = guard(tool, arguments)
@@ -143,6 +168,14 @@ class McpClient(Protocol):
     def call_tool(self, name: str, arguments: dict) -> Any: ...
 
 
+def _remote_call(client: McpClient, remote: str) -> Callable[..., Any]:
+    """Bind the remote tool's name in a closure. It must never be a parameter the model's arguments could reach: otherwise a read-only tool's name could be used
+    to call a sensitive remote tool without the approval that tool needs."""
+    def run(**arguments):
+        return client.call_tool(remote, arguments)
+    return run
+
+
 def register_mcp(registry: ToolRegistry, client: McpClient, prefix: str, read_only: set[str] | None = None) -> list[str]:
     """Offer an outside server's tools. Each is `<prefix>.<name>`; every one asks the player first unless it is named in `read_only`.
 
@@ -155,7 +188,7 @@ def register_mcp(registry: ToolRegistry, client: McpClient, prefix: str, read_on
             continue
         local = f"{prefix}.{remote}"
         about = fence("tool description", str(spec.get("description", "")), limit=160).replace("\n", " ")
-        registry.register(Tool(local, about, lambda _remote=remote, **kw: client.call_tool(_remote, kw), kind="mcp",
+        registry.register(Tool(local, about, _remote_call(client, remote), kind="mcp",
                                needs_confirm=remote not in (read_only or set()), schema=spec.get("input_schema") or {}))
         added.append(local)
     return added

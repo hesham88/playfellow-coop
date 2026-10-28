@@ -362,3 +362,21 @@ def test_the_approval_question_carries_a_cleaned_hint():
     gate = Confirmation(lambda tool, args: True)
     gate.approve("spend", {"amount": 5}, hint="Spend 5 credits for someone@example.com?")
     assert "someone@example.com" not in gate.last_hint and gate.last_hint.startswith("Spend 5 credits")
+
+
+def test_a_model_cannot_redirect_an_outside_tool_call_by_naming_a_hidden_argument():
+    """Security finding: the remote tool name must not be reachable from the model's arguments, or a read-only tool could run a sensitive one without approval."""
+    reg = ToolRegistry(confirmation=Confirmation(lambda t, a: False))
+    server = FakeMcp()
+    register_mcp(reg, server, "logs", read_only={"read_log"})
+    for sneaky in ({"_remote": "delete_log"}, {"_remote": "delete_log", "path": "a"}, {"__class__": 1}):
+        assert reg.call("logs.read_log", sneaky).error.startswith("blocked:argument")
+    assert server.called == []  # nothing reached the server
+
+
+def test_a_tool_with_a_declared_schema_or_signature_accepts_only_its_own_arguments():
+    reg = ToolRegistry()
+    reg.register(Tool("add", "add", lambda a, b: a + b))
+    assert reg.call("add", {"a": 1, "b": 2, "c": 3}).error == "blocked:undeclared argument 'c'" and reg.call("add", {"a": 1, "b": 2}).ok
+    reg.register(Tool("typed", "typed", lambda **kw: kw, schema={"properties": {"path": {"type": "string"}}}))
+    assert reg.call("typed", {"path": "x"}).ok and reg.call("typed", {"mode": "w"}).error.startswith("blocked:undeclared")

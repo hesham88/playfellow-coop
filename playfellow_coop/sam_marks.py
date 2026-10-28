@@ -23,7 +23,7 @@ from PIL import Image
 from brain import BrainError
 from grounding import Mark, draw_marks, label_marks, legend, mark_from_box
 
-from playfellow_coop import _http, fastpath
+from playfellow_coop import _http, fastpath, sam_protocol
 from playfellow_coop.budget import DailyBudget
 
 ENDPOINTS = {"sam": "https://api.meta.ai/v1"}  # pinned on purpose
@@ -35,6 +35,7 @@ USD_PER_IMAGE = 2.50 / 1000  # the published price: $2.50 per 1,000 images
 # own look, never from this table (see the plan: the planner names what it sees, SAM finds it).
 DEFAULT_PROMPTS = {"me": "blue circle", "reward": "yellow circle", "hazard": "red circle", "door": "brown box"}
 MIN_BOX = 0.015  # a box shorter than this share of the picture's shorter side is a speck (the door's knob came back as a "yellow circle"): dropped
+MIN_CONFIDENCE = 0.30  # a box the model itself is less than this sure of is dropped (only when the answer carries a confidence; none means keep)
 CELL_CHANGE = 20  # grey-level change (0-255) that makes one thumbnail cell "different"
 CELLS_NEEDED = 2  # a mover leaves one cell and enters another, so two different cells mean "something moved"
 
@@ -140,6 +141,7 @@ class SamMarker:
         self._signature: bytes | None = None
         self._marks: list[Mark] = []
         self.calls = 0  # requests attempted
+        self.last_confidences: list[float | None] = []  # the model's own confidence for each box it last kept (None: the answer had none)
         self.failed_calls = 0  # attempts that did not end in a 2xx answer (never charged)
         self._lock = threading.Lock()
         self.keyframe_latencies: list[float] = []  # seconds for a whole keyframe (all phrases together)
@@ -183,7 +185,8 @@ class SamMarker:
 
     def _find(self, kind: str, phrase: str, data: str) -> list[Mark]:
         body = {"model": MODEL, "input": [{"role": "user", "content": [
-            {"type": "input_text", "text": phrase}, {"type": "input_image", "image_url": f"data:image/png;base64,{data}"}]}]}
+            {"type": "input_text", "text": phrase}, {"type": "input_image", "image_url": f"data:image/png;base64,{data}"}]}],
+            "metadata": sam_protocol.request_metadata()}  # one_bit masks (several times smaller, we only need the boxes) and a confidence on every record; values are strings
         started = self._clock()
         with self._lock:
             self.calls += 1
@@ -208,7 +211,9 @@ class SamMarker:
         except ValueError:
             self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": False})
             raise BrainError("brain_trouble", detail="the answer was not in the expected shape") from None
-        boxes = big_enough(parse_boxes(text))
+        records = [r for r in sam_protocol.parse(text).records if r.confidence is None or r.confidence >= MIN_CONFIDENCE]
+        boxes = big_enough([((float(r.box.left), float(r.box.top), float(r.box.right), float(r.box.bottom)), (float(r.box.width), float(r.box.height))) for r in records])
+        self.last_confidences = [r.confidence for r in records]
         self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": bool(boxes), "boxes": len(boxes)})
         return [mark_from_box(kind, box, size) for box, size in boxes]
 

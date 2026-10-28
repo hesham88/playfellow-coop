@@ -104,3 +104,10 @@ def test_error_statuses_are_classified_the_way_the_docs_say():
 
 def test_the_limits_are_the_published_numbers():
     assert (sp.MAX_OBJECTS, sp.MAX_VIDEO_FRAMES, sp.MIN_BILLED_VIDEO_FRAMES) == (16, 15000, 50)
+
+
+def test_an_answer_without_object_ids_is_still_read_with_a_diagnostic_because_those_numbers_are_not_a_stable_identity():
+    text = "<0f><|box;x1=1;y1=1;x2=5;y2=5;w=100;h=100|><|mask;x=0;y=0;data=5,5,~a|><|box;x1=20;y1=20;x2=30;y2=30;w=100;h=100|><|mask;x=0;y=0;data=11,11,~b|>"
+    parsed = sp.parse(text)
+    assert [r.object_id for r in parsed.records] == [0, 1] and len(parsed.diagnostics) == 2 and all("without an object id" in d for d in parsed.diagnostics)
+    assert parsed.records[1].mask.rows == 11

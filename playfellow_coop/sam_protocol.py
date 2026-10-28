@@ -23,7 +23,7 @@ MASK_ENCODINGS = ("lossless", "one_bit")
 ENC_MARKERS = {"~": "lossless", "!": "one_bit"}
 
 FRAME = re.compile(r"<(\d+)f>")
-TOKEN = re.compile(r"<\|(box|mask|point);([^|]*?)\|>", re.S)  # a token ends at the first |>; field text never holds < > or |
+RECORD = re.compile(r"(?:(?:^|,)(\d+))?<\|box;([^|]*?)\|>(?:<\|mask;([^|]*?)\|>)?", re.S)  # id (optional), box, mask (optional); a token ends at the first |>
 _FIELD_INT = re.compile(r"-?\d+")
 
 
@@ -125,23 +125,22 @@ def parse(text: str) -> Parsed:
             result.diagnostics.append(f"line without a frame marker: {line[:40]!r}")
             continue
         frame, body = int(marker.group(1)), line[marker.end():]
-        # split the line into records at "<id><|box": the id is the integer just before a box token
-        starts = [m for m in re.finditer(r"(?:^|,)(\d+)(?=<\|box;)", body)]
-        for i, m in enumerate(starts):
-            chunk = body[m.end(): starts[i + 1].start() if i + 1 < len(starts) else len(body)]
-            tokens = list(TOKEN.finditer(chunk))
-            boxes = [t for t in tokens if t.group(1) == "box"]
-            masks = [t for t in tokens if t.group(1) == "mask"]
-            if not boxes:
-                result.diagnostics.append(f"frame {frame} object {m.group(1)}: no box")
-                continue
-            bf = _fields(boxes[0].group(2))
-            box = _box(bf)
+        # a record is `<id><|box...|><|mask...|>`; the id is the integer right before the box. An answer without ids (older fakes and some tools omit them) is still read:
+        # such records take the next free ordinal and a diagnostic says so, because the id is then not a stable identity.
+        ordinal = 0
+        for m in RECORD.finditer(body):
+            box = _box(_fields(m.group(2)))
             if box is None:
-                result.diagnostics.append(f"frame {frame} object {m.group(1)}: malformed box")
+                result.diagnostics.append(f"frame {frame}: malformed box")
                 continue
-            mask = _mask(masks[0].group(0), _fields(masks[0].group(2))) if masks else None
-            result.records.append(Record(frame, int(m.group(1)), box, mask, _conf(bf)))
+            if m.group(1) is None:
+                object_id = ordinal
+                result.diagnostics.append(f"frame {frame}: a box without an object id (read as {object_id})")
+            else:
+                object_id = int(m.group(1))
+            ordinal = max(ordinal, object_id) + 1
+            mask = _mask(m.group(3), _fields(m.group(3))) if m.group(3) is not None else None
+            result.records.append(Record(frame, object_id, box, mask, _conf(_fields(m.group(2)))))
     return result
 
 
