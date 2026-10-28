@@ -41,6 +41,11 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         return None
     with timer.stage("capture"):
         picture = parts.screen.grab(box)
+    watch = getattr(parts, "screen_watch", None)
+    seen = watch.look(picture) if watch is not None else None
+    if seen is not None and seen.skip:  # a frozen loading screen has nothing to decide: no picture is sent and the model is not asked
+        on_event("status", tr("Loading screen: waiting.", "شاشة تحميل: أنتظر."))
+        return parse_reply('{"thought": "loading screen", "say": "", "actions": []}', parts.card, settings.max_actions_per_step)
     with timer.stage("shrink"):
         image = shrink(picture, settings.image_width)
         if parts.card.uses_clicks:
@@ -66,6 +71,8 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         text = text + "\n\n" + harness.reminder()
     if harness is not None and harness.unknown_effects_note():  # a resumed session: say which actions were never confirmed
         text = text + "\n\n" + harness.unknown_effects_note()
+    if seen is not None and seen.note:  # the screen watch recognised a menu, game-over or victory screen
+        text = text + "\n\n" + seen.note
     if blocked:
         text = text + "\n\n" + blocked
     if labels:

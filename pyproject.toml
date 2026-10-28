@@ -15,7 +15,7 @@ packages = ["playfellow_coop", "playfellow_coop.overlay", "playfellow_coop.skill
 
 [tool.setuptools.package-data]
 # the optional Rust fast path: built by rust/build.ps1 into this folder; without it the Python twin runs
-playfellow_coop = ["_native/*.dll"]
+playfellow_coop = ["_native/*.dll", "universal/states/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

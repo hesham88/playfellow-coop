@@ -41,7 +41,8 @@ def features(frame: np.ndarray, previous: np.ndarray | None = None) -> np.ndarra
     return np.array([brightness, contrast, saturation, red, gold, dark, min(detail, 1.0), min(palette, 1.0), motion, edge_band], dtype=np.float32)
 
 
-# built-in centres, from what these screens generally look like; fit() replaces them with a game's own
+# built-in centres, from what these screens generally look like; fit() replaces them with a game's own. Measured on the five arena games they are NOT reliable (play frames of
+# two games read as a menu or a loading screen), so nothing acts on an unfitted classifier except the strict `looks_loading` rule below.
 DEFAULT_CENTRES = {
     "loading": np.array([0.10, 0.10, 0.20, 0.00, 0.00, 0.80, 0.03, 0.05, 0.00, 0.05], dtype=np.float32),
     "menu": np.array([0.35, 0.40, 0.40, 0.00, 0.01, 0.30, 0.30, 0.20, 0.02, 0.25], dtype=np.float32),
@@ -51,10 +52,18 @@ DEFAULT_CENTRES = {
 }
 
 
+def looks_loading(frame: np.ndarray) -> bool:
+    """The one rule that needs no learning: a nearly black picture with at most a thin bright strip (a progress bar). Games rarely look like this while they are being played."""
+    small = frame[::3, ::3].astype(np.float32)
+    top = small.max(axis=2)
+    return bool((top < 45).mean() >= 0.85 and float(grey(small).mean()) < 40.0)
+
+
 @dataclass
 class StateClassifier:
     centres: dict[str, np.ndarray] = field(default_factory=lambda: {k: v.copy() for k, v in DEFAULT_CENTRES.items()})
     scale: np.ndarray = field(default_factory=lambda: np.full(len(FEATURES), 0.25, dtype=np.float32))
+    fitted: bool = False  # True once centres were learned from this game's own pictures; the built-in centres are only a rough guide (see the note on DEFAULT_CENTRES)
 
     def fit(self, labelled: list[tuple[np.ndarray, str, np.ndarray | None]]) -> "StateClassifier":
         """Re-learn the centres from `(picture, label, previous picture or None)` examples. A label with no example keeps its built-in centre."""
@@ -63,12 +72,24 @@ class StateClassifier:
             if label not in STATES:
                 raise ValueError(f"unknown state {label!r}; use one of {STATES}")
             by_label.setdefault(label, []).append(features(frame, previous))
+        self.fitted = True
         for label, rows in by_label.items():
             self.centres[label] = np.mean(rows, axis=0)
         everything = np.concatenate([np.array(rows) for rows in by_label.values()])
         if len(everything) > 1:
             self.scale = np.maximum(everything.std(axis=0), 0.08).astype(np.float32)  # never trust a feature that did not vary in the examples to be exact
         return self
+
+    def to_json(self) -> dict:
+        return {"centres": {k: [round(float(x), 5) for x in v] for k, v in self.centres.items()}, "scale": [round(float(x), 5) for x in self.scale], "fitted": self.fitted}
+
+    @classmethod
+    def from_json(cls, data: dict) -> "StateClassifier":
+        model = cls()
+        model.centres = {k: np.array(v, dtype=np.float32) for k, v in data["centres"].items()}
+        model.scale = np.array(data["scale"], dtype=np.float32)
+        model.fitted = bool(data.get("fitted", True))
+        return model
 
     def classify(self, frame: np.ndarray, previous: np.ndarray | None = None) -> tuple[str, float]:
         """(state, confidence 0..1). Confidence is how much closer the best centre is than the second best; near 0 means "could be either"."""

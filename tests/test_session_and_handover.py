@@ -217,3 +217,66 @@ def test_f12_still_ends_the_session_while_the_player_has_the_controls():
 
     reason = session.play_session(parts, cfg, "system", StageTimer(), handover, wait=wait)
     assert reason == "stopped_f12" and parts.hands.stops >= 1 and parts.brain.calls == 0
+
+
+# ---- the screen watch -----------------------------------------------------------------------------------------
+def _loading_screen(box):
+    import numpy as np
+    frame = np.full((box.height, box.width, 3), 12, np.uint8)
+    frame[100:106, 30:90] = (200, 200, 200)
+    return Image.fromarray(frame)
+
+
+def test_a_frozen_loading_screen_is_waited_out_without_asking_the_model_but_only_twice_in_a_row():
+    from playfellow_coop.universal.watch import ScreenWatch
+    parts, cfg = make()
+    parts.screen.grab = lambda box: _loading_screen(box)
+    parts.screen_watch = ScreenWatch()
+    events = []
+    parts.safety.start()
+    replies = [session.take_turn(parts, cfg, "system", StageTimer(), lambda kind, data: events.append(kind)) for _ in range(6)]
+    assert all(reply is not None for reply in replies)
+    # turn 1 has no earlier picture to compare (asked), turns 2 and 3 are skipped, turn 4 is forced (asked), then it rests: the model is never starved
+    assert parts.brain.calls == 4 and events.count("status") == 2 and parts.hands.pressed == [MOVE] * 4
+
+
+def test_a_moving_picture_is_never_skipped_and_a_game_over_screen_is_named_in_the_prompt():
+    import numpy as np
+    from playfellow_coop.universal.watch import ScreenWatch
+    rng = np.random.default_rng(1)
+    parts, cfg = make()
+    seen_texts = []
+    parts.brain.ask = lambda system, text, images: (seen_texts.append(text), REPLY)[1]
+    noise = lambda: (rng.random((120, 160, 3)) * 160 + 40).astype(np.uint8)  # noqa: E731
+    dead = (rng.random((120, 160, 3)) * 70).astype(np.uint8)
+    dead[..., 0] = np.clip(dead[..., 0].astype(int) + 120, 0, 255)
+    dead[..., 1] //= 3
+    dead[..., 2] //= 3
+    from playfellow_coop.universal.state import StateClassifier
+    fitted = StateClassifier().fit([(noise(), "gameplay", noise()) for _ in range(8)] + [(dead, "dead", dead)] * 4)
+    parts.screen.grab = lambda box: Image.fromarray(noise())
+    parts.screen_watch = ScreenWatch(fitted)
+    parts.safety.start()
+    for _ in range(4):
+        session.take_turn(parts, cfg, "system", StageTimer())
+    assert len(seen_texts) == 4 and not any("screen looks like" in t for t in seen_texts)
+    parts.screen.grab = lambda box: Image.fromarray(dead)
+    for _ in range(2):  # the first picture after the cut moves a lot; the second is the steady game-over screen
+        session.take_turn(parts, cfg, "system", StageTimer())
+    assert "game-over screen" in seen_texts[-1]
+
+
+def test_an_unfitted_watch_never_labels_screens_it_only_waits_out_a_black_frozen_one():
+    import numpy as np
+    from playfellow_coop.universal.watch import ScreenWatch
+    rng = np.random.default_rng(3)
+    parts, cfg = make()
+    seen_texts = []
+    parts.brain.ask = lambda system, text, images: (seen_texts.append(text), REPLY)[1]
+    parts.screen.grab = lambda box: Image.fromarray((rng.random((box.height, box.width, 3)) * 255).astype(np.uint8))
+    parts.screen_watch = ScreenWatch()  # the built-in centres are a rough guide: they must not put words in the model's prompt
+    parts.safety.start()
+    for _ in range(3):
+        session.take_turn(parts, cfg, "system", StageTimer())
+    assert len(seen_texts) == 3 and not any("screen looks like" in t for t in seen_texts)
+
