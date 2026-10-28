@@ -51,17 +51,18 @@ FAKE_MARKS_BANNER = ("FAKE MARKS ON: the numbered marks come from a fake server 
                      "This is a pipeline demo, NOT SAM output. Do not use it for results, the README or the video.")
 
 
-def attach_marks(parts, mode: str, key_loader: Callable, budget_file: Path, daily_usd: float, daily_calls: int) -> None:
+def attach_marks(parts, mode: str, key_loader: Callable, budget_file: Path, daily_usd: float, daily_calls: int, track: bool = True) -> None:
     """Give the session a marker. "sam" needs a key and calls the real service; "fake" starts a local fake server and says so loudly."""
     from playfellow_coop import sam_marks
     from playfellow_coop.sam_marks import DEFAULT_PROMPTS, SamMarker
+    from playfellow_coop.tracking import Tracker
 
     budget = DailyBudget(budget_file, daily_usd, daily_calls)
     if mode == "sam":
         key = key_loader()
         if not key:
             raise BrainError("no_key")
-        parts.marker = SamMarker(key, budget=budget)
+        parts.marker = SamMarker(key, budget=budget, tracker=Tracker() if track else None)
         return
     from practice_arena.game import ArenaGame
 
@@ -69,7 +70,7 @@ def attach_marks(parts, mode: str, key_loader: Callable, budget_file: Path, dail
 
     parts.fake_sam = FakeSam(ArenaGame(), DEFAULT_PROMPTS).__enter__()  # a local server; it never talks to Meta
     sam_marks.ENDPOINTS["sam"] = parts.fake_sam.url
-    parts.marker = SamMarker("fake-key-never-sent-to-meta", budget=budget)
+    parts.marker = SamMarker("fake-key-never-sent-to-meta", budget=budget, tracker=Tracker() if track else None)
 
 
 def build(argv: list[str] | None = None, build_parts: Callable = play.build_parts, key_loader: Callable = load_muse_key):
@@ -90,6 +91,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                              "Default: sam with --brain muse, off otherwise")
     parser.add_argument("--overlay", action="store_true",
                         help="the floating command center over the game (a small chat panel: summon and hide with one key)")
+    parser.add_argument("--track", choices=("on", "off"), default="on",
+                        help="on: between SAM calls a local tracker follows what SAM found and asks SAM again only when something is lost (fewer requests, lower latency)")
     parser.add_argument("--skills", choices=("on", "off"), default="on",
                         help="on: the model may start a skill (a local controller that plays many steps for it) when the game has one; off: the model presses every key")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
@@ -122,7 +125,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
         model = args.model or (DEFAULT_MODEL if args.brain == "muse" else "builtin" if args.brain == "builtin" else None)
         parts.session_log_plan = {"path": resolve_log_path(args.log), "brain": args.brain, "model": model, "level": args.log_level}
     if marks != "off":
-        attach_marks(parts, marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls)
+        attach_marks(parts, marks, key_loader, args.budget_file.with_name("sam-budget.json"), args.daily_usd, args.daily_calls, track=args.track == "on")
     if args.brain == "local-open":
         # The engine's own LM Studio brain: loopback only, no proxy, and the memory check that refuses a model that will not fit
         # BEFORE it is loaded (the reason a laptop is not frozen). Never routed through MuseBrain, which would skip that check.

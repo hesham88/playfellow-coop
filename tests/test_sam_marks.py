@@ -251,3 +251,21 @@ def test_the_default_phrases_are_the_visible_descriptions_the_real_service_answe
     assert DEFAULT_PROMPTS["me"] == "blue circle" and DEFAULT_PROMPTS["reward"] == "yellow circle" and DEFAULT_PROMPTS["door"] == "brown box"
     for vague in ("the player character", "coin or collectible item", "door or exit", "hazard or enemy"):
         assert vague not in DEFAULT_PROMPTS.values()
+
+
+def test_the_tracker_answers_small_moves_without_asking_sam_and_sam_is_asked_again_when_a_thing_is_lost(game, fake, tmp_path):
+    from playfellow_coop.tracking import Tracker
+    m = marker(tmp_path, tracker=Tracker())
+    first = m(game.render())
+    asked = len(fake.requests)
+    assert asked == len(DEFAULT_PROMPTS) and first
+    game.press("right")
+    second = m(game.render())  # the player moved one step: the same things, a little apart
+    assert len(fake.requests) == asked and m.tracked_pictures == 1 and len(second) == len(first)
+    moved_me = [mk for mk in second if mk.kind == "me"][0]
+    before_me = [mk for mk in first if mk.kind == "me"][0]
+    assert (moved_me.x, moved_me.y) != (before_me.x, before_me.y)  # the mark followed the move
+    for key in ("left", "right") * 8:  # many changed pictures later the tracker asks SAM to confirm (refresh), so a request is made again
+        game.press(key)
+        m(game.render())
+    assert len(fake.requests) > asked

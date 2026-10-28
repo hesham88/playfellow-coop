@@ -130,9 +130,12 @@ class SamMarker:
     """marker(image) -> list[Mark]: the engine's `Parts.marker` shape."""
 
     def __init__(self, api_key: str, prompts: dict[str, str] | None = None, budget: DailyBudget | None = None,
-                 client: httpx.Client | None = None, clock: Callable[[], float] = time.perf_counter, tracer=None):
+                 client: httpx.Client | None = None, clock: Callable[[], float] = time.perf_counter, tracer=None, tracker=None):
         self._key = api_key
         self.tracer = tracer  # an optional pf-trace/1 writer
+        self.tracker = tracker  # an optional playfellow_coop.tracking.Tracker: follows what SAM found between SAM calls
+        self._found: list = []  # (kind, pixel box) of the last keyframe, handed to the tracker
+        self.tracked_pictures = 0  # pictures answered by the tracker with no SAM request
         self._png_bytes = 0
         self.prompts = dict(prompts or DEFAULT_PROMPTS)
         self.budget = budget
@@ -158,6 +161,13 @@ class SamMarker:
         signature = _signature(image)
         if not _changed(self._signature, signature):
             return list(self._marks)  # the picture has not changed: no request, no cost
+        if self.tracker is not None and self.tracker.tracks and self._marks:
+            self.tracker.update(image)
+            if not self.tracker.needs_sam():  # every tracked thing still matches well: the marks move with it, no request, no cost
+                self.tracked_pictures += 1
+                self._marks = [mark_from_box(kind, box, image.size) for kind, box in self.tracker.boxes()]
+                self._signature = signature
+                return list(self._marks)
         if self.budget is not None and self.budget.exhausted():
             self.last_error = BrainError("token_cap_day")  # nothing is sent
             return list(self._marks)
@@ -168,6 +178,7 @@ class SamMarker:
         started = self._clock()
         marks: list[Mark] = []
         failure: BrainError | None = None
+        self._found = []
         with ThreadPoolExecutor(max_workers=max(1, len(self.prompts))) as pool:  # the phrases are asked at the same time
             futures = [pool.submit(self._find, kind, phrase, data) for kind, phrase in self.prompts.items()]
             for future in futures:
@@ -181,6 +192,8 @@ class SamMarker:
             return list(self._marks)
         self.last_error = None
         self._signature, self._marks = signature, marks
+        if self.tracker is not None:
+            self.tracker.anchor(image, list(self._found))  # SAM confirmed the scene: keep each thing's look and its identity for the next pictures
         return list(marks)
 
     def _find(self, kind: str, phrase: str, data: str) -> list[Mark]:
@@ -215,6 +228,8 @@ class SamMarker:
         boxes = big_enough([((float(r.box.left), float(r.box.top), float(r.box.right), float(r.box.bottom)), (float(r.box.width), float(r.box.height))) for r in records])
         self.last_confidences = [r.confidence for r in records]
         self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": bool(boxes), "boxes": len(boxes)})
+        with self._lock:
+            self._found += [(kind, box) for box, _ in boxes]
         return [mark_from_box(kind, box, size) for box, size in boxes]
 
     def _trace(self, started: float, **fields) -> None:
