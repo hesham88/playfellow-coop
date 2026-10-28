@@ -1,13 +1,9 @@
 """Pillar 1, seeing: whatever the screen grabber hands over becomes ONE standard picture (height x width x 3, uint8, RGB).
 
 Windows grabbers return BGRA, Pillow gives RGB or RGBA, a capture card may give grey or 16-bit; windows come in every size. `normalize` turns them all into the same kind of
-matrix, so every later step (skills, the classifier, the odometry, the model's picture) can rely on it. `FrameClock` measures how fast pictures really arrive.
+matrix, so every later step (skills, the classifier, the odometry, the model's picture) can rely on it.
 """
 from __future__ import annotations
-
-import time
-from collections import deque
-from typing import Callable
 
 import numpy as np
 
@@ -92,25 +88,3 @@ def normalize(picture, size: tuple[int, int] | None = None, order: str = "rgb", 
             scale = max_side / longest
             return resize(frame, max(1, round(width * scale)), max(1, round(height * scale)))
     return frame
-
-
-class FrameClock:
-    """Measures the real picture rate and the delay of the grabber, from the times pictures arrive."""
-
-    def __init__(self, window: int = 30, clock: Callable[[], float] = time.monotonic):
-        self._clock = clock
-        self._times: deque[float] = deque(maxlen=window)
-
-    def tick(self) -> None:
-        self._times.append(self._clock())
-
-    @property
-    def fps(self) -> float:
-        if len(self._times) < 2:
-            return 0.0
-        span = self._times[-1] - self._times[0]
-        return (len(self._times) - 1) / span if span > 0 else 0.0
-
-    @property
-    def frame_ms(self) -> float:
-        return 1000.0 / self.fps if self.fps else 0.0

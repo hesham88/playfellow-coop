@@ -26,6 +26,7 @@ def nearest(frame: np.ndarray, x: int, y: int, palette: dict, default=None):
     return best
 
 
+# audit: keep (a helper of the skills' pixel reading, used by the public benchmark and tests)
 def mask_of(frame: np.ndarray, colour: Colour, tolerance: int = 24, top: int = 0) -> np.ndarray:
     """A boolean picture: True where a pixel is within `tolerance` of `colour`; rows above `top` (the score bar) are always False."""
     delta = np.abs(frame.astype(np.int16) - np.array(colour, dtype=np.int16))

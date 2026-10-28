@@ -10,7 +10,8 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from playfellow_coop.universal.actions import ActionBinder, GuardRails, NativeInput, Plan
-from playfellow_coop.universal.frames import FrameClock, normalize
+from playfellow_coop.universal.frames import normalize
+from playfellow_coop.universal.rate import FrameClock
 from playfellow_coop.universal.hud import GlyphReader, Hud, ModelReader, Region, bar_fraction, find_bars, text_regions
 from playfellow_coop.universal.motion import Odometry, moving_blobs, motion_level, shift_between
 from playfellow_coop.universal.state import GoalChecker, StateClassifier, Verdict
