@@ -85,21 +85,35 @@ def main(argv: list[str] | None = None) -> int:
         prompts = dict(pair.split("=", 1) for pair in args.phrases.split(",") if "=" in pair) or None
         marker = SamMarker(key, prompts=prompts)
 
-    episodes, spent = [], 0.0
+    config = {"brain": args.brain, "model": model, "games": games, "first_seed": args.first_seed, "seeds": args.seeds, "turns": args.turns,
+              "effort": args.effort, "marks": args.marks, "phrases": args.phrases, "skills": args.skills}
+    checkpoint = ar.Checkpoint(args.out.with_name(args.out.name + ".partial.jsonl"), config)
+    episodes = checkpoint.load()  # episodes already paid for by an earlier, stopped run of this same configuration
+    spent = sum(e.cost_usd for e in episodes)
+    done = {(e.game, e.seed) for e in episodes}
+    if episodes:
+        print(f"resuming: {len(episodes)} episodes already done, ${spent:.4f} already spent")
     for game in games:
         for seed in range(args.first_seed, args.first_seed + args.seeds):
+            if (game, seed) in done:
+                continue
             if spent + CALL_RESERVE_USD > args.max_usd:  # never start an episode that one more call could push over the cap
-                print(f"spend cap reached at ${spent:.4f}; stopping before {game} seed {seed}")
+                print(f"spend cap reached at ${spent:.4f}; stopping before {game} seed {seed} (run again with the same arguments to resume)")
                 break
             brain = make_brain(game)
             episode = ar.run_episode(game, seed, brain, max_turns=args.turns, max_calls=args.turns, marker=marker, engine_dir=args.engine,
                                      skills=args.skills, max_usd=max(0.0, args.max_usd - spent))
             spent += episode.cost_usd
             episodes.append(episode)
+            checkpoint.add(episode)
             print(f"{game:12} seed {seed}: {episode.ended:8} progress={episode.progress} turns={episode.turns} tokens={episode.tokens_in}/{episode.tokens_out} ${episode.cost_usd:.4f}")
+    if len(episodes) < len(games) * args.seeds:
+        print(f"incomplete: {len(episodes)} of {len(games) * args.seeds} episodes; no results file written, the checkpoint {checkpoint.path.name} keeps them")
+        return 3
     note = (args.note + " " if args.note else "") + f"marks={args.marks}; skills={args.skills}; effort={args.effort}; turns<= {args.turns}; the engine's public arena pack (unskinned)."
     args.out.parent.mkdir(parents=True, exist_ok=True)
     ar.write_results(args.out, f"{args.brain}-{args.marks}", args.brain, model, games, episodes, note)
+    checkpoint.finish()
     summary = ar.summarise(episodes)
     print(f"wrote {args.out}: {summary['wins']}/{summary['episodes']} wins {summary['wilson95']}, cost ${summary['cost_usd']}")
     return 0

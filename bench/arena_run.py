@@ -119,6 +119,44 @@ class Episode:
     extra: dict = field(default_factory=dict)
 
 
+def config_hash(config: dict) -> str:
+    """A short fingerprint of everything that decides what a run measures (brain, model, games, seeds, turns, marks, skills ...). Equal hash means the same experiment."""
+    import hashlib
+    return hashlib.sha256(json.dumps(config, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
+
+
+class Checkpoint:
+    """One episode per line, written the moment the episode ends, under a header holding the configuration. A run that stops (a crash, a cap, the owner) is resumed
+    with the episodes it already paid for, but only when the configuration is the same: a different experiment is refused, never silently mixed in (Harness-squared rule)."""
+
+    def __init__(self, path: Path, config: dict):
+        self.path, self.config, self.hash = Path(path), config, config_hash(config)
+
+    def load(self) -> list[Episode]:
+        if not self.path.is_file():
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(json.dumps({"schema": SCHEMA + "-checkpoint", "config": self.config, "hash": self.hash}) + "\n", encoding="utf-8", newline="\n")
+            return []
+        lines = self.path.read_text(encoding="utf-8").splitlines()
+        head = json.loads(lines[0])
+        if head.get("hash") != self.hash:
+            raise ValueError(f"{self.path.name} was started with a different configuration ({head.get('hash')} instead of {self.hash}): refusing to resume")
+        episodes = []
+        for line in lines[1:]:
+            try:
+                episodes.append(Episode(**json.loads(line)))
+            except (ValueError, TypeError):
+                continue  # a torn last line (a crash while writing) is dropped; the others are kept
+        return episodes
+
+    def add(self, episode: Episode) -> None:
+        with open(self.path, "a", encoding="utf-8", newline="\n") as handle:
+            handle.write(json.dumps(episode.__dict__) + "\n")
+
+    def finish(self) -> None:
+        self.path.unlink(missing_ok=True)
+
+
 def _sam_usd(marker, before: int) -> float:
     if marker is None:
         return 0.0
@@ -133,7 +171,8 @@ def load_game(key: str, seed: int):
 
 
 def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_calls: int = 30, settings=None, system: str | None = None,
-                marker=None, tracer=None, engine_dir: Path | None = None, skills: bool = False, max_usd: float | None = None) -> Episode:
+                marker=None, tracer=None, engine_dir: Path | None = None, skills: bool = False, max_usd: float | None = None,
+                harness_dir: Path | None = None) -> Episode:
     import controls
     import settings as engine_settings
     from brain.prompts import system_prompt
@@ -158,6 +197,10 @@ def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_cal
         parts.skills = SkillBook(game_key)
         parts.skill_stop = lambda: game.done
         parts.skill_idle = lambda: game.step(None)
+        parts.skill_won = game.is_won
+        if harness_dir is not None:  # the harness around the skill: flow with checks, session, long-term facts (kept in `harness_dir`)
+            from playfellow_coop.harness.runtime import Harness
+            parts.harness = Harness(harness_dir, game=game_key)
         if hasattr(brain, "set_skills"):
             brain.set_skills(parts.skills.names)
     sys_text = system or system_prompt(cfg, card)

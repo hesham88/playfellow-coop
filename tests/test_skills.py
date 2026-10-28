@@ -158,3 +158,62 @@ def test_a_skill_lets_go_the_moment_the_player_takes_the_controls():
     assert session._skill_must_stop(Parts, Settings) is False
     Parts.safety.stopped = True
     assert session._skill_must_stop(Parts, Settings) is True
+
+
+def test_the_harness_remembers_a_won_skill_run_tags_who_acted_and_shows_the_fact_next_time(tmp_path):
+    first = ar.run_episode("snake", 0, ar.ScriptedChooser("chase_food"), max_turns=2, max_calls=2, engine_dir=ENGINE, skills=True, harness_dir=tmp_path)
+    assert first.won and first.invalid_plans == 0
+    from playfellow_coop.harness.runtime import Harness
+    h = Harness(tmp_path, game="snake")
+    facts = [f.text for f in h.bank.recall("snake")]
+    assert any("chase_food won snake" in t for t in facts)
+    skill_events = [e for e in h.session.events if e.kind == "skill"] or [e for s in h.session.store.sessions() for e in h.session.store.events(s) if e.kind == "skill"]
+    assert skill_events and skill_events[0].who["agent"] == "skill:chase_food" and skill_events[0].who["player"] == "local"
+    assert h.memory_block().startswith("<<<DATA") and "chase_food won snake" in h.memory_block()
+
+
+def test_a_skill_that_does_nothing_ends_in_the_players_turn_with_a_spoken_line():
+    from playfellow_coop import session
+    from playfellow_coop.harness.runtime import Harness, HELP_LINE
+    import tempfile
+
+    class Idle:
+        name, about, max_steps = "idle", "does nothing at all " * 3, 5
+
+        def reset(self):
+            pass
+
+        def next_key(self, frame):
+            return None
+
+    game = ar.load_game("box_push", 0)
+    taken, said = [], []
+
+    class Hand:
+        def take_over(self):
+            taken.append(True)
+            return True
+
+    book = SkillBook("box_push")
+    book.skill = Idle()
+
+    class Parts:
+        pass
+
+    parts = Parts()
+    from controls import load_card
+    parts.card = load_card(ENGINE / "controls" / "arena_box_push.yaml")
+    parts.screen, parts.hands = ar.VirtualScreen(game), ar.VirtualHands(game, parts.card)
+
+    class Safety:
+        stopped = False
+
+    parts.safety = Safety()
+    parts.skill_idle = lambda: None  # an idle skill presses nothing, and a puzzle does not move by itself, so the picture never changes
+    book.name = "idle"
+    with tempfile.TemporaryDirectory() as folder:
+        harness = Harness(folder, game="box_push")
+        run = lambda: book.run("idle", parts, None, lambda: False)  # noqa: E731
+        outcome = harness.skill_flow(run, game.render, lambda: False).run()
+    assert outcome.status == "help" and outcome.attempts == 2 and "did not change" in outcome.reason
+    assert "your turn" in HELP_LINE

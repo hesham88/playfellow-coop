@@ -151,6 +151,8 @@ def attach_skills(parts, cfg, switch: str) -> None:
         return
     parts.skills = SkillBook(game)
     parts.brain.set_skills(parts.skills.names)
+    from playfellow_coop.harness.runtime import Harness
+    parts.harness = Harness(game=game)  # session, long-term facts, identity and the flow around a skill run (files under ~/.playfellow-coop/harness)
 
 
 def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: Callable = listen_for_key,

@@ -13,6 +13,7 @@ from brain.prompts import turn_text
 from eyes import add_grid, shrink
 from hands import CornerStop
 from memory import Moment
+from messages import tr
 from reply import Reply, parse_reply
 
 from playfellow_coop.handover import HandOver
@@ -77,8 +78,22 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     skills = getattr(parts, "skills", None)
     chosen = _chosen_skill(raw) if skills is not None else None
     if chosen not in (None, NO_SKILL):  # the model chose a skill: it presses the keys for many steps, reading the picture itself, with no more model calls
+        stop = lambda: _skill_must_stop(parts, settings)  # noqa: E731
+        run = lambda: skills.run(chosen, parts, box, stop, max_steps=getattr(parts, "skill_max_steps", None))  # noqa: E731
+        harness = getattr(parts, "harness", None)
         with timer.stage("skill"):
-            ran = skills.run(chosen, parts, box, lambda: _skill_must_stop(parts, settings), max_steps=getattr(parts, "skill_max_steps", None))
+            if harness is None:
+                ran = run()
+            else:  # the harness runs it as a flow: act, then parallel checks, a retry, and the player's turn if it is still stuck
+                outcome = harness.skill_flow(run, lambda: parts.screen.grab(box), stop).run()
+                ran = outcome.context.get("result")
+                harness.record_skill(ran, won=getattr(ran, "stopped", "") == "game_over" and bool(getattr(parts, "skill_won", lambda: None)()))
+                if outcome.status == "help":
+                    from playfellow_coop.harness.runtime import HELP_LINE, HELP_LINE_AR
+                    on_event("say", tr(HELP_LINE, HELP_LINE_AR))
+                    handover = getattr(parts, "handover", None)
+                    if handover is not None:
+                        handover.take_over()
         if ran is not None:
             on_event("thought", reply.thought)
             on_event("skill", {"name": chosen, "steps": ran.steps, "stopped": ran.stopped})

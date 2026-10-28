@@ -119,3 +119,30 @@ def test_the_spend_cap_stops_before_the_next_model_call_and_sam_requests_are_cou
 def test_a_skill_turn_counts_as_a_valid_plan_and_records_its_steps():
     episode = ar.run_episode("snake", 1, ar.ScriptedChooser("chase_food"), max_turns=2, max_calls=2, engine_dir=ENGINE, skills=True)
     assert episode.won and episode.invalid_plans == 0 and episode.extra["skill_steps"] > 50
+
+
+def test_a_checkpoint_keeps_every_finished_episode_resumes_the_same_experiment_and_refuses_a_different_one(tmp_path):
+    cfg = {"brain": "muse", "games": ["snake"], "seeds": 3, "turns": 5, "skills": True}
+    path = tmp_path / "run.partial.jsonl"
+    first = ar.Checkpoint(path, cfg)
+    assert first.load() == []
+    first.add(ar.Episode("snake", 0, won=True, cost_usd=0.004))
+    first.add(ar.Episode("snake", 1, won=False, cost_usd=0.005))
+    with open(path, "a", encoding="utf-8") as handle:
+        handle.write('{"game": "snake", "seed": 2, "wo')  # a crash while writing the third line
+    again = ar.Checkpoint(path, dict(cfg)).load()
+    assert [(e.game, e.seed) for e in again] == [("snake", 0), ("snake", 1)] and again[0].won
+    with pytest.raises(ValueError, match="different configuration"):
+        ar.Checkpoint(path, {**cfg, "turns": 9}).load()
+    assert ar.config_hash(cfg) == ar.config_hash(dict(reversed(list(cfg.items()))))  # the order of the settings does not matter
+    ar.Checkpoint(path, cfg).finish()
+    assert not path.exists()
+
+
+def test_the_runner_writes_a_checkpoint_per_episode_and_removes_it_when_the_results_file_is_complete(tmp_path, monkeypatch):
+    monkeypatch.setenv("PLAYFELLOW_ENGINE", str(ENGINE))
+    from bench import run_condition
+    out = tmp_path / "r.json"
+    assert run_condition.main(["--brain", "random", "--games", "snake", "--seeds", "2", "--turns", "4", "--out", str(out), "--engine", str(ENGINE)]) == 0
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert doc["overall"]["episodes"] == 2 and not (tmp_path / "r.json.partial.jsonl").exists()
