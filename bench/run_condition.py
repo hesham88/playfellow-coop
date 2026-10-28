@@ -23,7 +23,7 @@ CALL_RESERVE_USD = 0.012  # about two model calls with their picture marks: the 
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--brain", choices=["random", "builtin", "muse", "open"], required=True)
+    p.add_argument("--brain", choices=["random", "builtin", "scripted", "muse", "open"], required=True)
     p.add_argument("--model", default=None)
     p.add_argument("--games", default="snake")
     p.add_argument("--seeds", type=int, default=3)
@@ -33,6 +33,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--marks", choices=["none", "sam"], default="none")
     p.add_argument("--phrases", default="", help='for --marks sam: kind=phrase pairs, e.g. "me=blue circle,reward=pink circle"')
     p.add_argument("--max-usd", type=float, default=1.0)
+    p.add_argument("--looks", type=Path, default=None, help="with --skills: a folder of <game>.json looks (how the skills read a re-skinned game); needed to play the revamped games")
     p.add_argument("--skills", action="store_true", help="the model may start a local skill (one decision, many steps); the skills read pictures only")
     p.add_argument("--note", default="")
     p.add_argument("--out", type=Path, required=True)
@@ -49,6 +50,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.brain == "random":
         make_brain = lambda g: ar.RandomBrain(list(controls.load_card(args.engine / "controls" / f"arena_{g}.yaml").actions), 0)  # noqa: E731
         model = "none"
+    elif args.brain == "scripted":  # a stand-in that always answers with the game's one skill: a wiring check, NOT a model result
+        from playfellow_coop.skills.registry import SKILLS
+        make_brain = lambda g: ar.ScriptedChooser(SKILLS[g]().name)  # noqa: E731
+        model = "scripted-chooser"
     elif args.brain == "builtin":  # the engine's own no-account, no-internet brain: free
         from brain.builtin_nav import BuiltinNavBrain
         make_brain = lambda g: BuiltinNavBrain(controls.load_card(args.engine / "controls" / f"arena_{g}.yaml"), max_actions=1)  # noqa: E731
@@ -86,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
         marker = SamMarker(key, prompts=prompts)
 
     config = {"brain": args.brain, "model": model, "games": games, "first_seed": args.first_seed, "seeds": args.seeds, "turns": args.turns,
-              "effort": args.effort, "marks": args.marks, "phrases": args.phrases, "skills": args.skills}
+              "effort": args.effort, "marks": args.marks, "phrases": args.phrases, "skills": args.skills, "looks": str(args.looks or ""), "engine": str(args.engine)}
     checkpoint = ar.Checkpoint(args.out.with_name(args.out.name + ".partial.jsonl"), config)
     episodes = checkpoint.load()  # episodes already paid for by an earlier, stopped run of this same configuration
     spent = sum(e.cost_usd for e in episodes)
@@ -102,7 +107,7 @@ def main(argv: list[str] | None = None) -> int:
                 break
             brain = make_brain(game)
             episode = ar.run_episode(game, seed, brain, max_turns=args.turns, max_calls=args.turns, marker=marker, engine_dir=args.engine,
-                                     skills=args.skills, max_usd=max(0.0, args.max_usd - spent))
+                                     skills=args.skills, max_usd=max(0.0, args.max_usd - spent), looks_dir=args.looks)
             spent += episode.cost_usd
             episodes.append(episode)
             checkpoint.add(episode)

@@ -172,7 +172,7 @@ def load_game(key: str, seed: int):
 
 def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_calls: int = 30, settings=None, system: str | None = None,
                 marker=None, tracer=None, engine_dir: Path | None = None, skills: bool = False, max_usd: float | None = None,
-                harness_dir: Path | None = None) -> Episode:
+                harness_dir: Path | None = None, looks_dir: Path | None = None) -> Episode:
     import controls
     import settings as engine_settings
     from brain.prompts import system_prompt
@@ -194,7 +194,12 @@ def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_cal
         parts.tracer = tracer
     if skills:  # the model may start a local skill (many steps from one decision); the skill reads pictures only
         from playfellow_coop.skills.book import SkillBook
-        parts.skills = SkillBook(game_key)
+        from playfellow_coop.skills.looks import load_looks
+        looks = load_looks(Path(looks_dir) / f"{game_key}.json") if looks_dir else []
+        parts.skills = SkillBook(game_key, looks=looks)
+        if not parts.skills.readable(game.render()):  # a benchmark of a look the skill cannot read would measure nothing: say so instead of running it
+            raise RuntimeError(f"the {game_key} skill cannot read this game's look (looks directory: {looks_dir})")
+        episode_look = parts.skills.look_name
         parts.skill_stop = lambda: game.done
         parts.skill_idle = lambda: game.step(None)
         parts.skill_won = game.is_won
@@ -238,6 +243,7 @@ def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_cal
         episode.cost_usd += episode.extra["sam_requests"] * USD_PER_IMAGE
     if skills:
         episode.extra["skill_steps"] = getattr(getattr(parts.skills, "last", None), "steps", 0)
+        episode.extra["look"] = parts.skills.look_name
     episode.calls = getattr(parts.safety, "ai_calls", episode.turns)
     episode.seconds = round(time.perf_counter() - started, 2)
     episode.won, episode.lost, episode.ticks = bool(game.is_won()), bool(game.is_lost()), int(game.ticks)
