@@ -19,6 +19,14 @@ NUMPY_ALLOWED = frozenset({"array", "asarray", "zeros", "ones", "full", "arange"
                            "argsort", "sort", "where", "sign", "floor", "ceil", "round", "exp", "log", "sin", "cos", "arctan2", "hypot", "minimum", "maximum", "cumsum", "diff",
                            "concatenate", "stack", "reshape", "transpose", "flatnonzero", "nonzero", "count_nonzero", "any", "all", "isnan", "isfinite", "unique", "bincount",
                            "float32", "float64", "int32", "int64", "uint8", "bool_", "pi", "inf", "nan", "ndarray", "linalg"})
+# The other three modules get the same treatment: `dataclasses.sys.modules[...]` and `typing.sys` reach the real os, so a skill sees only a proxy holding these names.
+MODULE_ALLOWED = {
+    "numpy": NUMPY_ALLOWED,
+    "math": frozenset({"pi", "e", "inf", "nan", "tau", "sqrt", "sin", "cos", "tan", "atan", "atan2", "asin", "acos", "exp", "log", "log2", "log10", "pow", "floor", "ceil", "fabs", "hypot",
+                       "isnan", "isinf", "isfinite", "copysign", "fmod", "trunc", "degrees", "radians", "dist", "prod", "gcd", "sinh", "cosh", "tanh", "isclose"}),
+    "typing": frozenset({"Any", "Optional", "Union", "List", "Dict", "Tuple", "Set", "Sequence", "Iterable", "Callable", "Final", "ClassVar", "Literal", "TypedDict", "NamedTuple"}),
+    "dataclasses": frozenset({"dataclass", "field"}),
+}
 MAX_NODES = 800
 REQUIRED_CLASS = "GeneratedArenaSkill"
 REQUIRED_METHOD = "compute_action"
@@ -31,7 +39,7 @@ class SkillRejected(Exception):
 class _Gate(ast.NodeVisitor):
     def __init__(self) -> None:
         self.nodes = 0
-        self.numpy_names: set[str] = set()
+        self.module_names: dict[str, str] = {}  # alias -> module, for the allow-listed modules
 
     def visit(self, node: ast.AST):
         self.nodes += 1
@@ -43,28 +51,28 @@ class _Gate(ast.NodeVisitor):
         for alias in node.names:
             if alias.name.split(".")[0] not in ALLOWED_MODULES:
                 raise SkillRejected(f"import of '{alias.name}' is not allowed; only {sorted(ALLOWED_MODULES)} may be imported")
-            if alias.name.startswith("numpy."):
-                raise SkillRejected("import numpy itself; its submodules are not importable")
-            if alias.name == "numpy":
-                self.numpy_names.add(alias.asname or "numpy")
+            if "." in alias.name:
+                raise SkillRejected(f"import {alias.name.split('.')[0]} itself; its submodules are not importable")
+            self.module_names[alias.asname or alias.name] = alias.name
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
         if node.level or not node.module or node.module.split(".")[0] not in ALLOWED_MODULES:
             raise SkillRejected(f"import from '{node.module}' is not allowed; only {sorted(ALLOWED_MODULES)} may be imported")
-        if node.module == "numpy":
-            for alias in node.names:
-                if alias.name not in NUMPY_ALLOWED:
-                    raise SkillRejected(f"numpy.{alias.name} is not allowed")
-        elif node.module.startswith("numpy."):
-            raise SkillRejected("import numpy itself; its submodules are not importable")
+        if "." in node.module:
+            raise SkillRejected(f"import {node.module.split('.')[0]} itself; its submodules are not importable")
+        for alias in node.names:
+            if alias.name not in MODULE_ALLOWED[node.module]:
+                raise SkillRejected(f"{node.module}.{alias.name} is not allowed")
         self.generic_visit(node)
 
     def visit_Attribute(self, node: ast.Attribute):
         if node.attr.startswith("__") or node.attr.endswith("__") or node.attr in BANNED_ATTRS:
             raise SkillRejected(f"attribute '{node.attr}' is not allowed")
-        if isinstance(node.value, ast.Name) and node.value.id in self.numpy_names and node.attr not in NUMPY_ALLOWED:
-            raise SkillRejected(f"numpy.{node.attr} is not allowed")
+        if isinstance(node.value, ast.Name) and node.value.id in self.module_names:
+            module = self.module_names[node.value.id]
+            if node.attr not in MODULE_ALLOWED[module] and not (module == "numpy" and node.attr == "linalg"):
+                raise SkillRejected(f"{module}.{node.attr} is not allowed")
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name):

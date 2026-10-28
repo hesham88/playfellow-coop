@@ -263,3 +263,21 @@ def test_numpy_is_an_allow_list_in_both_layers_so_file_touching_functions_are_ab
     boot = "import sys; sys.path.insert(0, %r); exec(compile(open(%r).read(), 'w', 'exec'))" % (str(pathlib.Path(numpy.__file__).parent.parent), worker)  # -I hides the user site where numpy may live
     out = subprocess.run([sys.executable, "-I", "-c", boot], input=lines, capture_output=True, text=True, timeout=60).stdout.splitlines()
     assert json.loads(out[0]) == {"ready": True} and json.loads(out[1]) == {"action": {"v": "absent"}}
+
+
+def test_every_allowed_module_is_a_proxy_so_dataclasses_sys_and_typing_sys_cannot_reach_os():
+    from playfellow_coop.skillsmith.ast_gate import check
+    skeleton = "{imp}\nclass GeneratedArenaSkill:\n    def compute_action(self, obs):\n        return {use}\n"
+    for imp, use in (("import dataclasses", "dataclasses.sys"), ("import typing", "typing.sys"), ("import math", "math.sys"), ("import dataclasses as d", "d.inspect"),
+                     ("from dataclasses import sys", "sys"), ("import typing.io", "1"), ("from math import fsum_missing", "1")):
+        assert not check(skeleton.format(imp=imp, use=use))[0], (imp, use)
+    assert check(skeleton.format(imp="import math\nfrom dataclasses import dataclass, field\nfrom typing import Any", use="math.sqrt(2.0)"))[0]
+    # the worker returns a namespace, never the module: nothing but the listed names exists on it
+    import json, pathlib, subprocess, sys
+    import playfellow_coop.skillsmith as pkg
+    nl = chr(10)
+    code = nl.join(["import dataclasses", "class GeneratedArenaSkill:", "    def compute_action(self, obs):", "        try:", "            dataclasses.sys", "            return {'v': 'reached'}",
+                    "        except AttributeError:", "            return {'v': 'absent'}", ""])
+    worker = str(pathlib.Path(pkg.__file__).parent / "_worker.py")
+    out = subprocess.run([sys.executable, "-I", worker], input=json.dumps({"code": code}) + nl + json.dumps({"obs": {}}) + nl, capture_output=True, text=True, timeout=60).stdout.splitlines()
+    assert json.loads(out[1]) == {"action": {"v": "absent"}}

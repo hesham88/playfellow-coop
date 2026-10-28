@@ -18,30 +18,39 @@ NUMPY_ALLOWED = ["array", "asarray", "zeros", "ones", "full", "arange", "linspac
                  "argsort", "sort", "where", "sign", "floor", "ceil", "round", "exp", "log", "sin", "cos", "arctan2", "hypot", "minimum", "maximum", "cumsum", "diff",
                  "concatenate", "stack", "reshape", "transpose", "flatnonzero", "nonzero", "count_nonzero", "any", "all", "isnan", "isfinite", "unique", "bincount",
                  "float32", "float64", "int32", "int64", "uint8", "bool_", "pi", "inf", "nan", "ndarray"]
-_proxy = None
+ALLOWED_MEMBERS = {
+    "numpy": NUMPY_ALLOWED,
+    "math": ["pi", "e", "inf", "nan", "tau", "sqrt", "sin", "cos", "tan", "atan", "atan2", "asin", "acos", "exp", "log", "log2", "log10", "pow", "floor", "ceil", "fabs", "hypot",
+             "isnan", "isinf", "isfinite", "copysign", "fmod", "trunc", "degrees", "radians", "dist", "prod", "gcd", "sinh", "cosh", "tanh", "isclose"],
+    "typing": ["Any", "Optional", "Union", "List", "Dict", "Tuple", "Set", "Sequence", "Iterable", "Callable", "Final", "ClassVar", "Literal", "TypedDict", "NamedTuple"],
+    "dataclasses": ["dataclass", "field"],
+}
+_proxies = {}
 
 
-def numpy_proxy():
-    global _proxy
-    if _proxy is None:
+def proxy_of(name):
+    """The skill never receives a real module (dataclasses.sys.modules reaches os): only a namespace holding the listed members."""
+    if name not in _proxies:
+        import importlib
         import types
-        import numpy
-        _proxy = types.SimpleNamespace(**{n: getattr(numpy, n) for n in NUMPY_ALLOWED}, linalg=types.SimpleNamespace(norm=numpy.linalg.norm))
-    return _proxy
+        module = importlib.import_module(name)
+        members = {n: getattr(module, n) for n in ALLOWED_MEMBERS[name] if hasattr(module, n)}
+        if name == "numpy":
+            members["linalg"] = types.SimpleNamespace(norm=module.linalg.norm)
+        _proxies[name] = types.SimpleNamespace(**members)
+    return _proxies[name]
 
 
 def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
     if level or name.split(".")[0] not in ALLOWED:
         raise ImportError("import of " + name + " is not allowed")
-    if name.split(".")[0] == "numpy":
-        if name != "numpy":
-            raise ImportError("import numpy itself; its submodules are not importable")
-        proxy = numpy_proxy()
-        for item in fromlist or ():
-            if not hasattr(proxy, item):
-                raise ImportError("numpy." + item + " is not allowed")
-        return proxy
-    return real_import(name, globals, locals, fromlist, level)
+    if name not in ALLOWED_MEMBERS:
+        raise ImportError("import " + name.split(".")[0] + " itself; its submodules are not importable")
+    proxy = proxy_of(name)
+    for item in fromlist or ():
+        if not hasattr(proxy, item):
+            raise ImportError(name + "." + item + " is not allowed")
+    return proxy
 
 
 def main():
