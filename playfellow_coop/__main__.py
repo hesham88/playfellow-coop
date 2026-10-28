@@ -126,7 +126,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     if args.screen_watch == "on":
         from playfellow_coop.universal.state_fit import load_state_classifier
         from playfellow_coop.universal.watch import ScreenWatch
-        parts.screen_watch = ScreenWatch(load_state_classifier(str(cfg.controls_card).removeprefix("arena_")))  # a classifier fitted to this game when one is shipped
+        parts.screen_watch = ScreenWatch(load_state_classifier(str(cfg.controls_card).removeprefix("arena_")), eog_fps=1.0 / max(0.05, float(cfg.look_every_seconds)))  # a classifier fitted to this game when one is shipped
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise

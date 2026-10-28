@@ -279,11 +279,27 @@ def summarise(episodes: list[Episode]) -> dict:
             "skill_steps_total": sum(e.extra.get("skill_steps", 0) for e in episodes)}
 
 
+def honesty(brain_name: str, episodes: list[Episode], clock: str = "paused") -> dict:
+    """Who played, which rung of the ladder this is, and how sure the progress number is (evalkit): the fields a report needs next to every win rate."""
+    from playfellow_coop.evalkit import attribution, ladder, stats
+    ticks = sum(e.ticks for e in episodes)
+    skill = sum(int(e.extra.get("skill_steps", 0)) for e in episodes)
+    is_model = brain_name in ("muse", "open")
+    origins = ["human_skill"] * skill + ["model_chunk" if is_model else "fallback"] * max(0, ticks - skill)
+    shares = attribution.origin_share(origins) if origins else attribution.Shares()
+    rung = ladder.rung_for(is_model, skill > 0, False, clock)
+    progress = {g: [e.progress or 0.0 for e in episodes if e.game == g] for g in sorted({e.game for e in episodes})}
+    point, low, high = stats.stratified_bootstrap(progress, reps=1000) if any(progress.values()) else (0.0, 0.0, 0.0)
+    return {"rung": {"key": rung.key, "number": rung.number, "title": rung.title, "clock": clock}, "label": attribution.label(shares) if skill or is_model else "[Local floor: no model]",
+            "action_share": {"human_skill": shares.human_skill, "model_skill": shares.model_skill, "model_chunk": shares.model_chunk, "fallback": shares.fallback},
+            "progress_iqm": {"estimate": round(point, 4), "ci95": [round(low, 4), round(high, 4)]}}
+
+
 def write_results(path: Path, condition: str, brain_name: str, model: str, games: list[str], episodes: list[Episode], note: str = "") -> None:
     by_game = {g: summarise([e for e in episodes if e.game == g]) for g in games}
     if any(e.extra.get("skill_steps", 0) > 0 for e in episodes):
         note = (note + " " if note else "") + "REPORTING: some wins used local skills that the model started; report them as the system winning with local help, not as the model alone."
     doc = {"schema": SCHEMA, "written": datetime.now().astimezone().isoformat(timespec="seconds"), "condition": condition, "brain": brain_name, "model": model,
-           "note": note, "overall": summarise(episodes), "by_game": by_game, "episodes": [e.__dict__ for e in episodes]}
+           "note": note, "overall": summarise(episodes), "by_game": by_game, "honesty": honesty(brain_name, episodes), "episodes": [e.__dict__ for e in episodes]}
     with open(path, "x", encoding="utf-8", newline="\n") as handle:  # never overwrites a results file
         json.dump(doc, handle, indent=1)

@@ -146,6 +146,8 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     if stuck is not None:
         stuck.acted(reply.action_names())
     parts.memory.add(Moment(shrink(image, MEMORY_IMAGE_WIDTH), reply.thought, tuple(reply.action_names()), reply.say))
+    if watch is not None:
+        watch.note_action(1.0 if reply.steps else 0.0)  # the next look can tell whether the picture answered these keys
     return reply
 
 

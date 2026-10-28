@@ -159,3 +159,20 @@ def test_results_say_when_wins_had_local_skill_help_so_nobody_reports_them_as_th
     plain = tmp_path / "p.json"
     ar.write_results(plain, "c", "b", "m", ["snake"], [alone])
     assert "local help" not in json.loads(plain.read_text(encoding="utf-8"))["note"]
+
+
+def test_results_carry_the_rung_the_action_shares_and_an_interval_for_progress(tmp_path):
+    helped = [ar.Episode("snake", i, won=True, progress=1.0, ticks=100, extra={"skill_steps": 90}) for i in range(3)]
+    out = tmp_path / "h.json"
+    ar.write_results(out, "c", "muse", "m", ["snake"], helped)
+    honest = json.loads(out.read_text(encoding="utf-8"))["honesty"]
+    assert honest["rung"]["key"] == "human_skills" and honest["label"] == "[Assisted: Human Local Skill]" and abs(honest["action_share"]["human_skill"] - 0.9) < 1e-9
+    assert honest["progress_iqm"]["estimate"] == 1.0 and honest["progress_iqm"]["ci95"][0] <= 1.0
+    raw = [ar.Episode("snake", i, progress=0.2, ticks=40) for i in range(3)]
+    out2 = tmp_path / "r.json"
+    ar.write_results(out2, "c", "muse", "m", ["snake"], raw)
+    honest = json.loads(out2.read_text(encoding="utf-8"))["honesty"]
+    assert honest["rung"]["key"] == "raw_paused" and honest["label"] == "[Model Alone]" and honest["action_share"]["model_chunk"] == 1.0
+    out3 = tmp_path / "f.json"
+    ar.write_results(out3, "c", "random", "none", ["snake"], raw)
+    assert json.loads(out3.read_text(encoding="utf-8"))["honesty"]["label"] == "[Local floor: no model]"

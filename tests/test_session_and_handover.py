@@ -280,3 +280,27 @@ def test_an_unfitted_watch_never_labels_screens_it_only_waits_out_a_black_frozen
         session.take_turn(parts, cfg, "system", StageTimer())
     assert len(seen_texts) == 3 and not any("screen looks like" in t for t in seen_texts)
 
+
+
+def test_when_the_picture_stops_answering_the_keys_the_model_is_told_the_match_may_be_over():
+    import numpy as np
+    from playfellow_coop.universal.watch import END_NOTE, ScreenWatch
+    parts, cfg = make()
+    texts = []
+    parts.brain.ask = lambda system, text, images: (texts.append(text), REPLY)[1]
+    state = {"turn": 0}
+
+    def grab(box):
+        frame = np.full((box.height, box.width, 3), (60, 90, 120), np.uint8)
+        x = (10 + 9 * min(state["turn"], 8)) % (box.width - 20)  # the avatar moves for eight turns, then the picture freezes
+        frame[box.height // 2:box.height // 2 + 12, x:x + 12] = (250, 80, 80)
+        state["turn"] += 1
+        return Image.fromarray(frame)
+
+    parts.screen.grab = grab
+    parts.screen_watch = ScreenWatch(eog_fps=3.0)
+    parts.safety.start()
+    for _ in range(40):
+        session.take_turn(parts, cfg, "system", StageTimer())
+    assert END_NOTE in texts[-1] and END_NOTE not in texts[3]
+    assert parts.screen_watch.end_candidates > 0
