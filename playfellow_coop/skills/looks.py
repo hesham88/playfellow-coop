@@ -43,9 +43,6 @@ class Look:
                     best, best_gap = role, gap
         return best
 
-    def to_json(self) -> dict:
-        return {"name": self.name, "radius": self.radius, "protos": {r: [list(map(float, p)) for p in ps] for r, ps in self.protos.items()}}
-
     @staticmethod
     def from_json(data: dict) -> "Look":
         return Look(str(data["name"]), {r: [tuple(p) for p in ps] for r, ps in data["protos"].items()}, float(data.get("radius", 36.0)))

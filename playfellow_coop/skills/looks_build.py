@@ -33,5 +33,9 @@ def calibrate(name: str, samples: dict[str, list], radius: float | None = None, 
     return look
 
 
+def look_to_json(look: Look) -> dict:
+    return {"name": look.name, "radius": look.radius, "protos": {r: [list(map(float, p)) for p in ps] for r, ps in look.protos.items()}}
+
+
 def save_looks(path: Path, looks: list[Look]) -> None:
-    Path(path).write_text(json.dumps([lk.to_json() for lk in looks], indent=1), encoding="utf-8", newline="\n")
+    Path(path).write_text(json.dumps([look_to_json(lk) for lk in looks], indent=1), encoding="utf-8", newline="\n")
