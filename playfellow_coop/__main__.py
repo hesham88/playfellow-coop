@@ -99,6 +99,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                         help="on: the model may start a skill (a local controller that plays many steps for it) when the game has one; off: the model presses every key")
     parser.add_argument("--cua", action="store_true",
                         help="with --brain muse: use the native computer tool (the model answers with clicks and key presses on the screenshot; safety checks wait for your approve/decline)")
+    parser.add_argument("--input", choices=("pydirectinput", "scancode"), default="pydirectinput",
+                        help="scancode (Windows): press hardware scan codes with the extended flag and absolute or relative mouse, the way games read input; the same safety rules apply")
     parser.add_argument("--screen-watch", choices=("on", "off"), default="on",
                         help="on: a frozen loading screen is waited out without asking the model, and menu, game-over and victory screens are named in the prompt")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
@@ -127,6 +129,11 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
         from playfellow_coop.universal.state_fit import load_state_classifier
         from playfellow_coop.universal.watch import ScreenWatch
         parts.screen_watch = ScreenWatch(load_state_classifier(str(cfg.controls_card).removeprefix("arena_")), eog_fps=1.0 / max(0.05, float(cfg.look_every_seconds)))  # a classifier fitted to this game when one is shipped
+    if args.input == "scancode" and not args.dry_run:
+        from playfellow_coop.universal.scan_backend import DirectInputCompat, available
+        if not available():
+            raise BrainError("brain_trouble", detail="--input scancode needs Windows")
+        parts.hands.backend = DirectInputCompat()  # the engine's own hands and safety rules, now pressing scan codes
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise
