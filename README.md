@@ -78,7 +78,7 @@ It plays and talks with you. It does not judge or score the player. The demo use
 
 ## Contributing
 
-This is an open project, and the maintainer reviews every contribution in depth: [CONTRIBUTING.md](CONTRIBUTING.md) says how, [SECURITY.md](SECURITY.md) says how to report a vulnerability privately, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) says how we treat each other. Because the hackathon requires that the submission was made during the event by approved participants, **no outside change is merged before the judging ends on 9 November 2026**; issues and pull requests are welcome to open and discuss before then. The open research behind this work, and what is done and not done, is in [docs/research-roadmap.md](docs/research-roadmap.md).
+This is an open project, and the maintainer reviews every contribution in depth: [CONTRIBUTING.md](CONTRIBUTING.md) says how, [SECURITY.md](SECURITY.md) says how to report a vulnerability privately, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) says how we treat each other. Because the hackathon requires that the submission was made during the event by approved participants, **no outside change is merged before the judging ends on 9 November 2026**; issues and pull requests are welcome to open and discuss before then. The open research behind this work, and what is done and not done, is in [docs/research-roadmap.md](docs/research-roadmap.md); the three-part design (open model, open framework, private platform), the loop, the equations and the checks for every piece are in [docs/gegaa.md](docs/gegaa.md).
 
 **Judges:** see the access note in the submission.
 
