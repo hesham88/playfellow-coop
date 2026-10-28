@@ -239,3 +239,27 @@ def test_prompt_helpers():
     prompt = build_prompt("snake", "goal", trace(200), ["lesson one"], "bad import")
     assert "lesson one" in prompt and "bad import" in prompt and prompt.count('"self"') <= 61 and json.loads(prompt.split("Recorded observations (raw, in order):\n")[1].split("\n\n")[0])
     assert os.name  # keeps the import used
+
+
+def test_numpy_is_an_allow_list_in_both_layers_so_file_touching_functions_are_absent():
+    from playfellow_coop.skillsmith.ast_gate import check
+    from playfellow_coop.skillsmith.sandbox import SandboxedSkill
+    body = "import numpy as np\nclass GeneratedArenaSkill:\n    def compute_action(self, obs):\n        return {}\n"
+    for bad in ("np.memmap('x', mode='w+')", "np.loadtxt('x')", "np.genfromtxt('x')", "np.fromregex('x', 'a', float)", "np.DataSource()"):
+        ok, why = check(body.replace("return {}", f"return {bad}"))
+        assert not ok and "not allowed" in why, bad
+    assert not check("from numpy import memmap\nclass GeneratedArenaSkill:\n    def compute_action(self, obs):\n        return {}\n")[0]
+    assert not check("import numpy.lib.format\nclass GeneratedArenaSkill:\n    def compute_action(self, obs):\n        return {}\n")[0]
+    assert check(body.replace("return {}", "return {'x': float(np.clip(np.mean(np.array([1.0, 2.0])), 0, 1))}"))[0]
+    # the second layer: code that skipped the gate (a gate bug) still cannot reach the real module from inside the worker
+    import json, subprocess, sys
+    import pathlib, playfellow_coop.skillsmith as pkg
+    NL = chr(10)
+    code = NL.join(["import numpy as np", "class GeneratedArenaSkill:", "    def compute_action(self, obs):", "        try:", "            np.memmap",
+                    "            return {'v': 'reached'}", "        except AttributeError:", "            return {'v': 'absent'}", ""])
+    lines = json.dumps({"code": code}) + NL + json.dumps({"obs": {}}) + NL
+    import numpy
+    worker = str(pathlib.Path(pkg.__file__).parent / "_worker.py")
+    boot = "import sys; sys.path.insert(0, %r); exec(compile(open(%r).read(), 'w', 'exec'))" % (str(pathlib.Path(numpy.__file__).parent.parent), worker)  # -I hides the user site where numpy may live
+    out = subprocess.run([sys.executable, "-I", "-c", boot], input=lines, capture_output=True, text=True, timeout=60).stdout.splitlines()
+    assert json.loads(out[0]) == {"ready": True} and json.loads(out[1]) == {"action": {"v": "absent"}}

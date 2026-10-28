@@ -13,6 +13,12 @@ BANNED_NAMES = frozenset({"eval", "exec", "compile", "open", "input", "getattr",
                           "exit", "quit", "memoryview", "super", "type", "object", "classmethod", "staticmethod", "property", "print"})
 BANNED_ATTRS = frozenset({"system", "popen", "environ", "getenv", "load", "loads", "dump", "dumps", "read", "write", "open", "save", "savetxt", "fromfile", "tofile", "ctypeslib",
                           "f2py", "testing", "distutils", "lib", "ctypes", "core", "__class__"})
+# numpy is an allow-list, not a deny-list: the real module reaches files (memmap, loadtxt, genfromtxt, fromregex, DataSource ...) by more names than any list can keep up with. The worker
+# hands the skill a proxy holding exactly these names (the same set), and the gate refuses any other attribute on a numpy alias, so a gap in one layer is closed by the other.
+NUMPY_ALLOWED = frozenset({"array", "asarray", "zeros", "ones", "full", "arange", "linspace", "clip", "sqrt", "abs", "dot", "mean", "median", "std", "sum", "min", "max", "argmax", "argmin",
+                           "argsort", "sort", "where", "sign", "floor", "ceil", "round", "exp", "log", "sin", "cos", "arctan2", "hypot", "minimum", "maximum", "cumsum", "diff",
+                           "concatenate", "stack", "reshape", "transpose", "flatnonzero", "nonzero", "count_nonzero", "any", "all", "isnan", "isfinite", "unique", "bincount",
+                           "float32", "float64", "int32", "int64", "uint8", "bool_", "pi", "inf", "nan", "ndarray", "linalg"})
 MAX_NODES = 800
 REQUIRED_CLASS = "GeneratedArenaSkill"
 REQUIRED_METHOD = "compute_action"
@@ -25,6 +31,7 @@ class SkillRejected(Exception):
 class _Gate(ast.NodeVisitor):
     def __init__(self) -> None:
         self.nodes = 0
+        self.numpy_names: set[str] = set()
 
     def visit(self, node: ast.AST):
         self.nodes += 1
@@ -36,16 +43,28 @@ class _Gate(ast.NodeVisitor):
         for alias in node.names:
             if alias.name.split(".")[0] not in ALLOWED_MODULES:
                 raise SkillRejected(f"import of '{alias.name}' is not allowed; only {sorted(ALLOWED_MODULES)} may be imported")
+            if alias.name.startswith("numpy."):
+                raise SkillRejected("import numpy itself; its submodules are not importable")
+            if alias.name == "numpy":
+                self.numpy_names.add(alias.asname or "numpy")
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom):
         if node.level or not node.module or node.module.split(".")[0] not in ALLOWED_MODULES:
             raise SkillRejected(f"import from '{node.module}' is not allowed; only {sorted(ALLOWED_MODULES)} may be imported")
+        if node.module == "numpy":
+            for alias in node.names:
+                if alias.name not in NUMPY_ALLOWED:
+                    raise SkillRejected(f"numpy.{alias.name} is not allowed")
+        elif node.module.startswith("numpy."):
+            raise SkillRejected("import numpy itself; its submodules are not importable")
         self.generic_visit(node)
 
     def visit_Attribute(self, node: ast.Attribute):
         if node.attr.startswith("__") or node.attr.endswith("__") or node.attr in BANNED_ATTRS:
             raise SkillRejected(f"attribute '{node.attr}' is not allowed")
+        if isinstance(node.value, ast.Name) and node.value.id in self.numpy_names and node.attr not in NUMPY_ALLOWED:
+            raise SkillRejected(f"numpy.{node.attr} is not allowed")
         self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name):

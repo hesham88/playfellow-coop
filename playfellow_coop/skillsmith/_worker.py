@@ -13,11 +13,34 @@ SAFE = ["abs", "all", "any", "bool", "dict", "divmod", "enumerate", "float", "in
         "ArithmeticError", "StopIteration", "__build_class__", "NotImplementedError", "AttributeError", "RuntimeError", "OverflowError", "FloatingPointError", "hash", "repr", "callable",
         "filter", "next", "iter", "format", "ord", "chr", "frozenset", "bytes", "bytearray", "complex"]
 real_import = builtins.__import__
+# The skill never gets the real numpy module: only this proxy, built from the same name list the static gate uses, so a file-touching function (memmap, loadtxt ...) is simply absent.
+NUMPY_ALLOWED = ["array", "asarray", "zeros", "ones", "full", "arange", "linspace", "clip", "sqrt", "abs", "dot", "mean", "median", "std", "sum", "min", "max", "argmax", "argmin",
+                 "argsort", "sort", "where", "sign", "floor", "ceil", "round", "exp", "log", "sin", "cos", "arctan2", "hypot", "minimum", "maximum", "cumsum", "diff",
+                 "concatenate", "stack", "reshape", "transpose", "flatnonzero", "nonzero", "count_nonzero", "any", "all", "isnan", "isfinite", "unique", "bincount",
+                 "float32", "float64", "int32", "int64", "uint8", "bool_", "pi", "inf", "nan", "ndarray"]
+_proxy = None
+
+
+def numpy_proxy():
+    global _proxy
+    if _proxy is None:
+        import types
+        import numpy
+        _proxy = types.SimpleNamespace(**{n: getattr(numpy, n) for n in NUMPY_ALLOWED}, linalg=types.SimpleNamespace(norm=numpy.linalg.norm))
+    return _proxy
 
 
 def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
     if level or name.split(".")[0] not in ALLOWED:
         raise ImportError("import of " + name + " is not allowed")
+    if name.split(".")[0] == "numpy":
+        if name != "numpy":
+            raise ImportError("import numpy itself; its submodules are not importable")
+        proxy = numpy_proxy()
+        for item in fromlist or ():
+            if not hasattr(proxy, item):
+                raise ImportError("numpy." + item + " is not allowed")
+        return proxy
     return real_import(name, globals, locals, fromlist, level)
 
 
