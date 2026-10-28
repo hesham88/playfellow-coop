@@ -380,3 +380,23 @@ def test_a_tool_with_a_declared_schema_or_signature_accepts_only_its_own_argumen
     assert reg.call("add", {"a": 1, "b": 2, "c": 3}).error == "blocked:undeclared argument 'c'" and reg.call("add", {"a": 1, "b": 2}).ok
     reg.register(Tool("typed", "typed", lambda **kw: kw, schema={"properties": {"path": {"type": "string"}}}))
     assert reg.call("typed", {"path": "x"}).ok and reg.call("typed", {"mode": "w"}).error.startswith("blocked:undeclared")
+
+
+# ---- ADK-compatible evalset and trajectory match types
+def test_adk_trajectory_match_types_follow_adks_rules_and_evalsets_round_trip(tmp_path):
+    from playfellow_coop.harness.adk_compat import eval_case, evalset, expected_calls, save_evalset, trajectory_match
+    skill = {"name": "chase_food", "args": {}}
+    look = {"name": "look", "args": {"x": 1}}
+    press = {"name": "press", "args": {"key": "up"}}
+    assert trajectory_match([skill], [skill], "EXACT") == 1.0 and trajectory_match([skill], [look, skill], "EXACT") == 0.0
+    assert trajectory_match([look, skill], [look, press, skill], "IN_ORDER") == 1.0 and trajectory_match([skill, look], [look, skill], "IN_ORDER") == 0.0
+    assert trajectory_match([skill, look], [look, press, skill], "ANY_ORDER") == 1.0 and trajectory_match([skill, skill], [skill], "ANY_ORDER") == 0.0
+    assert trajectory_match([], [], "EXACT") == 1.0 and trajectory_match([{"name": "a", "args": {"k": 1}}], [{"name": "a", "args": {"k": 2}}], "IN_ORDER") == 0.0
+    with pytest.raises(ValueError):
+        trajectory_match([], [], "SOMEHOW")
+    case = eval_case("snake_skill", [{"user": "win the game", "final": "I won.", "tool_uses": [skill]}], state={"game": "snake"})
+    path = tmp_path / "set.json"
+    save_evalset(path, evalset("pf", "PlayFellow runs", [case]))
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["eval_cases"][0]["conversation"][0]["final_response"]["role"] == "model" and expected_calls(loaded["eval_cases"][0]) == [skill]
+    assert loaded["eval_cases"][0]["session_input"]["state"] == {"game": "snake"}
