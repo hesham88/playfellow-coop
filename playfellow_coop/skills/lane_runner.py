@@ -14,7 +14,7 @@ COLOURS = {"train": (230, 70, 70), "low": (255, 160, 40), "high": (34, 228, 255)
 PLAYER = (124, 92, 255)
 ARENA_LOOK = exact_look("arena", {"train": COLOURS["train"], "low": COLOURS["low"], "high": COLOURS["high"], "coin": COLOURS["coin"], "player": PLAYER, "road": (40, 40, 64)}, radius=30.0)
 # where to sample inside a row (offsets from the lane's left edge and the row's top) for each kind
-PROBES = {"coin": (60, 21), "train": (60, 20), "low": (60, 31), "high": (60, 8)}
+PROBES = {"coin": (60, 21), "train": (22, 20), "low": (22, 31), "high": (22, 8)}  # bars and trains span the lane: read them near its edge, away from where the runner stands
 KEYS = (None, "left", "right", "up", "down")
 DEPTH = 9
 

@@ -14,7 +14,7 @@ from playfellow_coop.skills.box_pusher import TILE as BOX_TILE, TOP as BOX_TOP
 from playfellow_coop.skills.looks import Look, calibrate, patch_mean
 
 KEYS = {"snake": ("up", "down", "left", "right"), "box_push": ("up", "down", "left", "right"), "slide_2048": ("up", "down", "left", "right"),
-        "lane_dash": ("left", "right", "up", "down", None, None), "brick_breaker": ("left", "right", "space", None)}
+        "lane_dash": ("left", "right", "up", "down") + (None,) * 10, "brick_breaker": ("left", "right", "space", None)}
 
 
 def _frame(game) -> np.ndarray:
@@ -93,6 +93,16 @@ def sample_brick(game, frame, out) -> None:
         out.setdefault("brick", []).append(patch_mean(frame, int(bx) + 6, top + int(by) + 5, bb.BRICK_W - 12, bb.BRICK_H - 10))
 
 
+def augment_lane(game, samples) -> None:
+    """Fill the track with one kind of thing at every place, one kind at a time, so each thing is seen in every lane and row (a textured sprite looks a little different in each).
+    Build time only: the game state is set directly, which a skill never does."""
+    for kind in ("train", "low", "high", "coin"):
+        game.items = [[lane, ahead, kind] for lane in range(lane_runner.LANES) for ahead in range(2, lane_runner.HORIZON + 1)]
+        sample_lane(game, _frame(game), samples)
+    game.items = []
+
+
+AUGMENT = {"lane_dash": augment_lane}
 SAMPLERS = {"snake": sample_snake, "box_push": sample_box_push, "slide_2048": sample_2048, "lane_dash": sample_lane, "brick_breaker": sample_brick}
 
 
@@ -107,4 +117,6 @@ def calibrate_look(game_key: str, name: str, make_game, seeds=range(8), steps: i
                 break
             SAMPLERS[game_key](game, _frame(game), samples)
             game.step(rng.choice(KEYS[game_key]))
+        if game_key in AUGMENT and not game.done:
+            AUGMENT[game_key](game, samples)
     return calibrate(name, samples)
