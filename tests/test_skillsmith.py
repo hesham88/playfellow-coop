@@ -100,7 +100,7 @@ def test_a_skill_that_raises_or_returns_nonsense_is_faulted():
 
 
 def test_the_worker_alone_refuses_imports_even_if_the_static_gate_were_bypassed(monkeypatch):
-    monkeypatch.setattr(ast_gate, "check", lambda code: (True, "ok"))
+    monkeypatch.setattr(ast_gate, "check", lambda code, *a, **k: (True, "ok"))
     code = "import os\nclass GeneratedArenaSkill:\n    def compute_action(self, obs):\n        return {'move': [0.0, 0.0]}\n"
     with SandboxedSkill(code, step_timeout_ms=2000) as skill:
         assert skill.faulted and "ImportError" in skill.fault

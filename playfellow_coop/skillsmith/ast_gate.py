@@ -79,8 +79,9 @@ class _Gate(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def check(code: str) -> tuple[bool, str]:
-    """(True, "ok") when the code passes the gate, else (False, why)."""
+def check(code: str, class_name: str = REQUIRED_CLASS, methods: tuple[str, ...] = (REQUIRED_METHOD,)) -> tuple[bool, str]:
+    """(True, "ok") when the code passes the gate, else (False, why). `class_name` and `methods` say what the code must define (a skill by default; a world model asks for
+    GeneratedWorldModel with init_state, transition and render)."""
     try:
         tree = ast.parse(code, mode="exec")
     except SyntaxError as error:
@@ -89,12 +90,13 @@ def check(code: str) -> tuple[bool, str]:
         _Gate().visit(tree)
     except SkillRejected as error:
         return False, str(error)
-    classes = [n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == REQUIRED_CLASS]
+    classes = [n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == class_name]
     if not classes:
-        return False, f"the code must define 'class {REQUIRED_CLASS}'"
-    methods = {n.name for n in classes[0].body if isinstance(n, ast.FunctionDef)}
-    if REQUIRED_METHOD not in methods:
-        return False, f"'{REQUIRED_CLASS}' must implement '{REQUIRED_METHOD}(self, obs)'"
+        return False, f"the code must define 'class {class_name}'"
+    defined = {n.name for n in classes[0].body if isinstance(n, ast.FunctionDef)}
+    for method in methods:
+        if method not in defined:
+            return False, f"'{class_name}' must implement '{method}'"
     for node in tree.body:
         if not isinstance(node, (ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.Assign, ast.AnnAssign, ast.Expr)):
             return False, f"only imports, classes, functions and simple constants may appear at the top level (found {type(node).__name__})"

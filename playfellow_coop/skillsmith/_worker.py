@@ -34,11 +34,16 @@ def main():
                 # exec is the whole point of this file: it runs ONLY here, in the isolated process (python -I, scrubbed environment, restricted builtins and imports),
                 # and only code that already passed the static gate in the parent
                 exec(compile(message["code"], "<skill>", "exec"), scope)
-                instance = scope["GeneratedArenaSkill"]()
+                instance = scope[message.get("class", "GeneratedArenaSkill")]()
                 reply = {"ready": True}
             elif "obs" in message:
                 action = instance.compute_action(message["obs"])
                 reply = {"action": action}
+            elif "call" in message:
+                name = message["call"]
+                if not isinstance(name, str) or name.startswith("_"):
+                    raise ValueError("a public method name is needed")
+                reply = {"result": getattr(instance, name)(*message.get("args", []))}
             else:
                 reply = {"error": "unknown message"}
             out = json.dumps(reply)

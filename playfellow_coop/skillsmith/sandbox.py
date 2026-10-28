@@ -34,11 +34,15 @@ def scrubbed_environment() -> dict[str, str]:
     return env
 
 
-class SandboxedSkill:
-    def __init__(self, code: str, step_timeout_ms: float = 50.0, python: str | None = None):
-        ok, why = ast_gate.check(code)
+class SandboxedProgram:
+    """Any model-written class run in the isolated worker: `call(method, *args)` returns the method's JSON-able result, or None when the program is late, dead or faulted. A skill is the
+    special case `SandboxedSkill`; a world model (init_state, transition, render) is another."""
+
+    def __init__(self, code: str, class_name: str = "GeneratedArenaSkill", methods: tuple[str, ...] = ("compute_action",), step_timeout_ms: float = 50.0, python: str | None = None):
+        ok, why = ast_gate.check(code, class_name, methods)
         if not ok:
             raise ast_gate.SkillRejected(why)
+        self.class_name = class_name
         self.code, self.step_timeout = code, step_timeout_ms / 1000.0
         self._python = python or sys.executable
         self.faulted = False
@@ -57,7 +61,7 @@ class SandboxedSkill:
         self._proc = subprocess.Popen([self._python, "-I", str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,
                                       env=env, cwd=self._folder.name)
         threading.Thread(target=self._pump, args=(self._proc,), daemon=True).start()
-        reply = self._ask({"code": self.code}, START_TIMEOUT)
+        reply = self._ask({"code": self.code, "class": self.class_name}, START_TIMEOUT)
         if reply is None or not reply.get("ready"):
             self._fail(reply.get("error", "the skill did not start") if isinstance(reply, dict) else "the skill did not start in time")
 
@@ -103,7 +107,7 @@ class SandboxedSkill:
             except subprocess.TimeoutExpired:  # pragma: no cover
                 pass
 
-    def __enter__(self) -> "SandboxedSkill":
+    def __enter__(self):
         return self
 
     def __exit__(self, *exc) -> None:
@@ -112,6 +116,35 @@ class SandboxedSkill:
             self._folder.cleanup()
         except OSError:  # the worker may still hold the folder for a moment on Windows
             pass
+
+    def call(self, method: str, *args: Any) -> Any:
+        """Call a method of the program. None (and the program is marked faulted) when it did not answer in time or raised."""
+        if self.faulted:
+            return None
+        started = time.perf_counter()
+        reply = self._ask({"call": method, "args": list(args)}, self.step_timeout)
+        self.latencies_ms.append((time.perf_counter() - started) * 1000.0)
+        self.steps += 1
+        if reply is None:
+            self._fail(f"no answer within {self.step_timeout * 1000:.0f} ms")
+            return None
+        if "error" in reply:
+            self._fail(str(reply["error"]))
+            return None
+        return reply.get("result")
+
+    def percentile_ms(self, q: float = 99.0) -> float:
+        if not self.latencies_ms:
+            return 0.0
+        ordered = sorted(self.latencies_ms)
+        return ordered[min(len(ordered) - 1, int(round(q / 100.0 * (len(ordered) - 1))))]
+
+
+class SandboxedSkill(SandboxedProgram):
+    """A model-written controller: `step(obs)` returns a valid action or the neutral fallback."""
+
+    def __init__(self, code: str, step_timeout_ms: float = 50.0, python: str | None = None):
+        super().__init__(code, "GeneratedArenaSkill", ("compute_action",), step_timeout_ms, python)
 
     # ---- one step ------------------------------------------------------------------------------------------------------------------
     def step(self, obs: dict[str, Any]) -> dict:
@@ -133,12 +166,6 @@ class SandboxedSkill:
             self._fail("the skill returned something that is not an action")
             return dict(NEUTRAL)
         return action
-
-    def percentile_ms(self, q: float = 99.0) -> float:
-        if not self.latencies_ms:
-            return 0.0
-        ordered = sorted(self.latencies_ms)
-        return ordered[min(len(ordered) - 1, int(round(q / 100.0 * (len(ordered) - 1))))]
 
 
 BUTTONS = frozenset({"jump", "attack", "use", "guard", "dash", "item", "confirm", "cancel", "fire", "special"})
