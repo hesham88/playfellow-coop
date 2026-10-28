@@ -217,3 +217,48 @@ def test_a_skill_that_does_nothing_ends_in_the_players_turn_with_a_spoken_line()
         outcome = harness.skill_flow(run, game.render, lambda: False).run()
     assert outcome.status == "help" and outcome.attempts == 2 and "did not change" in outcome.reason
     assert "your turn" in HELP_LINE
+
+
+def test_skill_brain_lets_any_brain_use_a_skill_and_passes_everything_else_through():
+    import controls
+    from playfellow_coop.skills.skill_brain import SkillBrain, chosen_skill
+
+    class Inner:
+        model = "x"
+        last_request = {"tokens_in": 5}
+
+        def __init__(self, answer):
+            self.answer, self.seen = answer, []
+
+        def ask(self, system, text, images):
+            self.seen.append(system)
+            return self.answer
+
+    game = ar.load_game("snake", 4)
+    card = controls.load_card(ENGINE / "controls" / "arena_snake.yaml")
+    screen, hands = ar.VirtualScreen(game), ar.VirtualHands(game, card)
+    inner = Inner(json.dumps({"thought": "chase", "say": "going for it", "actions": [], "skill": "chase_food"}))
+    brain = SkillBrain(inner, SkillBook("snake"), screen, hands, card, stop=lambda: game.done)
+    reply = json.loads(brain.ask("rules", "turn", []))
+    assert game.is_won() and reply["actions"] == [] and reply["say"] == "going for it" and brain.last_skill.steps > 50
+    assert "SKILLS" in inner.seen[0] and inner.seen[0].startswith("rules") and brain.model == "x" and brain.last_request == {"tokens_in": 5}
+    passthrough = json.dumps({"thought": "t", "say": "", "actions": ["UP"], "skill": "none"})
+    assert Inner(passthrough) and SkillBrain(Inner(passthrough), SkillBook("snake"), screen, hands, card).ask("s", "t", []) == passthrough
+    unknown = json.dumps({"thought": "t", "say": "", "actions": [], "skill": "teleport"})
+    assert SkillBrain(Inner(unknown), SkillBook("snake"), screen, hands, card).ask("s", "t", []) == unknown  # an unknown skill name does nothing
+    assert chosen_skill("not json") is None and chosen_skill('{"skill": "x"}') == "x"
+
+
+def test_skill_brain_stops_at_once_when_asked_to_stop():
+    import controls
+    from playfellow_coop.skills.skill_brain import SkillBrain
+
+    class Inner:
+        def ask(self, system, text, images):
+            return json.dumps({"thought": "", "say": "", "actions": [], "skill": "chase_food"})
+
+    game = ar.load_game("snake", 0)
+    card = controls.load_card(ENGINE / "controls" / "arena_snake.yaml")
+    brain = SkillBrain(Inner(), SkillBook("snake"), ar.VirtualScreen(game), ar.VirtualHands(game, card), card, stop=lambda: True)
+    brain.ask("s", "t", [])
+    assert brain.last_skill.steps == 0 and brain.last_skill.stopped == "game_over" and game.ticks == 0  # the player took over: not one key was pressed
