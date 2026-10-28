@@ -18,6 +18,20 @@ class SkillBook:
         self.skill = SKILLS[game_key]()
         self.last: SkillResult | None = None
 
+    def readable(self, picture) -> bool:
+        """Can the skill read this game's picture? A skill reads known colours and shapes; another look of the same game (a re-skin, sprites) it cannot read, and a skill that cannot
+        see must not be offered to the model. Tries one look on a fresh copy: a skill that gives up ("no head in the picture") means no."""
+        from playfellow_coop.skills.base import Done, as_frame
+        probe = type(self.skill)()
+        probe.reset()
+        try:
+            probe.next_key(as_frame(picture))
+        except Done:
+            return False
+        except Exception:
+            return False
+        return True
+
     @property
     def names(self) -> tuple[str, ...]:
         return (self.skill.name, NONE)

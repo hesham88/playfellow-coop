@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 
 import numpy as np
+from PIL import Image
 import pytest
 
 from bench import arena_run as ar
@@ -329,3 +330,12 @@ def test_a_live_snake_run_steps_with_the_game_clock_and_wins():
         running[0] = False
         thread.join(2)
     assert game.is_won() or brain.last_skill.steps > 20  # it stepped with the clock rather than spinning on a stale picture
+
+
+def test_a_skill_says_whether_it_can_read_a_picture_so_a_blind_skill_is_never_offered():
+    book = SkillBook("snake")
+    game = ar.load_game("snake", 0)
+    assert book.readable(game.render()) is True
+    assert book.readable(Image.new("RGB", (440, 504), (30, 30, 60))) is False  # a look it does not know: nothing it can find
+    assert SkillBook("box_push").readable(Image.new("RGB", (480, 400), (0, 0, 0))) is False
+    assert SkillBook("lane_dash").readable(ar.load_game("lane_dash", 0).render()) is True
