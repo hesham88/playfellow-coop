@@ -103,7 +103,16 @@ def augment_lane(game, samples) -> None:
     game.items = []
 
 
-AUGMENT = {"lane_dash": augment_lane}
+def augment_brick(game, samples) -> None:
+    """Show every level's bricks, so every strength a brick can have (each is drawn in its own colour) is in the look, not only the strengths of the first level. Build time only."""
+    from arena_pack import brick_breaker as bb
+    for level in range(len(bb.LEVELS)):
+        game.level_no = level
+        game._load()
+        sample_brick(game, _frame(game), samples)
+
+
+AUGMENT = {"lane_dash": augment_lane, "brick_breaker": augment_brick}
 SAMPLERS = {"snake": sample_snake, "box_push": sample_box_push, "slide_2048": sample_2048, "lane_dash": sample_lane, "brick_breaker": sample_brick}
 
 

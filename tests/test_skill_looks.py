@@ -112,3 +112,10 @@ def test_the_paddle_reads_a_recoloured_look_after_calibration(monkeypatch):
     assert book.readable(game.render())
     run_skill(book.skill, game.render, lambda k: game.step(k), lambda: game.done, set(game.keys), max_steps=600)
     assert game.progress()["launched"] and game.progress()["bricks_left"] < 32 and game.progress()["lives"] == 3
+
+
+def test_a_calibrated_brick_look_knows_every_brick_strength_not_only_those_of_the_first_level():
+    from bench import arena_run as ar
+    look = calibrate_look("brick_breaker", "plain", lambda seed: ar.load_game("brick_breaker", seed), seeds=range(2), steps=30)
+    colours = {tuple(round(c / 10) for c in p) for p in look.protos["brick"]}
+    assert len(look.protos["brick"]) >= 2 and len(colours) >= 2  # a second brick colour (the stronger bricks of later levels) is in the look
