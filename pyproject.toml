@@ -11,7 +11,7 @@ dependencies = ["httpx>=0.27", "certifi", "Pillow>=10.1", "websockets>=16,<18", 
 # The engine itself is installed first, from a clone of the tag (see the README); it is not a dependency pulled from here.
 
 [tool.setuptools]
-packages = ["playfellow_coop", "playfellow_coop.overlay", "playfellow_coop.skills", "playfellow_coop.harness", "playfellow_coop.universal", "playfellow_coop.skillsmith", "playfellow_coop.gym", "playfellow_coop.evalkit", "train"]
+packages = ["playfellow_coop", "playfellow_coop.overlay", "playfellow_coop.skills", "playfellow_coop.harness", "playfellow_coop.universal", "playfellow_coop.skillsmith", "playfellow_coop.gym", "playfellow_coop.evalkit", "playfellow_coop.adk_app", "train"]
 
 [tool.setuptools.package-data]
 # the optional Rust fast path: built by rust/build.ps1 into this folder; without it the Python twin runs
