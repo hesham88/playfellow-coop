@@ -157,6 +157,51 @@ def conform(golden: list[GoldenRun], now: list[GoldenRun], step_tolerance: float
     return problems
 
 
+# ---- deterministic replay (cookbook): a fixture is recorded events plus the model context they must reduce to; replay needs no model, no tool, no network
+FIXTURE_SCHEMA = 1
+
+
+def project_context(events: list[dict], limit: int = 12) -> list[str]:
+    """The pure function a replay checks: recorded events in, the short context lines out (the same lines `Session.transcript` writes)."""
+    lines = []
+    for event in events[-limit:]:
+        data = event.get("data", {})
+        body = ", ".join(f"{k}={v}" for k, v in list(data.items())[:4])
+        lines.append(f"{event.get('kind', '')}: {body}"[:200])
+    return lines
+
+
+def save_fixture(path: Path, name: str, events: list[dict], expected_context: list[str]) -> None:
+    path = Path(path)
+    if path.exists():
+        raise FileExistsError(f"{path} exists: a fixture is never edited in place (a changed behaviour gets a reviewed update in the same change)")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"schema_version": FIXTURE_SCHEMA, "name": name, "events": events, "expected_context": expected_context}, indent=1, ensure_ascii=False),
+                    encoding="utf-8", newline="\n")
+
+
+def replay_fixture(path: Path) -> dict:
+    """{"name", "load": "ok"|"partial", "diffs": [...]} for one fixture. An unsupported schema version or broken file loads as partial with an error, never as a pass."""
+    try:
+        fixture = json.loads(Path(path).read_text(encoding="utf-8"))
+        if fixture.get("schema_version") != FIXTURE_SCHEMA:
+            return {"name": Path(path).stem, "load": "partial", "diffs": [], "error": f"unsupported fixture schema version {fixture.get('schema_version')}"}
+        got = project_context(fixture["events"])
+        want = fixture["expected_context"]
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        return {"name": Path(path).stem, "load": "partial", "diffs": [], "error": f"{type(error).__name__}"}
+    diffs = [f"line {i + 1}: expected {w!r}, got {g!r}" for i, (w, g) in enumerate(zip(want, got)) if w != g]
+    if len(want) != len(got):
+        diffs.append(f"expected {len(want)} lines, got {len(got)}")
+    return {"name": Path(path).stem, "load": "ok", "diffs": diffs}  # the file name, so two fixtures can never share a report
+
+
+def replay_gate(folder: Path) -> tuple[bool, list[dict]]:
+    """Replay every fixture in a folder. Passes only when every fixture loaded and none has a diff: gate on the DIFF COUNT, not on an exit code."""
+    reports = [replay_fixture(p) for p in sorted(Path(folder).glob("*.json"))]
+    return all(r["load"] == "ok" and not r["diffs"] for r in reports) and bool(reports), reports
+
+
 # ---- user simulation
 class ScriptedPlayer:
     """A player who says fixed things at fixed turns, so a session can be driven offline: {turn_number: "what the player says"}."""

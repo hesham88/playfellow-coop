@@ -56,16 +56,83 @@ class Confirmation:
         self._ask = ask
         self.log: list[tuple[str, bool]] = []
         self.last_hint = ""
+        self.last_scope = "once"  # how long the last approval lasts: once, session or game (the player's answer may be a scope word instead of yes)
 
     def approve(self, tool: str, arguments: dict, hint: str = "") -> bool:
         """Ask the player. `hint` is the plain sentence shown with the question (what is about to happen and why); it is cleaned like any outside text."""
         self.last_hint = redact(hint)[:200]
+        self.last_scope = "once"
         try:
-            answer = bool(self._ask(tool, dict(arguments))) if self._ask else False
+            raw = self._ask(tool, dict(arguments)) if self._ask else False
+            if isinstance(raw, str):  # "session" or "game" approve with that scope; "once" and "yes" approve once; anything else is a no
+                answer = raw in ("once", "yes", "session", "game")
+                if raw in ("session", "game"):
+                    self.last_scope = raw
+            else:
+                answer = bool(raw)
         except Exception:  # a crashed prompt is a no, never a yes
             answer = False
         self.log.append((tool, answer))
         return answer
+
+
+SCOPES = ("once", "session", "game")  # how long an approval lasts: this one action, until the program ends, or for this game
+ALLOW, ASK, DENY = "allow", "ask", "deny"
+
+
+class Policy:
+    """Standing rules about tools (cookbook: staged approvals and immutable guardrails).
+
+      * Rules are allow, ask or deny, per tool name or "*" for every tool. A deny beats an ask and an ask beats an allow, whatever the order; an allow never overrides a deny.
+      * A protected tool (the harness's own files and settings, spending, anything irreversible) can only ever be approved for ONE action: there is no "always allow" for it,
+        so the agent can never widen its own permissions. A standing grant for it is refused.
+      * Approvals have a scope: once (consumed by the next call), session (until the program ends), game (this game only).
+      * `decide` returns None when the policy has nothing to say about a tool: the tool's own approval rule then decides.
+    """
+
+    def __init__(self, protected: set[str] | None = None, rules: dict[str, str] | None = None):
+        self.protected = set(protected or ())
+        self.rules = dict(rules or {})
+        for effect in self.rules.values():
+            if effect not in (ALLOW, ASK, DENY):
+                raise ValueError("a rule is allow, ask or deny")
+        self._once: set[str] = set()
+        self._standing: dict[str, str] = {}  # tool -> scope
+
+    def decide(self, tool: str) -> str | None:
+        exact, star = self.rules.get(tool), self.rules.get("*")
+        effects = {e for e in (exact, star) if e is not None}
+        if DENY in effects:
+            return DENY
+        if tool in self.protected:
+            if tool in self._once:
+                self._once.discard(tool)
+                return ALLOW
+            return ASK  # a protected tool never rides on a standing grant or an allow rule
+        if ASK in effects:
+            return ASK if tool not in self._once else (self._once.discard(tool) or ALLOW)
+        if tool in self._once:
+            self._once.discard(tool)
+            return ALLOW
+        if tool in self._standing or ALLOW in effects:
+            return ALLOW
+        return None
+
+    def grant(self, tool: str, scope: str) -> bool:
+        """Record an approval. False when it may not be recorded: a denied tool takes nothing, a protected tool takes only `once`."""
+        if scope not in SCOPES or DENY in {self.rules.get(tool), self.rules.get("*")}:
+            return False
+        if scope == "once":
+            self._once.add(tool)
+            return True
+        if tool in self.protected:
+            return False
+        self._standing[tool] = scope
+        return True
+
+    def end_game(self) -> None:
+        """A game ended: grants whose scope was this game are dropped; session grants stay."""
+        self._standing = {t: s for t, s in self._standing.items() if s != "game"}
 
 
 @dataclass(frozen=True)

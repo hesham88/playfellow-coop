@@ -167,6 +167,48 @@ class Session:
     def end_turn(self) -> None:
         self._temp.clear()
 
+    # ---- the goal (cookbook: goal tracking): pinned once, kept in front of the agent, and closed only when the oracle says so
+    def set_goal(self, text: str, oracle: str = "") -> None:
+        """Pin the objective and name the oracle (the check that says it is done, for example "the game is won")."""
+        self.append("state", {"goal": text[:200], "oracle": oracle[:120]}, delta={"goal.text": text[:200], "goal.oracle": oracle[:120], "goal.done": False, "goal.idle": 0, "goal.best": None})
+
+    def note_progress(self, value: float | None) -> None:
+        """Tell the goal how far things are (a number that only rises). No rise counts as an idle step."""
+        best = self.get("goal.best")
+        idle = self.get("goal.idle", 0)
+        if value is not None and (best is None or value > best):
+            self.append("state", {"progress": value}, delta={"goal.best": value, "goal.idle": 0})
+        else:
+            self.append("state", {"progress": value}, delta={"goal.idle": idle + 1})
+
+    def probe(self, every: int = 10) -> str:
+        """The step probe: after `every` steps with no progress, one plain reminder of the goal for the agent. Empty otherwise."""
+        text, idle = self.get("goal.text"), self.get("goal.idle", 0)
+        if text and not self.get("goal.done") and idle >= every:
+            return f"Continue working toward the goal: {text} (no progress for {idle} steps; the check is: {self.get('goal.oracle') or 'the game is won'})."
+        return ""
+
+    def close_goal(self, oracle_says_done: bool) -> bool:
+        """Close the goal only when the oracle (code, not the model's word) says every deliverable is present. False, and nothing changes, otherwise."""
+        if not oracle_says_done or not self.get("goal.text"):
+            return False
+        self.append("state", {"goal": "done"}, delta={"goal.done": True})
+        return True
+
+    def compact(self, keep_last: int = 20) -> int:
+        """Replace the old middle of the transcript with one summary note and keep the state and the most recent events (cookbook: context management).
+        Returns how many events were folded. The scratchpad is untouched; the saved file keeps every event."""
+        if len(self.events) <= keep_last:
+            return 0
+        old, self.events = self.events[:-keep_last], self.events[-keep_last:]
+        kinds: dict[str, int] = {}
+        for event in old:
+            kinds[event.kind] = kinds.get(event.kind, 0) + 1
+        self._seq += 1
+        summary = Event(self._seq, self._clock().isoformat(timespec="seconds"), "note", {"compacted": len(old), "kinds": kinds}, {}, {})
+        self.events.insert(0, summary)
+        return len(old)
+
     def transcript(self, limit: int = 12) -> list[str]:
         """The last events as short plain lines, for the model's context (as data: wrap it with security.fence)."""
         lines = []

@@ -14,6 +14,41 @@ from typing import Any, Callable
 
 DONE, HELP = "done", "help"
 
+# The five ways an agent loop ends (cookbook, basic agent loop). Only the first is success.
+COMPLETE, ITERATION_CAP, BUDGET, CANNOT, CANCELLED = "complete", "iteration_cap", "budget_spent", "cannot_solve", "cancelled"
+DOOM_LOOP = "doom_loop"  # the same call repeated without anything changing
+
+
+class LoopGuard:
+    """Bounds a loop so a stuck run cannot go on without limit. `check` is called once per iteration and returns the reason to stop, or None to go on.
+
+    Doom loop: the same signature (for example the skill chosen, how it stopped, and a hash of the picture) three times in a row means nothing is changing; stop and ask for help.
+    """
+
+    def __init__(self, max_iterations: int = 50, max_usd: float | None = None, repeat_limit: int = 3):
+        if max_iterations < 1 or repeat_limit < 2:
+            raise ValueError("max_iterations is at least 1 and repeat_limit at least 2")
+        self.max_iterations, self.max_usd, self.repeat_limit = max_iterations, max_usd, repeat_limit
+        self._last, self._same = None, 0
+
+    def check(self, iteration: int, spent_usd: float = 0.0, signature=None, cancelled: bool = False, cannot: bool = False, complete: bool = False) -> str | None:
+        if complete:
+            return COMPLETE
+        if cancelled:
+            return CANCELLED
+        if cannot:
+            return CANNOT
+        if self.max_usd is not None and spent_usd >= self.max_usd:
+            return BUDGET
+        if iteration >= self.max_iterations:
+            return ITERATION_CAP
+        if signature is not None:
+            self._same = self._same + 1 if signature == self._last else 1
+            self._last = signature
+            if self._same >= self.repeat_limit:
+                return DOOM_LOOP
+        return None
+
 
 @dataclass
 class FlowResult:

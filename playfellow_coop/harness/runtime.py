@@ -5,9 +5,9 @@ import uuid
 from pathlib import Path
 
 from playfellow_coop import sam_marks
-from playfellow_coop.harness.flow import DONE, Flow
+from playfellow_coop.harness.flow import DONE, DOOM_LOOP, Flow, LoopGuard
 from playfellow_coop.harness.memory_bank import MemoryBank, fact_from_skill
-from playfellow_coop.harness.security import Confirmation, Identity, PrivacyPolicy
+from playfellow_coop.harness.security import Confirmation, Identity, Policy, PrivacyPolicy
 from playfellow_coop.harness.state import Session, SessionStore
 from playfellow_coop.harness.tools import ToolRegistry
 
@@ -17,17 +17,24 @@ HELP_LINE_AR = "علقتُ، فالدور عليك. اضغط F9 وسأتوقف �
 
 
 class Harness:
-    def __init__(self, folder: Path | None = None, game: str = "", player: str = "local", confirm=None, clock_session: str | None = None):
+    def __init__(self, folder: Path | None = None, game: str = "", player: str = "local", confirm=None, clock_session: str | None = None, goal: str = "",
+                 max_iterations: int = 200, max_usd: float | None = None):
         self.folder = Path(folder or DEFAULT_DIR)
         self.game = game
         store = SessionStore(self.folder / "sessions")
         self.session = Session(clock_session or uuid.uuid4().hex[:12], store)
         self.bank = MemoryBank(self.folder / "memory.json")
         self.confirmation = Confirmation(confirm)
-        self.tools = ToolRegistry(self.session, self.confirmation)
+        self.policy = Policy(protected={"harness.settings", "harness.memory.clear", "harness.files"})  # the harness's own settings and files are one approval per action, never "always"
+        self.tools = ToolRegistry(self.session, self.confirmation, policy=self.policy)
+        self.guard = LoopGuard(max_iterations=max_iterations, max_usd=max_usd)  # five ways to end, and the doom-loop stop
+        self.turns = 0
+        self.progress = 0
         self.privacy = PrivacyPolicy()
         self.identity = Identity("buddy", self.session.id, player)
         self.session.append("note", {"event": "game started", "game": game}, who=self.identity.tag(), delta={"game": game} if game else {})
+        if goal:
+            self.session.set_goal(goal, "the game is won")
 
     # ---- context: what the model is shown besides the picture (all fenced data)
     def memory_block(self) -> str:
@@ -54,6 +61,23 @@ class Harness:
             return getattr(ctx.get("result"), "stopped", "") == "game_over"
 
         return Flow(act, {"picture_changed": picture_changed, "not_stopped": not_stopped}, retry_limit=retry_limit, finished=game_over)
+
+    # ---- the goal and the loop's brakes
+    def reminder(self) -> str:
+        """The goal reminder, empty unless the last several turns made no progress."""
+        return self.session.probe()
+
+    def turn_done(self, changed: bool, signature=None) -> str | None:
+        """Call once per model turn that ran a skill. `changed` says the picture changed (progress); `signature` is whatever should repeat for a doom loop to be called.
+        Returns the reason the loop must stop (iteration cap, budget, doom loop), or None."""
+        self.turns += 1
+        if changed:
+            self.progress += 1
+        self.session.note_progress(float(self.progress) if changed else None)
+        reason = self.guard.check(self.turns, signature=signature)
+        if reason:
+            self.session.append("note", {"loop_end": reason}, who=self.identity.tag())
+        return reason
 
     # ---- remembering
     def record_skill(self, result, won: bool | None = None) -> None:

@@ -4,11 +4,14 @@ A tool is a name, a plain sentence about it, and a function. Skills, small helpe
 registered the same way and called the same way, so the safety rules apply to all of them at once:
 
   * an unknown name does nothing, and a tool outside the allow-list (the tool filter) does not exist for the model;
+  * only declared arguments get through (a hidden argument can never redirect a call);
   * guards run before the tool and can refuse it (a policy check on the model's arguments, like ADK's before-tool callback);
+  * the standing policy decides next (deny beats ask beats allow; a protected tool is approved one action at a time, never "always");
   * a sensitive tool needs the player's approval first (always, or only when a rule over the arguments says so);
   * a crash becomes an error answer, never a crash of the game session;
-  * the answer is always a dict with a "status" key (ok or error), like ADK's function tools; an outside tool's text is fenced as untrusted data;
-  * every call and every answer is written to the session with who made it.
+  * the answer is always a dict with a "status" key; an outside tool's text is fenced as untrusted data;
+  * every call and every answer is written to the session with who made it;
+  * several calls can run as one plan: every stage is resolved first, one refusal denies the whole plan, and nothing runs (staged approvals).
 """
 from __future__ import annotations
 
@@ -16,7 +19,7 @@ import inspect
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
-from playfellow_coop.harness.security import Confirmation, fence
+from playfellow_coop.harness.security import ALLOW, ASK, DENY, Confirmation, Policy, fence
 from playfellow_coop.harness.state import Session
 
 KINDS = ("skill", "function", "mcp")
@@ -39,8 +42,16 @@ class Outcome:
     tool: str
     ok: bool
     result: dict = field(default_factory=dict)  # always has "status"
-    error: str = ""  # "unknown_tool", "not_allowed", "blocked:<why>", "not_approved", "failed:<why>"
+    error: str = ""  # "unknown_tool", "not_allowed", "blocked:<why>", "denied_by_policy", "not_approved", "failed:<why>"
     text: str = ""  # what the model reads: fenced when the tool is an outside one
+
+
+@dataclass
+class PlanOutcome:
+    status: str  # "ran" or "denied"
+    stage: int = 0  # the stage that denied the plan, or how many ran
+    reason: str = ""
+    results: list = field(default_factory=list)
 
 
 def _status_dict(value: Any) -> dict:
@@ -50,9 +61,10 @@ def _status_dict(value: Any) -> dict:
 
 
 class ToolRegistry:
-    def __init__(self, session: Session | None = None, confirmation: Confirmation | None = None, allowed: set[str] | None = None):
+    def __init__(self, session: Session | None = None, confirmation: Confirmation | None = None, allowed: set[str] | None = None, policy: Policy | None = None):
         self.session = session
         self.confirmation = confirmation or Confirmation()
+        self.policy = policy
         self.allowed = None if allowed is None else set(allowed)  # the tool filter: only these names are visible and callable
         self._tools: dict[str, Tool] = {}
         self._guards: list[Guard] = []
@@ -107,33 +119,77 @@ class ToolRegistry:
                 return True
         return bool(gate)
 
-    def call(self, name: str, arguments: dict | None = None, who: dict | None = None) -> Outcome:
-        arguments = dict(arguments or {})
-        self._note("tool_call", {"tool": name, "args": arguments}, who)
-        tool = self._tools.get(name)
+    def _vet(self, tool: Tool | None, name: str, arguments: dict) -> str:
+        """The reason a call may not even be considered ("" when it may): unknown, filtered, badly argued, or refused by a guard."""
         if tool is None:
-            return self._finish(Outcome(name, False, {"status": "error"}, "unknown_tool"), who)
+            return "unknown_tool"
         if self.allowed is not None and name not in self.allowed:
-            return self._finish(Outcome(name, False, {"status": "error"}, "not_allowed"), who)
-        refused = self._bad_arguments(tool, arguments)
-        if refused:
-            return self._finish(Outcome(name, False, {"status": "error"}, f"blocked:{refused}"[:120]), who)
+            return "not_allowed"
+        problem = self._bad_arguments(tool, arguments)
+        if problem:
+            return f"blocked:{problem}"[:120]
         for guard in self._guards:
             try:
                 reason = guard(tool, arguments)
             except Exception as error:  # a guard that crashes refuses
                 reason = f"guard crashed ({type(error).__name__})"
             if reason:
-                return self._finish(Outcome(name, False, {"status": "error"}, f"blocked:{reason}"[:120]), who)
-        if self._asks(tool, arguments) and not self.confirmation.approve(name, arguments):
-            return self._finish(Outcome(name, False, {"status": "error"}, "not_approved"), who)
+                return f"blocked:{reason}"[:120]
+        return ""
+
+    def _permission(self, tool: Tool, arguments: dict) -> str:
+        """"" when the call may run now, otherwise the reason. The policy decides first (deny beats ask beats allow); when it says nothing, the tool's own approval rule decides."""
+        decision = self.policy.decide(tool.name) if self.policy is not None else None
+        if decision == DENY:
+            return "denied_by_policy"
+        if decision == ALLOW:
+            return ""
+        if decision != ASK and not self._asks(tool, arguments):
+            return ""
+        if not self.confirmation.approve(tool.name, arguments):
+            return "not_approved"
+        if self.policy is not None:
+            scope = getattr(self.confirmation, "last_scope", "once")
+            if scope in ("session", "game"):
+                self.policy.grant(tool.name, scope)  # a protected tool refuses this: it stays one approval per action
+        return ""
+
+    def call(self, name: str, arguments: dict | None = None, who: dict | None = None) -> Outcome:
+        arguments = dict(arguments or {})
+        self._note("tool_call", {"tool": name, "args": arguments}, who)
+        tool = self._tools.get(name)
+        refusal = self._vet(tool, name, arguments) or (self._permission(tool, arguments) if tool is not None else "")
+        if refusal:
+            return self._finish(Outcome(name, False, {"status": "error"}, refusal), who)
+        return self._execute(tool, arguments, who)
+
+    def _execute(self, tool: Tool, arguments: dict, who: dict | None) -> Outcome:
         try:
             result = _status_dict(tool.run(**arguments))
         except Exception as error:  # a tool's crash is an answer, not the end of the session
-            return self._finish(Outcome(name, False, {"status": "error"}, f"failed:{type(error).__name__}"), who)
+            return self._finish(Outcome(tool.name, False, {"status": "error"}, f"failed:{type(error).__name__}"), who)
         shown = str(result)
-        text = fence(f"answer of tool {name}", shown) if tool.kind == "mcp" else shown[:500]
-        return self._finish(Outcome(name, True, result, text=text), who)
+        text = fence(f"answer of tool {tool.name}", shown) if tool.kind == "mcp" else shown[:500]
+        return self._finish(Outcome(tool.name, True, result, text=text), who)
+
+    def call_plan(self, calls: list[tuple[str, dict]], who: dict | None = None) -> PlanOutcome:
+        """Run several calls as one unit (cookbook: staged approvals). Every stage is vetted and permitted BEFORE any runs, in order; the first refusal denies the whole plan and
+        nothing runs. Fail closed: anything unexpected while deciding denies."""
+        stages = [(name, dict(arguments or {})) for name, arguments in calls]
+        for index, (name, arguments) in enumerate(stages):
+            self._note("tool_call", {"tool": name, "args": arguments, "stage": index + 1, "of": len(stages)}, who)
+            tool = self._tools.get(name)
+            try:
+                refusal = self._vet(tool, name, arguments) or (self._permission(tool, arguments) if tool is not None else "")
+            except Exception as error:
+                refusal = f"blocked:deciding crashed ({type(error).__name__})"
+            if refusal:
+                self._note("tool_result", {"tool": name, "ok": False, "error": refusal, "plan": "denied"}, who)
+                return PlanOutcome("denied", index, refusal)
+        results = []
+        for name, arguments in stages:
+            results.append(self._execute(self._tools[name], arguments, who))
+        return PlanOutcome("ran", len(results), "", results)
 
     def _note(self, kind: str, data: dict, who: dict | None) -> None:
         if self.session is not None:

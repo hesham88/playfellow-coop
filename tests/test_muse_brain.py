@@ -115,9 +115,16 @@ def test_each_error_code_becomes_the_right_friendly_error(brain, server, status,
 
 def test_an_empty_answer_is_a_failure_not_a_blank_move(brain, server):
     server.script.append((200, _answer("")))
+    server.script.append((200, _answer("")))  # the call is made once more (a dropped stream is not the model's decision); empty twice is a failure
     with pytest.raises(BrainError) as caught:
         brain().ask("s", "t", [IMAGE])
     assert caught.value.key == "empty_answer"
+
+
+def test_one_empty_answer_is_retried_once_and_a_good_second_answer_is_used(brain, server):
+    server.script.append((200, _answer("")))
+    server.script.append((200, _answer('{"thought": "ok", "say": "", "actions": []}')))
+    assert "ok" in brain().ask("s", "t", [IMAGE])
 
 
 def test_a_garbled_answer_body_is_a_brain_error(brain, server):

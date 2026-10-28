@@ -93,6 +93,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                         help="the floating command center over the game (a small chat panel: summon and hide with one key)")
     parser.add_argument("--track", choices=("on", "off"), default="on",
                         help="on: between SAM calls a local tracker follows what SAM found and asks SAM again only when something is lost (fewer requests, lower latency)")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="do everything except press keys: the buddy looks, thinks and says what it would press (cookbook: voice chess; nothing is ever pressed in a dry run)")
     parser.add_argument("--skills", choices=("on", "off"), default="on",
                         help="on: the model may start a skill (a local controller that plays many steps for it) when the game has one; off: the model presses every key")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
@@ -114,6 +116,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     cfg = dataclasses.replace(cfg, **{k: v for k, v in overrides.items() if v is not None})
     parts = build_parts(cfg)
     parts.typed = args.typed
+    if args.dry_run:
+        from playfellow_coop.dry_run import DryRunHands
+        parts.hands = DryRunHands(parts.hands)
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise
@@ -155,7 +160,7 @@ def attach_skills(parts, cfg, switch: str) -> None:
     parts.skills = SkillBook(game)
     parts.brain.set_skills(parts.skills.names)
     from playfellow_coop.harness.runtime import Harness
-    parts.harness = Harness(game=game)  # session, long-term facts, identity and the flow around a skill run (files under ~/.playfellow-coop/harness)
+    parts.harness = Harness(game=game, goal=cfg.goal)  # session, long-term facts, identity, goal and the flow around a skill run (files under ~/.playfellow-coop/harness)
 
 
 def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: Callable = listen_for_key,

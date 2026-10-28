@@ -62,6 +62,8 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     remembered = harness.memory_block() if harness is not None else ""
     if remembered:  # what worked before in this game: fenced data, never an instruction; it changes only between games
         text = remembered + "\n\n" + text
+    if harness is not None and harness.reminder():  # no progress for a while: one plain reminder of the goal
+        text = text + "\n\n" + harness.reminder()
     if blocked:
         text = text + "\n\n" + blocked
     if labels:
@@ -93,6 +95,10 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
                 outcome = harness.skill_flow(run, lambda: parts.screen.grab(box), stop).run()
                 ran = outcome.context.get("result")
                 harness.record_skill(ran, won=getattr(ran, "stopped", "") == "game_over" and bool(getattr(parts, "skill_won", lambda: None)()))
+                signature = (chosen, getattr(ran, "stopped", ""), outcome.context.get("after"))  # the same skill ending the same way on the same picture, again and again, is a doom loop
+                stop_reason = harness.turn_done(changed=outcome.context.get("before") != outcome.context.get("after"), signature=signature)
+                if stop_reason == "doom_loop" and outcome.status != "help":
+                    outcome.status = "help"
                 if outcome.status == "help":
                     from playfellow_coop.harness.runtime import HELP_LINE, HELP_LINE_AR
                     on_event("say", tr(HELP_LINE, HELP_LINE_AR))

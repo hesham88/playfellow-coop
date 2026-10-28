@@ -60,7 +60,7 @@ class MuseBrain:
 
     def __init__(self, model: str, api_key: str, budget: DailyBudget | None = None, client: httpx.Client | None = None,
                  effort: str = DEFAULT_EFFORT, cache_key: str | None = CACHE_KEY, base_url: str | None = None, auth_scheme: str = "Bearer",
-                 retries: int = 0, sleeper=time.sleep, safety_id: str | None = None):
+                 retries: int = 0, sleeper=time.sleep, safety_id: str | None = None, breaker=None):
         if effort not in EFFORTS:
             raise ValueError(f"effort must be one of {EFFORTS}")
         self.effort = effort
@@ -74,6 +74,7 @@ class MuseBrain:
         self.auth_scheme = auth_scheme
         self.retries = max(0, min(int(retries), 5))  # attempts after the first for a 429, 500 or 503 (never for a 4xx: the request must change)
         self._sleep = sleeper
+        self.breaker = breaker  # optional circuit breaker (the engine's brain.breaker.CircuitBreaker): after repeated failures calls stop for a cool-down instead of hammering
         self.guard = backoff.RateGuard()  # reads the rate-limit headers of every answer and pauses before the limit is hit
         self.safety_id = safety_id  # a stable, privacy-preserving id of the end user (a hash, never a name or an e-mail), up to 64 characters
         self.actions: tuple[str, ...] | None = None
@@ -121,13 +122,25 @@ class MuseBrain:
     def _send(self, url: str, request: dict):
         """POST with the harness's error policy: pause when the rate-limit headers say the budget is nearly gone, retry 429, 500 and 503 with backoff and jitter
         (honouring Retry-After), never retry anything else. The answer of the last attempt is returned either way."""
+        if self.breaker is not None and self.breaker.is_open():
+            raise BrainError("busy", retry=True, wait_seconds=max(1.0, float(self.breaker.cooldown_seconds())))  # nothing is sent while the breaker is open
         pause = self.guard.wait_seconds()
         if pause:
             self._sleep(pause)
         attempt = 0
         while True:
-            response = _http.post(self._client, url, self._key, request, scheme=self.auth_scheme)
+            try:
+                response = _http.post(self._client, url, self._key, request, scheme=self.auth_scheme)
+            except BrainError as error:
+                if self.breaker is not None:
+                    self.breaker.record_error(error)
+                raise
             self.guard.note(response.headers)
+            if response.status_code < 400:
+                if self.breaker is not None:
+                    self.breaker.record_success()
+            elif response.status_code in (429, 500, 502, 503, 504) and self.breaker is not None:
+                self.breaker.record_error(BrainError("busy", retry=True))
             if response.status_code < 400 or attempt >= self.retries:
                 return response
             try:
@@ -158,6 +171,16 @@ class MuseBrain:
         return count if isinstance(count, int) and not isinstance(count, bool) and count >= 0 else None
 
     def ask(self, system: str, text: str, images: list) -> str:
+        """One planning call. An empty answer that did not come from running out of the output budget is a dropped or truncated stream, a transport failure and not the
+        model's decision (cookbook: interleaved reasoning): the call is made once more before it is reported."""
+        try:
+            return self._ask_once(system, text, images)
+        except BrainError as error:
+            if error.key == "empty_answer" and (self.last_request or {}).get("finish_reason") != "length":
+                return self._ask_once(system, text, images)
+            raise
+
+    def _ask_once(self, system: str, text: str, images: list) -> str:
         if self.budget is not None and self.budget.exhausted():
             raise BrainError("token_cap_day")  # nothing is sent
         started = time.perf_counter()
