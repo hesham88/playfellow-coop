@@ -1,0 +1,19 @@
+# Truss configuration (partner GPU service) for the tactical loop: one persistent WebSocket per game session, pinned to one replica so the prompt prefix stays in the KV cache.
+# NOT deployed from here: `truss push` creates a billed deployment and needs the owner's Baseten login. See deploy/baseten/README.md.
+model_name: playfellow-tactical
+python_version: py311
+requirements:
+  - fastapi
+  - websockets
+  - pillow
+resources:
+  accelerator: L4
+  use_gpu: true
+runtime:
+  transport:
+    kind: websocket
+  predict_concurrency: 1
+environment_variables:
+  PLAYFELLOW_TACTICAL_MODEL: muse-glimmer-30b
+external_package_dirs:
+  - ../../../playfellow_coop
