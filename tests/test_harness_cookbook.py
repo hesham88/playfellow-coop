@@ -240,3 +240,59 @@ def test_an_empty_answer_caused_by_running_out_of_budget_is_not_retried_but_a_dr
     with pytest.raises(BrainError):
         brain.ask("s", "t", [Image.new("RGB", (8, 8))])
     assert len(seen) == 1  # the budget ran out: asking the same thing again would do the same
+
+
+# ---------------------------------------------------------------- audit: intent before effect, unknown effects, deterministic export
+def test_the_intent_and_who_allowed_it_are_written_before_the_effect_and_a_terminal_record_after():
+    session = Session("a")
+    order = []
+
+    def act():
+        order.append([e.kind for e in session.events])  # what the log holds at the moment the effect runs
+        return "done"
+
+    reg = ToolRegistry(session, Confirmation(lambda t, a: True))
+    reg.register(Tool("spend", "spend", act, needs_confirm=True))
+    reg.register(Tool("look", "look", lambda: "x"))
+    assert reg.call("spend").ok and reg.call("look").ok
+    assert order == [["tool_call", "intent"]]  # the intent was already durable when the effect started
+    intents = [e for e in session.events if e.kind == "intent"]
+    assert [i.data["decision"] for i in intents] == ["approved", "allowed"] and len({i.data["key"] for i in intents}) == 2
+    assert [e.data["ok"] for e in session.events if e.kind == "terminal"] == [True, True] and session.unfinished_intents() == []
+
+
+def test_an_intent_without_a_terminal_record_is_reported_unknown_after_a_restart_and_never_hidden(tmp_path):
+    first = Session("crash", SessionStore(tmp_path))
+    first.append("intent", {"tool": "wipe", "key": "k1", "decision": "approved"})  # announced, then the process died: no terminal record
+    first.append("intent", {"tool": "look", "key": "k2", "decision": "allowed"})
+    first.append("terminal", {"tool": "look", "key": "k2", "ok": True})
+    again = Session("crash", SessionStore(tmp_path))
+    assert [e.data["key"] for e in again.unfinished_intents()] == ["k1"]
+
+
+def test_a_crashing_tool_still_gets_a_terminal_record_marked_not_ok():
+    session = Session("c")
+    reg = ToolRegistry(session)
+    reg.register(Tool("boom", "boom", lambda: 1 / 0))
+    reg.call("boom")
+    assert session.unfinished_intents() == [] and [e.data["ok"] for e in session.events if e.kind == "terminal"] == [False]
+
+
+def test_the_export_is_byte_deterministic_offline_and_the_redacted_form_masks_private_details():
+    clock = lambda: __import__("datetime").datetime(2026, 10, 28, 5, 0, 0)  # noqa: E731
+    a, b = Session("x", clock=clock), Session("x", clock=clock)
+    for s in (a, b):
+        s.append("message", {"text": "mail me at someone@example.com"}, delta={"level": 2})
+        s.append("intent", {"tool": "t", "key": "k"})
+    assert a.export() == b.export() and a.export(redacted=True) == b.export(redacted=True)
+    doc = json.loads(a.export())
+    assert doc["export_schema_version"] == 1 and doc["unfinished_intents"] == ["k"] and doc["terminated_orderly"] is False
+    assert "someone@example.com" not in a.export() and "someone@example.com" not in a.export(redacted=True)  # masked when stored, masked again on export
+
+
+def test_a_resumed_session_tells_the_model_which_actions_were_never_confirmed(tmp_path):
+    h = Harness(tmp_path, game="snake", clock_session="resume1")
+    assert h.unknown_effects_note() == ""
+    h.session.append("intent", {"tool": "restart_level", "key": "abc", "decision": "approved"})  # the process dies here
+    back = Harness(tmp_path, game="snake", clock_session="resume1")
+    assert "restart_level" in back.unknown_effects_note() and "never confirmed" in back.unknown_effects_note()

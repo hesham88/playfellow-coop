@@ -64,6 +64,8 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         text = remembered + "\n\n" + text
     if harness is not None and harness.reminder():  # no progress for a while: one plain reminder of the goal
         text = text + "\n\n" + harness.reminder()
+    if harness is not None and harness.unknown_effects_note():  # a resumed session: say which actions were never confirmed
+        text = text + "\n\n" + harness.unknown_effects_note()
     if blocked:
         text = text + "\n\n" + blocked
     if labels:

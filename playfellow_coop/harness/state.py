@@ -23,7 +23,7 @@ from playfellow_coop.harness.security import redact
 MAX_TEXT = 500
 MAX_KEYS = 200
 MAX_EVENTS_IN_MEMORY = 500
-KINDS = ("message", "tool_call", "tool_result", "skill", "state", "note")
+KINDS = ("message", "tool_call", "tool_result", "skill", "state", "note", "intent", "terminal")
 KEY = re.compile(r"^(?:(?:user|app|temp):)?[a-z][a-z0-9_.]{0,47}$")
 
 
@@ -208,6 +208,21 @@ class Session:
         summary = Event(self._seq, self._clock().isoformat(timespec="seconds"), "note", {"compacted": len(old), "kinds": kinds}, {}, {})
         self.events.insert(0, summary)
         return len(old)
+
+    # ---- audit (cookbook: audit and resume): the intent to act, with who allowed it, is written BEFORE the effect; a terminal record after. An intent with no terminal record is an
+    # effect that was announced but never confirmed, for example after a crash: it is reported as unknown, never retried blindly.
+    def unfinished_intents(self) -> list[Event]:
+        done = {e.data.get("key") for e in self.events if e.kind == "terminal"}
+        return [e for e in self.events if e.kind == "intent" and e.data.get("key") not in done]
+
+    def export(self, redacted: bool = False) -> str:
+        """The whole session as one JSON document: offline, never changes the log, and byte-deterministic (the same events give the same bytes, so a hash pins a run).
+        `redacted` runs every string through the masking rules again; a stored event is already masked, so this is the safe form for sharing."""
+        events = [e.as_json() for e in self.events]
+        doc = {"export_schema_version": 1, "session": self.id, "terminated_orderly": any(e.kind == "note" and e.data.get("event") == "game ended" for e in self.events),
+               "unfinished_intents": [e.data.get("key") for e in self.unfinished_intents()], "events": events}
+        text = json.dumps(doc, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        return redact(text) if redacted else text
 
     def transcript(self, limit: int = 12) -> list[str]:
         """The last events as short plain lines, for the model's context (as data: wrap it with security.fence)."""

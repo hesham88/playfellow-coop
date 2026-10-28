@@ -15,7 +15,9 @@ registered the same way and called the same way, so the safety rules apply to al
 """
 from __future__ import annotations
 
+import hashlib
 import inspect
+import json
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
@@ -164,13 +166,29 @@ class ToolRegistry:
         return self._execute(tool, arguments, who)
 
     def _execute(self, tool: Tool, arguments: dict, who: dict | None) -> Outcome:
+        key = self._intent(tool, arguments, who)
         try:
             result = _status_dict(tool.run(**arguments))
         except Exception as error:  # a tool's crash is an answer, not the end of the session
+            self._terminal(key, tool.name, False, who)
             return self._finish(Outcome(tool.name, False, {"status": "error"}, f"failed:{type(error).__name__}"), who)
         shown = str(result)
         text = fence(f"answer of tool {tool.name}", shown) if tool.kind == "mcp" else shown[:500]
+        self._terminal(key, tool.name, True, who)
         return self._finish(Outcome(tool.name, True, result, text=text), who)
+
+    def _intent(self, tool: Tool, arguments: dict, who: dict | None) -> str:
+        """Write the intent to act, with who allowed it, BEFORE the effect runs, and return its idempotency key."""
+        seq = (self.session._seq + 1) if self.session is not None else 0
+        key = hashlib.sha256(f"{getattr(self.session, 'id', '')}:{seq}:{tool.name}:{json.dumps(arguments, sort_keys=True, default=str)}".encode("utf-8")).hexdigest()[:16]
+        if self.session is not None:
+            decision = "approved" if self.confirmation.log and self.confirmation.log[-1] == (tool.name, True) else "allowed"  # asked and approved, or allowed without a question
+            self.session.append("intent", {"tool": tool.name, "key": key, "decision": decision}, who=who)
+        return key
+
+    def _terminal(self, key: str, name: str, ok: bool, who: dict | None) -> None:
+        if self.session is not None:
+            self.session.append("terminal", {"tool": name, "key": key, "ok": ok}, who=who)
 
     def call_plan(self, calls: list[tuple[str, dict]], who: dict | None = None) -> PlanOutcome:
         """Run several calls as one unit (cookbook: staged approvals). Every stage is vetted and permitted BEFORE any runs, in order; the first refusal denies the whole plan and

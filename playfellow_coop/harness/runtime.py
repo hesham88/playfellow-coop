@@ -62,6 +62,14 @@ class Harness:
 
         return Flow(act, {"picture_changed": picture_changed, "not_stopped": not_stopped}, retry_limit=retry_limit, finished=game_over)
 
+    def unknown_effects_note(self) -> str:
+        """After a restart on the same session: actions that were announced but never confirmed. They are reported as unknown, never repeated blindly."""
+        pending = self.session.unfinished_intents()
+        if not pending:
+            return ""
+        names = ", ".join(sorted({e.data.get("tool", "?") for e in pending}))[:120]
+        return f"Earlier actions were announced but never confirmed ({names}). Check what really happened on the screen before you repeat them."
+
     # ---- the goal and the loop's brakes
     def reminder(self) -> str:
         """The goal reminder, empty unless the last several turns made no progress."""
