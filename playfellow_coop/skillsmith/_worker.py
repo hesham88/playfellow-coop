@@ -7,6 +7,7 @@ import builtins
 import json
 import sys
 
+sys.path.extend(sys.argv[1:2])  # the folder holding numpy when it is in a user site (python -I does not see those)
 ALLOWED = {"math", "numpy", "typing", "dataclasses"}
 SAFE = ["abs", "all", "any", "bool", "dict", "divmod", "enumerate", "float", "int", "isinstance", "len", "list", "map", "max", "min", "pow", "range", "reversed", "round", "set",
         "slice", "sorted", "str", "sum", "tuple", "zip", "True", "False", "None", "ValueError", "TypeError", "KeyError", "IndexError", "ZeroDivisionError", "Exception",

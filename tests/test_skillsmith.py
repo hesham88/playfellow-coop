@@ -281,3 +281,28 @@ def test_every_allowed_module_is_a_proxy_so_dataclasses_sys_and_typing_sys_canno
     worker = str(pathlib.Path(pkg.__file__).parent / "_worker.py")
     out = subprocess.run([sys.executable, "-I", worker], input=json.dumps({"code": code}) + nl + json.dumps({"obs": {}}) + nl, capture_output=True, text=True, timeout=60).stdout.splitlines()
     assert json.loads(out[1]) == {"action": {"v": "absent"}}
+
+
+def test_the_worker_finds_numpy_even_in_a_user_site_and_runs_contained_with_no_file_writes_and_no_child_processes():
+    import sys
+    from playfellow_coop.skillsmith.sandbox import SandboxedSkill
+    code = "import numpy as np\nclass GeneratedArenaSkill:\n    def compute_action(self, obs):\n        return {'move': [float(np.clip(5, -1, 1)), 0.0], 'buttons': [], 'hold_ms': 0}\n"
+    with SandboxedSkill(code, step_timeout_ms=5000) as skill:
+        assert not skill.faulted, skill.fault
+        assert skill.step({})["move"] == [1.0, 0.0]
+        if sys.platform == "win32":
+            assert skill.containment == "low-integrity+job"
+
+
+def test_a_contained_process_cannot_write_a_normal_file_or_start_another_process():
+    import subprocess, sys, tempfile
+    if sys.platform != "win32":
+        pytest.skip("integrity levels and job objects are Windows features")
+    from playfellow_coop.skillsmith import osjail
+    target = tempfile.NamedTemporaryFile(delete=False).name
+    script = ("import sys,subprocess\nsys.stdin.readline()\nr=[]\ntry:\n open(%r,'w').write('x'); r.append('wrote')\nexcept OSError: r.append('write denied')\n"
+              "try:\n subprocess.run([sys.executable,'-c','1'],timeout=10); r.append('spawned')\nexcept Exception: r.append('spawn denied')\nprint(','.join(r),flush=True)\n") % target
+    proc = subprocess.Popen([sys.executable, "-I", "-c", script], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    assert osjail.contain(proc) == "low-integrity+job"
+    out, _ = proc.communicate("go\n", timeout=60)
+    assert out.strip() == "write denied,spawn denied"

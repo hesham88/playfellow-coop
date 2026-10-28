@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from playfellow_coop.skillsmith import ast_gate
+from playfellow_coop.skillsmith import ast_gate, osjail
 
 WORKER = Path(__file__).with_name("_worker.py")
 NEUTRAL: dict = {"move": [0.0, 0.0], "buttons": [], "hold_ms": 0}
@@ -34,6 +34,18 @@ def scrubbed_environment() -> dict[str, str]:
     return env
 
 
+def numpy_location() -> list[str]:
+    """Where numpy lives for the worker. `python -I` ignores the user site-packages, so a numpy installed there is invisible; the folder is appended (never prepended) to the worker's path."""
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec("numpy")
+        if spec and spec.submodule_search_locations:
+            return [str(Path(next(iter(spec.submodule_search_locations))).parent)]
+    except (ImportError, ValueError):
+        pass
+    return []
+
+
 class SandboxedProgram:
     """Any model-written class run in the isolated worker: `call(method, *args)` returns the method's JSON-able result, or None when the program is late, dead or faulted. A skill is the
     special case `SandboxedSkill`; a world model (init_state, transition, render) is another."""
@@ -47,6 +59,7 @@ class SandboxedProgram:
         self._python = python or sys.executable
         self.faulted = False
         self.fault = ""
+        self.containment = "none"
         self.steps = 0
         self.latencies_ms: list[float] = []
         self._proc: subprocess.Popen | None = None
@@ -58,8 +71,9 @@ class SandboxedProgram:
     def _start(self) -> None:
         env = scrubbed_environment()
         env["TEMP"] = env["TMP"] = self._folder.name
-        self._proc = subprocess.Popen([self._python, "-I", str(WORKER)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,
+        self._proc = subprocess.Popen([self._python, "-I", str(WORKER), *numpy_location()], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,
                                       env=env, cwd=self._folder.name)
+        self.containment = osjail.contain(self._proc)  # before the code is sent: the worker is still waiting for its first message
         threading.Thread(target=self._pump, args=(self._proc,), daemon=True).start()
         reply = self._ask({"code": self.code, "class": self.class_name}, START_TIMEOUT)
         if reply is None or not reply.get("ready"):
