@@ -304,3 +304,29 @@ def test_when_the_picture_stops_answering_the_keys_the_model_is_told_the_match_m
         session.take_turn(parts, cfg, "system", StageTimer())
     assert END_NOTE in texts[-1] and END_NOTE not in texts[3]
     assert parts.screen_watch.end_candidates > 0
+
+
+def test_a_watchdog_hook_ends_the_session_at_its_step_limit_and_a_match_over_stops_it_only_when_asked():
+    import numpy as np
+    from playfellow_coop.harness.hooks import from_spec
+    from playfellow_coop.universal.watch import ScreenWatch
+    parts, cfg = make(max_calls=500)
+    parts.hooks = from_spec({"watchdog": {"max_steps": 3}})
+    reason = session.play_session(parts, cfg, "system", StageTimer(), wait=lambda s: False)
+    assert reason == "hook_limit" and parts.brain.calls == 3
+
+    parts, cfg = make(max_calls=500)
+    state = {"turn": 0}
+
+    def grab(box):
+        frame = np.full((box.height, box.width, 3), (60, 90, 120), np.uint8)
+        x = (10 + 9 * min(state["turn"], 8)) % (box.width - 20)  # the avatar moves for eight turns, then the picture freezes
+        frame[box.height // 2:box.height // 2 + 12, x:x + 12] = (250, 80, 80)
+        state["turn"] += 1
+        return Image.fromarray(frame)
+
+    parts.screen.grab = grab
+    parts.screen_watch = ScreenWatch(eog_fps=3.0)
+    parts.stop_on_end = True
+    assert session.play_session(parts, cfg, "system", StageTimer(), wait=lambda s: False, max_turns=60) == "match_over"
+    assert 8 < parts.brain.calls < 60

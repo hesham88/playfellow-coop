@@ -17,6 +17,7 @@ from messages import tr
 from reply import Reply, parse_reply
 
 from playfellow_coop.handover import HandOver
+from playfellow_coop.harness.hooks import FORCE_FINISH
 from playfellow_coop.sam_marks import mark_image_full
 from playfellow_coop.skills.book import NONE as NO_SKILL
 from playfellow_coop.spatial import StuckTracker
@@ -194,11 +195,26 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
     safety.start()
     parts.hands.resume()
     errors = turns = 0
+    hooks = getattr(parts, "hooks", None)  # control-loop rules (watchdog, completion gate): code in the loop, not a request in the prompt
+    watch = getattr(parts, "screen_watch", None)
+    ends_seen = 0
     try:
         while safety.check() is None:
             if max_turns is not None and turns >= max_turns:
                 safety.stop("round_done")
                 break
+            if hooks is not None:
+                state = {"step": turns, "spent_usd": float(getattr(parts, "spent_usd", lambda: 0.0)()), "won": bool(getattr(parts, "won", lambda: False)())}
+                if hooks.before_step(state) == FORCE_FINISH:
+                    on_event("status", tr("Stopping: " + str(hooks.forced) + ".", "توقفت: " + str(hooks.forced) + "."))
+                    safety.stop("hook_limit")
+                    break
+            if watch is not None and getattr(parts, "stop_on_end", False) and watch.end_candidates > ends_seen:
+                ends_seen = watch.end_candidates
+                if hooks is None or hooks.before_finish({"step": turns, "won": bool(getattr(parts, "won", lambda: False)()), "match_over": True})[0]:
+                    on_event("status", tr("The match looks over: stopping.", "تبدو المباراة انتهت: أتوقف."))
+                    safety.stop("match_over")
+                    break
             if commands is not None:
                 for action in commands.take_controls():
                     _apply_control(action, parts, handover, on_event)

@@ -103,6 +103,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                         help="scancode (Windows): press hardware scan codes with the extended flag and absolute or relative mouse, the way games read input; the same safety rules apply")
     parser.add_argument("--screen-watch", choices=("on", "off"), default="on",
                         help="on: a frozen loading screen is waited out without asking the model, and menu, game-over and victory screens are named in the prompt")
+    parser.add_argument("--stop-on-end", action="store_true", help="stop the session when the end-of-game signals say the match is over (needs the screen watch)")
+    parser.add_argument("--max-steps", type=int, default=None, help="a watchdog in the loop: end the session after this many turns")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
@@ -134,6 +136,10 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
         if not available():
             raise BrainError("brain_trouble", detail="--input scancode needs Windows")
         parts.hands.backend = DirectInputCompat()  # the engine's own hands and safety rules, now pressing scan codes
+    parts.stop_on_end = args.stop_on_end
+    if args.max_steps is not None:
+        from playfellow_coop.harness.hooks import from_spec
+        parts.hooks = from_spec({"watchdog": {"max_steps": args.max_steps}})
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise
