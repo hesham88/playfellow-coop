@@ -97,6 +97,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                         help="do everything except press keys: the buddy looks, thinks and says what it would press (cookbook: voice chess; nothing is ever pressed in a dry run)")
     parser.add_argument("--skills", choices=("on", "off"), default="on",
                         help="on: the model may start a skill (a local controller that plays many steps for it) when the game has one; off: the model presses every key")
+    parser.add_argument("--cua", action="store_true",
+                        help="with --brain muse: use the native computer tool (the model answers with clicks and key presses on the screenshot; safety checks wait for your approve/decline)")
     parser.add_argument("--screen-watch", choices=("on", "off"), default="on",
                         help="on: a frozen loading screen is waited out without asking the model, and menu, game-over and victory screens are named in the prompt")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
@@ -149,7 +151,14 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
         key = key_loader()
         if not key:
             raise BrainError("no_key")
-        parts.brain = MuseBrain(args.model or DEFAULT_MODEL, key, budget=DailyBudget(args.budget_file, args.daily_usd, args.daily_calls))
+        brain_class = MuseBrain
+        if args.cua:
+            from playfellow_coop.cua_brain import CuaBrain
+            brain_class = CuaBrain
+        parts.brain = brain_class(args.model or DEFAULT_MODEL, key, budget=DailyBudget(args.budget_file, args.daily_usd, args.daily_calls))
+        if args.cua:
+            parts.brain.set_card(parts.card)
+            return parts, cfg  # the native tool has its own protocol: no skills schema, no marks
         if not parts.card.uses_clicks:  # key cards: the reply is held to a schema whose actions are exactly the card's keys (a click card keeps free text)
             parts.brain.set_actions(parts.card.actions)
         attach_skills(parts, cfg, args.skills)

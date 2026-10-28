@@ -168,11 +168,14 @@ def _skill_must_stop(parts, settings) -> bool:
 
 def _apply_control(action: str, parts, handover: HandOver | None, on_event: Callable[[str, Any], None]) -> None:
     """A spoken or typed control phrase, applied at once and without the AI."""
-    from playfellow_coop.control_words import BUDDY_TAKES, PLAYER_TAKES, STOP
+    from playfellow_coop.control_words import APPROVE, BUDDY_TAKES, DECLINE, PLAYER_TAKES, STOP
     from playfellow_coop.handover import taken_line
 
     if action == STOP:
         parts.safety.stop("stopped_button")  # the same stop as the Stop button; F12 and the corner still work too
+    elif action in (APPROVE, DECLINE) and getattr(parts.brain, "waiting_for_player", None):  # the player's own answer to a safety check, never the model's
+        (parts.brain.acknowledge if action == APPROVE else parts.brain.decline)()
+        on_event("say", tr("Done, thank you." if action == APPROVE else "Understood, I will not do it.", "تمام، شكرًا." if action == APPROVE else "فهمت، لن أنفذ ذلك."))
     elif action == BUDDY_TAKES and handover is not None and handover.human_has_controls:
         on_event("say", handover.give_back() or "")
     elif action == PLAYER_TAKES and handover is not None and not handover.human_has_controls:

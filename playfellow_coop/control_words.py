@@ -8,13 +8,16 @@ from __future__ import annotations
 import re
 import unicodedata
 
-STOP, BUDDY_TAKES, PLAYER_TAKES = "stop", "buddy_takes", "player_takes"
+STOP, BUDDY_TAKES, PLAYER_TAKES, APPROVE, DECLINE = "stop", "buddy_takes", "player_takes", "approve", "decline"
 
 PHRASES = {
     STOP: {"stop", "stop now", "stop it", "halt", "وقف", "وقّف", "قف", "وقف دلوقتي", "اوقف", "أوقف"},
     BUDDY_TAKES: {"you take it", "you take over", "you go", "your turn", "خذها", "انت خدها", "إنت خدها", "دورك", "كمل انت", "كمّل انت"},
     PLAYER_TAKES: {"i've got it", "i have got it", "i got it", "i'll take it", "my turn", "give it back", "أنا هكمل", "انا هكمل",
                    "أنا سأكمل", "دوري", "رجّعها", "رجعها"},
+    # the player's answer to a safety check of the computer-use brain; whole phrases only, so a sentence that merely contains them is an ordinary command
+    APPROVE: {"approve", "approve it", "approve the action", "yes do it", "yes go ahead", "نفذ", "نفّذ", "موافق"},
+    DECLINE: {"decline", "decline it", "don't do it", "do not do it", "no don't", "لا تنفذ", "لا تنفّذ", "ارفض", "مش موافق"},
 }
 _MARKS = dict.fromkeys(map(ord, "ًٌٍَُِّْـ"))  # Arabic short vowels, shadda, tatweel
 
@@ -29,7 +32,7 @@ _TABLE = {_normal(phrase): action for action, phrases in PHRASES.items() for phr
 
 
 def control_action(text: str) -> str | None:
-    """STOP, BUDDY_TAKES, PLAYER_TAKES, or None for an ordinary command."""
+    """STOP, BUDDY_TAKES, PLAYER_TAKES, APPROVE, DECLINE, or None for an ordinary command."""
     return _TABLE.get(_normal(text))
 
 
