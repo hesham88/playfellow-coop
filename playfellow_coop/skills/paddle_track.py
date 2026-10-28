@@ -29,6 +29,7 @@ class TrackPaddle:
     name = "track_paddle"
     about = "Launch the ball and keep the paddle under it, aiming at the remaining bricks, until every brick is gone."
     max_steps = 15000
+    realtime = True
 
     def reset(self) -> None:
         self.previous = None

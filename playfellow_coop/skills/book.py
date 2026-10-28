@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 from typing import Callable
 
-from playfellow_coop.skills.base import SkillResult, run_skill
+from playfellow_coop.skills.base import SkillResult, make_settle, run_skill
 from playfellow_coop.skills.registry import SKILLS
 
 NONE = "none"  # the model's answer when it wants to press keys itself this turn
@@ -55,6 +55,8 @@ class SkillBook:
             parts.hands.do(Step(by_key[key]), box)
 
         grab = lambda: parts.screen.grab(box)  # noqa: E731
-        result = run_skill(self.skill, grab, press, stop, set(by_key), max_steps=max_steps)
+        # a real-time game moves on its own clock: in a live session (the window or the in-app game) each step waits for the picture to move; the offline benchmark steps the game itself
+        settle = make_settle(grab) if getattr(self.skill, "realtime", False) and getattr(parts, "wait_for_ticks", False) else None
+        result = run_skill(self.skill, grab, press, stop, set(by_key), max_steps=max_steps, settle=settle)
         self.last = result
         return result

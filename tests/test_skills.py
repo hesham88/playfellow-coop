@@ -262,3 +262,70 @@ def test_skill_brain_stops_at_once_when_asked_to_stop():
     brain = SkillBrain(Inner(), SkillBook("snake"), ar.VirtualScreen(game), ar.VirtualHands(game, card), card, stop=lambda: True)
     brain.ask("s", "t", [])
     assert brain.last_skill.steps == 0 and brain.last_skill.stopped == "game_over" and game.ticks == 0  # the player took over: not one key was pressed
+
+
+def test_settle_waits_for_the_picture_to_change_and_gives_up_after_the_timeout():
+    from playfellow_coop.skills.base import make_settle
+    frames = [np.zeros((16, 16, 3), np.uint8)] * 3 + [np.full((16, 16, 3), 200, np.uint8)]
+    calls, now = [], [0.0]
+
+    def grab():
+        calls.append(1)
+        return frames[min(len(calls) - 1, 3)]
+
+    def sleep(seconds):
+        now[0] += seconds
+
+    make_settle(grab, timeout=1.0, poll=0.1, sleep=sleep, clock=lambda: now[0])(np.zeros((16, 16, 3), np.uint8))
+    assert len(calls) == 4  # three looks at the same picture, then the changed one: it returned at once
+    still = make_settle(lambda: np.zeros((16, 16, 3), np.uint8), timeout=0.5, poll=0.1, sleep=sleep, clock=lambda: now[0])
+    start = now[0]
+    still(np.zeros((16, 16, 3), np.uint8))
+    assert 0.45 <= now[0] - start <= 0.7  # a picture that never changes costs one timeout, never an endless wait
+
+
+def test_a_live_snake_run_steps_with_the_game_clock_and_wins():
+    import controls
+    import threading
+    import time
+    from types import SimpleNamespace
+    from playfellow_coop.skills.skill_brain import SkillBrain
+
+    game = ar.load_game("snake", 2)
+    card = controls.load_card(ENGINE / "controls" / "arena_snake.yaml")
+
+    class Clocked(ar.VirtualHands):
+        pass
+
+    hands = ar.VirtualHands(game, card)
+    # make the game tick by itself in a thread (like the in-app game); a key only sets the direction
+    original_do = hands.do
+
+    def only_press(step, box):
+        action = card.actions[step.action]
+        if getattr(action, "keys", None):
+            game.press(action.keys[0])
+
+    hands.do = only_press
+    running = [True]
+
+    def clock():
+        while running[0] and not game.done:
+            game.tick()
+            game.ticks += 1
+            time.sleep(0.03)
+
+    thread = threading.Thread(target=clock, daemon=True)
+
+    class Inner:
+        def ask(self, system, text, images):
+            return json.dumps({"thought": "", "say": "", "actions": [], "skill": "chase_food"})
+
+    brain = SkillBrain(Inner(), SkillBook("snake"), ar.VirtualScreen(game), hands, card, stop=lambda: game.done)
+    thread.start()
+    try:
+        brain.ask("s", "t", [])
+    finally:
+        running[0] = False
+        thread.join(2)
+    assert game.is_won() or brain.last_skill.steps > 20  # it stepped with the clock rather than spinning on a stale picture

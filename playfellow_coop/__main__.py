@@ -158,6 +158,7 @@ def attach_skills(parts, cfg, switch: str) -> None:
     if switch == "off" or game not in SKILLS or not hasattr(parts.brain, "set_skills"):
         return
     parts.skills = SkillBook(game)
+    parts.wait_for_ticks = True  # live play: a real-time game ticks on its own clock, so a skill waits for the picture to move between keys
     parts.brain.set_skills(parts.skills.names)
     from playfellow_coop.harness.runtime import Harness
     parts.harness = Harness(game=game, goal=cfg.goal)  # session, long-term facts, identity, goal and the flow around a skill run (files under ~/.playfellow-coop/harness)

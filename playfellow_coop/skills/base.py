@@ -1,6 +1,7 @@
 """The skill contract and the loop that runs one."""
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Callable, Protocol
 
@@ -36,8 +37,22 @@ def as_frame(picture) -> Frame:
     return picture if isinstance(picture, np.ndarray) else np.asarray(picture.convert("RGB"))
 
 
+def make_settle(grab: Callable[[], object], timeout: float = 0.6, poll: float = 0.01, sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic):
+    """After a key, wait for the game's own clock to move the picture (a real-time game ticks by itself; pressing again before it does would stack keys on a stale picture).
+    Returns when the picture has changed from `before`, or after `timeout` seconds, whichever comes first."""
+    def settle(before) -> None:
+        start = clock()
+        small = np.asarray(before)[::8, ::8]
+        while clock() - start < timeout:
+            now = as_frame(grab())[::8, ::8]
+            if now.shape != small.shape or not np.array_equal(now, small):
+                return
+            sleep(poll)
+    return settle
+
+
 def run_skill(skill: Skill, grab: Callable[[], object], press: Callable[[str | None], None], finished: Callable[[], bool],
-              allowed: set[str], max_steps: int | None = None, keep_keys: int = 0) -> SkillResult:
+              allowed: set[str], max_steps: int | None = None, keep_keys: int = 0, settle: Callable | None = None) -> SkillResult:
     """Run `skill` until it is done: grab a picture, ask the skill for a key, press it. `finished` says the game is over.
 
     A key the controls card does not allow stops the skill at once (nothing is pressed); the step limit is hard.
@@ -50,7 +65,8 @@ def run_skill(skill: Skill, grab: Callable[[], object], press: Callable[[str | N
             result.stopped = "game_over"
             return result
         try:
-            key = skill.next_key(as_frame(grab()))
+            frame = as_frame(grab())
+            key = skill.next_key(frame)
         except Done as why:
             result.stopped = f"done:{why}"
             return result
@@ -58,6 +74,8 @@ def run_skill(skill: Skill, grab: Callable[[], object], press: Callable[[str | N
             result.stopped = f"key_not_allowed:{key}"
             return result
         press(key)
+        if settle is not None:
+            settle(frame)
         result.steps += 1
         if keep_keys and len(result.keys) < keep_keys:
             result.keys.append(key or "wait")

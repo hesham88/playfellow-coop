@@ -101,6 +101,7 @@ class RunLanes:
     name = "run_lanes"
     about = "Run a three-lane track: change lane around trains, jump low bars, slide under high bars, and pick up coins; use it for the whole run."
     max_steps = 700
+    realtime = True
 
     def reset(self) -> None:
         pass

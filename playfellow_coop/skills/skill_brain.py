@@ -40,7 +40,7 @@ class SkillBrain:
         if name in (None, NONE) or name != self.book.skill.name:
             return raw
         box = self.screen.find(self.window)
-        parts = SimpleNamespace(card=self.card, screen=self.screen, hands=self.hands, safety=SimpleNamespace(stopped=False))
+        parts = SimpleNamespace(card=self.card, screen=self.screen, hands=self.hands, safety=SimpleNamespace(stopped=False), wait_for_ticks=True)
         result = self.book.run(name, parts, box, self.stop, max_steps=self.max_steps)
         self.last_skill = result
         if result is not None:

@@ -105,6 +105,7 @@ class ChaseFood:
     name = "chase_food"
     about = "Steer a growing snake to the food, avoiding walls and its own body; use it for the whole game."
     max_steps = 1500
+    realtime = True  # the snake moves on the game clock
 
     def reset(self) -> None:
         self.cells: list = []  # the snake, head first, kept up to date from the pictures (a coiled snake cannot be ordered from one picture)
