@@ -6,20 +6,21 @@ collects the most coins. The move rules it plans with are the ones the game's ca
 from __future__ import annotations
 
 from playfellow_coop.skills.base import Done, Frame
-from playfellow_coop.skills.pixels import near
+from playfellow_coop.skills.looks import Look, exact_look, patch_mean
 
 LANES, LANE_W, ROW_H, HORIZON, TOP = 3, 120, 40, 12, 64
 AIR = SLIDE = 4
 COLOURS = {"train": (230, 70, 70), "low": (255, 160, 40), "high": (34, 228, 255), "coin": (255, 214, 60)}
 PLAYER = (124, 92, 255)
+ARENA_LOOK = exact_look("arena", {"train": COLOURS["train"], "low": COLOURS["low"], "high": COLOURS["high"], "coin": COLOURS["coin"], "player": PLAYER, "road": (40, 40, 64)}, radius=30.0)
 # where to sample inside a row (offsets from the lane's left edge and the row's top) for each kind
 PROBES = {"coin": (60, 21), "train": (60, 20), "low": (60, 31), "high": (60, 8)}
 KEYS = (None, "left", "right", "up", "down")
 DEPTH = 9
 
 
-def read(frame: Frame):
-    """(lane, jumping, sliding, items) where an item is (lane, rows ahead, kind)."""
+def read(frame: Frame, look: Look = ARENA_LOOK):
+    """(lane, jumping, sliding, items) where an item is (lane, rows ahead, kind). Each thing is read from a small patch where it sits in its row."""
     bottom = TOP + HORIZON * ROW_H
     items = []
     for lane in range(LANES):
@@ -27,15 +28,16 @@ def read(frame: Frame):
         for ahead in range(0, HORIZON + 1):
             upper = bottom - ahead * ROW_H
             for kind, (dx, dy) in PROBES.items():
-                if near(frame, left + dx, upper + dy, COLOURS[kind], 16):
+                if look.classify(patch_mean(frame, left + dx - 5, upper + dy - 3, 10, 6)) == kind:
                     items.append((lane, ahead, kind))
                     break
     lane, top_y, bottom_y = 1, None, None
     for candidate in range(LANES):
-        column = frame[bottom - 20: bottom + ROW_H + 4, candidate * LANE_W + 60]
-        rows = [i for i in range(len(column)) if all(abs(int(column[i][c]) - PLAYER[c]) <= 16 for c in range(3))]
+        rows = [y for y in range(bottom - 20, bottom + ROW_H + 4, 2) if look.classify(patch_mean(frame, candidate * LANE_W + 55, y, 10, 2)) == "player"]
         if rows:
-            lane, top_y, bottom_y = candidate, rows[0] + bottom - 20, rows[-1] + bottom - 20
+            lane, top_y, bottom_y = candidate, rows[0], rows[-1] + 1
+    if bottom_y is None:
+        raise Done("no runner in the picture")  # a look the skill cannot read shows it nothing to stand on: say so, do not run blind
     jumping = bottom_y is not None and bottom_y < bottom + ROW_H - 10
     sliding = bottom_y is not None and top_y is not None and (bottom_y - top_y) < 24 and not jumping
     return lane, jumping, sliding, items
@@ -103,11 +105,14 @@ class RunLanes:
     max_steps = 700
     realtime = True
 
+    def __init__(self, look: Look | None = None):
+        self.look = look or ARENA_LOOK
+
     def reset(self) -> None:
         pass
 
     def next_key(self, frame: Frame) -> str | None:
-        lane, jumping, sliding, items = read(frame)
+        lane, jumping, sliding, items = read(frame, self.look)
         state = (lane, AIR if jumping else 0, SLIDE if sliding else 0, tuple(items))
         value, key = plan(state, DEPTH)
         if value < 0:

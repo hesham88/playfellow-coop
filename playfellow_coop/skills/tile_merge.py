@@ -2,22 +2,25 @@
 from __future__ import annotations
 
 from playfellow_coop.skills.base import Done, Frame
-from playfellow_coop.skills.pixels import nearest
+from playfellow_coop.skills.looks import Look, exact_look, patch_mean
 
 SIZE, TILE, GAP, TOP = 4, 96, 8, 64
 COLOURS = {0: (44, 44, 70), 2: (238, 228, 218), 4: (237, 224, 200), 8: (242, 177, 121), 16: (245, 149, 99),
            32: (246, 124, 95), 64: (246, 94, 59), 128: (237, 207, 114), 256: (237, 204, 97), 512: (60, 58, 50)}
+ARENA_LOOK = exact_look("arena", {str(v): c for v, c in COLOURS.items()}, radius=14.0)  # one role per tile value
 KEYS = ("left", "right", "up", "down")
 WEIGHTS = [[4 ** (6 - x - y) for x in range(SIZE)] for y in range(SIZE)]  # weights fall away from the top-left corner
 
 
-def read(frame: Frame) -> list[list[int]]:
+def read(frame: Frame, look: Look = ARENA_LOOK) -> list[list[int]]:
+    """The tile numbers. Each tile is read from a small patch near its top-left corner, away from the number drawn in the middle. An unknown colour reads as empty."""
     board = []
     for gy in range(SIZE):
         row = []
         for gx in range(SIZE):
-            x, y = GAP + gx * (TILE + GAP) + 12, TOP + GAP + gy * (TILE + GAP) + 12
-            row.append(nearest(frame, x, y, COLOURS, 0))
+            left, top = GAP + gx * (TILE + GAP), TOP + GAP + gy * (TILE + GAP)
+            role = look.classify(patch_mean(frame, left + 8, top + 8, 18, 18))
+            row.append(int(role) if role and role.isdigit() else 0)
         board.append(row)
     return board
 
@@ -90,11 +93,14 @@ class SlideMerge:
     about = "Slide and merge numbered tiles toward a big tile in one corner, looking two moves ahead; use it for the whole game."
     max_steps = 1200
 
+    def __init__(self, look: Look | None = None):
+        self.look = look or ARENA_LOOK
+
     def reset(self) -> None:
         pass
 
     def next_key(self, frame: Frame) -> str | None:
-        board = read(frame)
+        board = read(frame, self.look)
         choice, _ = best(board, 2)
         if choice is None:
             raise Done("no move changes the board")

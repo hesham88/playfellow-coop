@@ -7,24 +7,26 @@ from __future__ import annotations
 from collections import deque
 
 from playfellow_coop.skills.base import Frame
-from playfellow_coop.skills.pixels import near
+from playfellow_coop.skills.looks import Look, exact_look, patch_mean
 
 GRID, TILE, TOP = 10, 44, 64
 HEAD, BODY, FOOD = (182, 255, 59), (110, 220, 120), (255, 61, 203)
+ARENA_LOOK = exact_look("arena", {"head": HEAD, "body": BODY, "food": FOOD, "floor": (30, 34, 58)})  # the plain look of the public arena game
+INSET = 14  # a tile's patch is read from its middle: borders, rounded corners and glow do not count
 STEPS = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
 OPPOSITE = {"up": "down", "down": "up", "left": "right", "right": "left"}
 
 
-def read(frame: Frame):
+def read(frame: Frame, look: Look = ARENA_LOOK):
     head, body, food = None, set(), None
     for gy in range(GRID):
         for gx in range(GRID):
-            x, y = gx * TILE + TILE // 2, TOP + gy * TILE + TILE // 2
-            if near(frame, x, y, HEAD):
+            role = look.classify(patch_mean(frame, gx * TILE, TOP + gy * TILE, TILE, TILE, INSET))
+            if role == "head":
                 head = (gx, gy)
-            elif near(frame, x, y, BODY):
+            elif role == "body":
                 body.add((gx, gy))
-            elif near(frame, x, y, FOOD):
+            elif role == "food":
                 food = (gx, gy)
     return head, body, food
 
@@ -107,6 +109,9 @@ class ChaseFood:
     max_steps = 1500
     realtime = True  # the snake moves on the game clock
 
+    def __init__(self, look: Look | None = None):
+        self.look = look or ARENA_LOOK
+
     def reset(self) -> None:
         self.cells: list = []  # the snake, head first, kept up to date from the pictures (a coiled snake cannot be ordered from one picture)
         self.heading = (1, 0)  # the game starts moving right
@@ -124,7 +129,7 @@ class ChaseFood:
 
     def next_key(self, frame: Frame) -> str | None:
         from playfellow_coop.skills.base import Done
-        head, body, food = read(frame)
+        head, body, food = read(frame, self.look)
         if head is None:
             raise Done("no head in the picture")
         snake = self._track(head, body)

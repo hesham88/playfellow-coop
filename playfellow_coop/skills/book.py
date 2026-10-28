@@ -11,26 +11,32 @@ NONE = "none"  # the model's answer when it wants to press keys itself this turn
 
 
 class SkillBook:
-    def __init__(self, game_key: str):
+    def __init__(self, game_key: str, looks=None):
         if game_key not in SKILLS:
             raise KeyError(f"no skills for game {game_key!r}")
         self.game_key = game_key
+        self.looks = list(looks or [])  # other ways this game may be drawn (re-skins), tried in order after the plain look
+        self.look_name = "arena"
         self.skill = SKILLS[game_key]()
         self.last: SkillResult | None = None
 
     def readable(self, picture) -> bool:
-        """Can the skill read this game's picture? A skill reads known colours and shapes; another look of the same game (a re-skin, sprites) it cannot read, and a skill that cannot
-        see must not be offered to the model. Tries one look on a fresh copy: a skill that gives up ("no head in the picture") means no."""
+        """Can a skill read this game's picture? Tries the plain look, then each known re-skin; the first look the skill can read with is kept (`look_name`).
+        A skill that cannot see must not be offered to the model: False when no look works."""
         from playfellow_coop.skills.base import Done, as_frame
-        probe = type(self.skill)()
-        probe.reset()
-        try:
-            probe.next_key(as_frame(picture))
-        except Done:
-            return False
-        except Exception:
-            return False
-        return True
+        frame = as_frame(picture)
+        for look in [None] + self.looks:
+            candidate = SKILLS[self.game_key](look) if look is not None else SKILLS[self.game_key]()
+            candidate.reset()
+            try:
+                candidate.next_key(frame)
+            except Done:
+                continue
+            except Exception:
+                continue
+            self.skill, self.look_name = candidate, (look.name if look is not None else "arena")
+            return True
+        return False
 
     @property
     def names(self) -> tuple[str, ...]:

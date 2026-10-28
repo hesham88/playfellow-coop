@@ -7,39 +7,45 @@ from __future__ import annotations
 from collections import deque
 
 from playfellow_coop.skills.base import Done, Frame
-from playfellow_coop.skills.pixels import near
+from playfellow_coop.skills.looks import Look, exact_look, patch_mean
 
-TILE, TOP, VIEW_W = 56, 64, 480
+TILE, TOP = 56, 64
 WALL, GOAL, BOX, BOX_DONE, PLAYER = (62, 64, 86), (120, 220, 150), (196, 140, 60), (90, 190, 110), (40, 110, 255)
+ARENA_LOOK = exact_look("arena", {"wall": WALL, "goal": GOAL, "box": BOX, "box_done": BOX_DONE, "player": PLAYER, "floor": (226, 232, 242)}, radius=40.0)
 MOVES = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
 MAX_STATES = 400_000
 
 
-def read(frame: Frame):
+def _role_at(frame: Frame, look: Look, cx: int, cy: int, half: int = 8) -> str | None:
+    return look.classify(patch_mean(frame, cx - half, cy - half, 2 * half, 2 * half))
+
+
+def read(frame: Frame, look: Look = ARENA_LOOK):
     """(walls, boxes, goals, player, width, height) in cells, or None when the picture is not a level."""
-    rows, cols = [], []
-    y = TOP + TILE // 2
-    xs = [x for x in range(VIEW_W) if near(frame, x, y, WALL, 8)]
+    y = TOP + TILE // 2  # the first row of the level is wall from end to end: its extent is the level's width
+    xs = [x for x in range(frame.shape[1]) if _role_at(frame, look, x, y, 1) == "wall"]
     if not xs:
         return None
-    left, width = xs[0], (xs[-1] - xs[0] + 1) // TILE
+    left = xs[0]
+    width = max(1, round((xs[-1] + 1 - left) / TILE))
     x = left + TILE // 2
-    ys = [yy for yy in range(TOP, frame.shape[0]) if near(frame, x, yy, WALL, 8)]
-    height = (ys[-1] - TOP + 1) // TILE if ys else 0
+    ys = [yy for yy in range(TOP, frame.shape[0]) if _role_at(frame, look, x, yy, 1) == "wall"]
+    height = max(0, round((ys[-1] + 1 - TOP) / TILE)) if ys else 0
     walls, boxes, goals, player = set(), set(), set(), None
     for gy in range(height):
         for gx in range(width):
             cx, cy = left + gx * TILE + TILE // 2, TOP + gy * TILE + TILE // 2
-            if near(frame, cx, cy, WALL, 8):
+            role = _role_at(frame, look, cx, cy)
+            if role == "wall":
                 walls.add((gx, gy))
-            elif near(frame, cx, cy, PLAYER, 20):
+            elif role == "player":
                 player = (gx, gy)
-            elif near(frame, cx, cy, BOX, 20):
+            elif role == "box":
                 boxes.add((gx, gy))
-            elif near(frame, cx, cy, BOX_DONE, 20):
+            elif role == "box_done":
                 boxes.add((gx, gy))
                 goals.add((gx, gy))
-            elif near(frame, cx, cy, GOAL, 20):
+            elif role == "goal":
                 goals.add((gx, gy))
     if player is None:
         return None
@@ -84,13 +90,16 @@ class PushBoxes:
     about = "Solve box-pushing levels: find the shortest way to put every box on a goal and walk it, level after level."
     max_steps = 400
 
+    def __init__(self, look: Look | None = None):
+        self.look = look or ARENA_LOOK
+
     def reset(self) -> None:
         self.plan: list[str] = []
 
     def next_key(self, frame: Frame) -> str | None:
         if self.plan:
             return self.plan.pop(0)
-        seen = read(frame)
+        seen = read(frame, self.look)
         if seen is None:
             raise Done("no level in the picture")
         walls, boxes, goals, player, _, _ = seen

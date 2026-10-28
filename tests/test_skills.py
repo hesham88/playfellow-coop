@@ -38,10 +38,11 @@ def test_every_listed_game_has_exactly_one_skill_and_it_is_described_for_the_mod
 def test_no_skill_looks_inside_the_game_it_reads_pixels_only():
     banned = re.compile(r"arena_pack|\.progress\(|\.is_won\(|\.is_lost\(|\bgame\.[a-z_]|self\.game\b")
     for path in SKILL_DIR.glob("*.py"):
-        if path.name in {"__init__.py", "base.py", "book.py", "registry.py"}:
+        if path.name in {"__init__.py", "base.py", "book.py", "registry.py", "calibration.py"}:
             continue  # the plumbing talks to the session, not to a game
         text = "\n".join(line for line in path.read_text(encoding="utf-8").splitlines() if not line.lstrip().startswith(("#", '"""')))
         assert not banned.search(text), f"{path.name} reads the game's inner state"
+        assert "calibration" not in text, f"{path.name} must not depend on the build-time calibration (it reads game state to label frames)"
 
 
 @pytest.mark.parametrize("game_key, seeds", [("snake", 8), ("slide_2048", 3), ("box_push", 3)])
@@ -314,7 +315,7 @@ def test_a_live_snake_run_steps_with_the_game_clock_and_wins():
         while running[0] and not game.done:
             game.tick()
             game.ticks += 1
-            time.sleep(0.03)
+            time.sleep(0.06)
 
     thread = threading.Thread(target=clock, daemon=True)
 

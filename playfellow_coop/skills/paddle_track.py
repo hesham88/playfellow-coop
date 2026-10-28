@@ -4,11 +4,14 @@ from __future__ import annotations
 import numpy as np
 
 from playfellow_coop.skills.base import Done, Frame
-from playfellow_coop.skills.pixels import centre_of, mask_of
+from playfellow_coop.skills.looks import Look, exact_look, role_mask
+from playfellow_coop.skills.pixels import centre_of
 
 W, TOP = 480, 64
 PADDLE, BALL = (124, 92, 255), (255, 255, 255)
 BRICK_1, BRICK_2 = (34, 228, 255), (255, 61, 203)
+ARENA_LOOK = exact_look("arena", {"paddle": PADDLE, "ball": BALL, "brick": BRICK_1}, radius=24.0)
+ARENA_LOOK.protos["brick"].append(BRICK_2)
 BALL_R, PADDLE_W = 6, 80
 PADDLE_STEP = 12
 
@@ -31,18 +34,21 @@ class TrackPaddle:
     max_steps = 15000
     realtime = True
 
+    def __init__(self, look: Look | None = None):
+        self.look = look or ARENA_LOOK
+
     def reset(self) -> None:
         self.previous = None
         self.rally = 0
 
     def next_key(self, frame: Frame) -> str | None:
-        paddle = centre_of(mask_of(frame, PADDLE, 16, TOP))
+        paddle = centre_of(role_mask(frame, self.look, "paddle", TOP))
         if paddle is None:
             raise Done("no paddle in the picture")
-        ball = centre_of(mask_of(frame, BALL, 12, TOP))
+        ball = centre_of(role_mask(frame, self.look, "ball", TOP))
         if ball is None:
             return None
-        bricks = mask_of(frame, BRICK_1, 16, TOP) | mask_of(frame, BRICK_2, 16, TOP)
+        bricks = role_mask(frame, self.look, "brick", TOP)
         if not bricks.any():
             raise Done("no bricks left")
         paddle_x = paddle[0]
