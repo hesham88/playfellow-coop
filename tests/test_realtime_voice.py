@@ -358,3 +358,34 @@ def test_close_code_1013_is_read_from_the_error_or_its_received_frame():
         rcvd = Closed()
 
     assert close_code(Closed()) == 1013 and close_code(Wrapper()) == 1013 and close_code(ValueError()) is None
+
+
+def test_audio_is_paced_against_an_absolute_schedule_never_ahead_of_real_time():
+    from playfellow_coop.realtime_voice import paced
+    now = [0.0]
+    slept = []
+
+    def clock():
+        return now[0]
+
+    def sleep(seconds):
+        slept.append(round(seconds, 4))
+        now[0] += seconds
+
+    chunk = b"\0" * 4800  # 0.1 s of 24 kHz 16-bit mono
+    out = list(paced([chunk] * 5, clock=clock, sleep=sleep))
+    assert len(out) == 5 and slept == [0.1, 0.1, 0.1, 0.1]  # the first chunk goes at once, each next one waits for its own time
+    # a slow send does not accumulate drift: lateness is absorbed because the schedule is absolute
+    now[0], slept[:] = 0.0, []
+
+    def slow_sleep(seconds):
+        slept.append(round(seconds, 4))
+        now[0] += seconds + 0.03  # every wait overshoots by 30 ms
+
+    list(paced([chunk] * 4, clock=clock, sleep=slow_sleep))
+    assert slept[0] == 0.1 and slept[1] < 0.1 and slept[2] < slept[1] + 0.0001  # the next waits are shorter, not longer
+
+
+def test_the_close_meanings_cover_the_documented_codes():
+    from playfellow_coop.realtime_voice import CLOSE_MEANINGS
+    assert set(CLOSE_MEANINGS) == {1000, 1008, 1011, 1013} and "60 minutes" in CLOSE_MEANINGS[1011]

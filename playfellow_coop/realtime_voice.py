@@ -41,6 +41,32 @@ def language_bias(language: str) -> list[str]:
     return [main] if main == "English" else [main, "English"]
 
 
+BYTES_PER_SECOND = 48000  # 24 kHz, 16-bit mono PCM: the engine-native rate (16 kHz is 32,000)
+
+
+def paced(chunks, bytes_per_second: int = BYTES_PER_SECOND, clock=None, sleep=None):
+    """Hand out audio chunks no faster than real time, against an ABSOLUTE schedule (cookbook: voice API fundamentals).
+
+    A recording or a buffer must not be sent at network speed: the server closes a stream that gets more than 5 s of audio ahead of processing (code 1008). Sleeping a fixed
+    interval per chunk drifts, and ten seconds of accumulated lateness also closes the session, so each chunk waits until `start + bytes_sent / bytes_per_second`. A live microphone
+    already runs in real time and needs no pacing.
+    """
+    import time as _time
+    clock, sleep = clock or _time.monotonic, sleep or _time.sleep
+    start, sent = clock(), 0
+    for chunk in chunks:
+        due = start + sent / bytes_per_second
+        wait = due - clock()
+        if wait > 0:
+            sleep(wait)
+        sent += len(chunk)
+        yield chunk
+
+
+CLOSE_MEANINGS = {1000: "finished", 1008: "the stream broke a rule (no handshake in 10 s, more than 5 s of audio ahead, or input slower than real time for 10 s)",
+                  1011: "the session was open longer than 60 minutes", 1013: "rate limited"}
+
+
 def close_code(error: Exception) -> int | None:
     """The WebSocket close code carried by a closed-connection error, if any (1013 means the stream limit was reached)."""
     for holder in (error, getattr(error, "rcvd", None)):
