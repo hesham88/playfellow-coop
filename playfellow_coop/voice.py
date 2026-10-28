@@ -27,6 +27,8 @@ MODEL = "muse-voice-transcribe-1.0"
 USD_PER_HOUR = 0.18
 MAX_SECONDS = 10 * 60
 MAX_BYTES = 32 * 1024 * 1024
+from playfellow_coop.realtime_voice import language_bias  # noqa: E402
+
 LANGUAGES = {"english": "English", "arabic": "Arabic"}
 
 
@@ -65,7 +67,7 @@ class MuseVoiceTranscriber:
         if self.budget is not None and self.budget.exhausted():
             raise BrainError("token_cap_day")
         request = {"model": MODEL, "audioEncoding": "WAV", "mode": "PUSH_TO_TALK",
-                   "languageBias": [LANGUAGES.get(language, "English")], "keywords": keywords or []}
+                   "languageBias": language_bias(language), "keywords": keywords or []}
         files = {"request": (None, json.dumps(request), "application/json"), "audio": ("command.wav", wav, "audio/wav")}
         started = time.perf_counter()
         try:

@@ -51,7 +51,9 @@ def test_with_a_marker_the_brain_gets_the_labels_and_the_marked_picture(tmp_path
         session.take_turn(parts, cfg, "system", timer)
         turn = timer.end_turn()
         parts.marker.close()
-    assert seen["text"].startswith("Labels drawn on the picture:") and "[ME] = you" in seen["text"]
+    # the labels change every turn, so they come LAST (prompt caching matches from the start: the stable goal and rules lead)
+    assert seen["text"].startswith("The goal:") and "Labels drawn on the picture:" in seen["text"] and "[ME] = you" in seen["text"]
+    assert seen["text"].index("The goal:") < seen["text"].index("Labels drawn on the picture:")
     assert "mark" in turn and turn["mark"] > 0
     plain = Image.new("RGB", seen["image"].size)
     assert ImageChops.difference(seen["image"].convert("RGB"), plain).getbbox() is not None

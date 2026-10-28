@@ -88,7 +88,7 @@ def test_the_handshake_has_the_architects_fields_and_audio_follows(fake, tmp_pat
     result = transcriber(tmp_path).transcribe([FRAME] * 5, language="arabic", keywords=["coins", "باب"])
     (hello,) = fake.handshakes
     assert hello == {"authorization": {"accessToken": f"Bearer {KEY}"}, "audioEncoding": "PCM_24KHZ",
-                     "model": "muse-voice-transcribe-1.0", "mode": "PUSH_TO_TALK", "languageBias": ["Arabic"],
+                     "model": "muse-voice-transcribe-1.0", "mode": "PUSH_TO_TALK", "languageBias": ["Arabic", "English"],
                      "keywords": ["coins", "باب"]}
     assert fake.audio_bytes == 5 * len(FRAME) and json.loads(fake.texts[-1]) == {"type": "endStream"}
     assert result.text == "grab the coins on the left"
@@ -341,3 +341,20 @@ def test_the_websockets_range_in_pyproject_is_the_tested_one():
 
     text = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
     assert '"websockets>=16,<18"' in text
+
+
+def test_an_arabic_player_is_biased_to_arabic_and_english_and_an_english_player_to_english_only():
+    from playfellow_coop.realtime_voice import language_bias
+    assert language_bias("arabic") == ["Arabic", "English"] and language_bias("english") == ["English"] and language_bias("klingon") == ["English"]
+
+
+def test_close_code_1013_is_read_from_the_error_or_its_received_frame():
+    from playfellow_coop.realtime_voice import close_code
+
+    class Closed(Exception):
+        code = 1013
+
+    class Wrapper(Exception):
+        rcvd = Closed()
+
+    assert close_code(Closed()) == 1013 and close_code(Wrapper()) == 1013 and close_code(ValueError()) is None

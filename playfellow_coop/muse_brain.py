@@ -14,7 +14,7 @@ import time
 import httpx
 
 from brain import BrainError, to_jpeg_bytes
-from playfellow_coop import _http
+from playfellow_coop import _http, backoff
 from playfellow_coop.budget import INPUT_USD_PER_TOKEN, OUTPUT_USD_PER_TOKEN, DailyBudget
 
 ENDPOINTS = {"muse": "https://api.meta.ai/v1"}  # pinned on purpose, like the engine's own brains
@@ -48,11 +48,19 @@ def cached_tokens(usage) -> int | None:
     return None
 
 
+def reasoning_tokens(usage) -> int | None:
+    """The chain-of-thought tokens inside the output count (billed as output): `completion_tokens_details.reasoning_tokens` on Chat Completions."""
+    details = usage.get("completion_tokens_details") if isinstance(usage, dict) else None
+    value = details.get("reasoning_tokens") if isinstance(details, dict) else None
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+
+
 class MuseBrain:
     name = "muse"
 
     def __init__(self, model: str, api_key: str, budget: DailyBudget | None = None, client: httpx.Client | None = None,
-                 effort: str = DEFAULT_EFFORT, cache_key: str | None = CACHE_KEY, base_url: str | None = None, auth_scheme: str = "Bearer"):
+                 effort: str = DEFAULT_EFFORT, cache_key: str | None = CACHE_KEY, base_url: str | None = None, auth_scheme: str = "Bearer",
+                 retries: int = 0, sleeper=time.sleep, safety_id: str | None = None):
         if effort not in EFFORTS:
             raise ValueError(f"effort must be one of {EFFORTS}")
         self.effort = effort
@@ -64,6 +72,10 @@ class MuseBrain:
         if (base_url is not None and not base_url.startswith("https://")) or auth_scheme not in ("Bearer", "Api-Key"):
             raise ValueError("a brain address must be https, and the key goes as Bearer or Api-Key")
         self.auth_scheme = auth_scheme
+        self.retries = max(0, min(int(retries), 5))  # attempts after the first for a 429, 500 or 503 (never for a 4xx: the request must change)
+        self._sleep = sleeper
+        self.guard = backoff.RateGuard()  # reads the rate-limit headers of every answer and pauses before the limit is hit
+        self.safety_id = safety_id  # a stable, privacy-preserving id of the end user (a hash, never a name or an e-mail), up to 64 characters
         self.actions: tuple[str, ...] | None = None
         self.skills: tuple[str, ...] | None = None  # the skill names the model may answer with (see playfellow_coop/skills)
         if "contributor" in model.lower():
@@ -106,6 +118,45 @@ class MuseBrain:
     def close(self) -> None:
         self._client.close()
 
+    def _send(self, url: str, request: dict):
+        """POST with the harness's error policy: pause when the rate-limit headers say the budget is nearly gone, retry 429, 500 and 503 with backoff and jitter
+        (honouring Retry-After), never retry anything else. The answer of the last attempt is returned either way."""
+        pause = self.guard.wait_seconds()
+        if pause:
+            self._sleep(pause)
+        attempt = 0
+        while True:
+            response = _http.post(self._client, url, self._key, request, scheme=self.auth_scheme)
+            self.guard.note(response.headers)
+            if response.status_code < 400 or attempt >= self.retries:
+                return response
+            try:
+                body = response.json()
+            except ValueError:
+                body = None
+            info = backoff.classify(response.status_code, body, response.headers)
+            if info.kind != "retry":
+                return response
+            attempt += 1
+            self._sleep(backoff.delay(attempt, info.retry_after))
+
+    def count_input_tokens(self, system: str, text: str, images: list) -> int | None:
+        """The exact number of input tokens this request would use on this model (images included), without generating anything: POST /responses/input_tokens.
+        None when the service does not answer with a count. It measures context fit, not the bill."""
+        content = [{"type": "input_text", "text": text}]
+        for image in images:
+            data = base64.standard_b64encode(to_jpeg_bytes(image)).decode("ascii")
+            content.append({"type": "input_image", "image_url": f"data:image/jpeg;base64,{data}"})
+        body = {"model": self.model, "input": [{"type": "message", "role": "system", "content": [{"type": "input_text", "text": system}]},
+                                               {"type": "message", "role": "user", "content": content}]}
+        response = self._send(self.base + "/responses/input_tokens", body)
+        _http.check_status(response.status_code)
+        try:
+            count = response.json().get("input_tokens")
+        except (ValueError, AttributeError):
+            return None
+        return count if isinstance(count, int) and not isinstance(count, bool) and count >= 0 else None
+
     def ask(self, system: str, text: str, images: list) -> str:
         if self.budget is not None and self.budget.exhausted():
             raise BrainError("token_cap_day")  # nothing is sent
@@ -123,10 +174,12 @@ class MuseBrain:
         schema = self._schema()
         if schema is not None:
             request["response_format"] = schema
+        if self.safety_id:
+            request["safety_identifier"] = str(self.safety_id)[:64]
         if self.cache_key:
             request["prompt_cache_key"] = self.cache_key
             request["prompt_cache_retention"] = CACHE_RETENTION
-        response = _http.post(self._client, self.base + "/chat/completions", self._key, request, scheme=self.auth_scheme)
+        response = self._send(self.base + "/chat/completions", request)
         self.last_timings = {"encode": encoded - started, "request": time.perf_counter() - encoded}  # measured here, inside
         _http.check_status(response.status_code)
         try:
@@ -144,7 +197,7 @@ class MuseBrain:
             cost = (prompt or 0) * INPUT_USD_PER_TOKEN + (completion or 0) * OUTPUT_USD_PER_TOKEN if (prompt or completion) else None
         choice = body["choices"][0]
         self.last_request = {"model": self.model, "images": len(images), "image_bytes": picture_bytes, "tokens_in": prompt,
-                             "tokens_cached": cached_tokens(usage), "tokens_out": completion,
+                             "tokens_cached": cached_tokens(usage), "tokens_out": completion, "reasoning_tokens": reasoning_tokens(usage),
                              "finish_reason": choice.get("finish_reason") if isinstance(choice, dict) else None, "cost_usd": cost,
                              "encode_ms": self.last_timings["encode"] * 1000.0, "request_ms": self.last_timings["request"] * 1000.0}
         if not isinstance(answer, str) or not answer.strip():

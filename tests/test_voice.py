@@ -84,7 +84,7 @@ def test_a_recording_is_sent_as_the_docs_describe_and_the_transcript_comes_back(
     assert hit["type"].startswith("multipart/form-data")
     body = hit["body"]
     assert b'name="request"' in body and b'"model": "muse-voice-transcribe-1.0"' in body and b'"audioEncoding": "WAV"' in body
-    assert b'"languageBias": ["Arabic"]' in body and b'"keywords": ["coins"]' in body and b'name="audio"' in body and b"RIFF" in body
+    assert b'"languageBias": ["Arabic", "English"]' in body and b'"keywords": ["coins"]' in body and b'name="audio"' in body and b"RIFF" in body
 
 
 def test_the_cost_is_the_providers_own_audio_length_at_the_published_hourly_price(transcriber, server, tmp_path):

@@ -42,6 +42,10 @@ def check_status(status: int) -> None:
     """Raise the friendly error for a bad status; return for a good one."""
     if 300 <= status < 400:
         raise BrainError("brain_trouble", detail="the service tried to send the request somewhere else")
+    if status == 402:
+        raise BrainError("brain_trouble", detail="the account has a billing problem: check the balance in the Model API dashboard")
+    if status == 504:
+        raise BrainError("brain_trouble", detail="the request ran too long: try a lower reasoning effort or a shorter input")
     if status in (401, 403):
         raise BrainError("bad_key")
     if status == 429:

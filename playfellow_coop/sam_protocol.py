@@ -256,3 +256,22 @@ def classify_status(status: int, body_text: str = "") -> str:
     if status == 429 or 500 <= status < 600:
         return "retry"
     return "other"
+
+
+IMAGE_USD = 2.50 / 1000
+VIDEO_FRAME_USD = 0.20 / 1000
+
+
+def sam_cost(frames: int, mode: str) -> float:
+    """What SAM bills (docs: pricing). An image request is $2.50 per 1,000 images; a video request is $0.20 per 1,000 frames with a minimum of 50 frames per request
+    (a shorter clip or tracking range is billed as 50). The same prices apply streamed or not."""
+    if mode == "image":
+        return max(1, frames) * IMAGE_USD
+    if mode == "video":
+        return max(MIN_BILLED_VIDEO_FRAMES, frames) * VIDEO_FRAME_USD
+    raise ValueError("mode is image or video")
+
+
+def cheaper_mode(frames: int) -> str:
+    """For `frames` pictures of the same scene: one video request or that many image requests, whichever costs less (four images cost the same $0.01 as the 50-frame minimum of one clip, so from five pictures on a clip is cheaper)."""
+    return "video" if sam_cost(frames, "video") < sam_cost(frames, "image") else "image"

@@ -57,10 +57,15 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         parts.stuck = stuck
         blocked = stuck.note(marks)  # "your last move did nothing", from the marks alone
     text = turn_text(settings.goal, parts.memory.as_text(), for_the_planner(chat or []), None)  # the player's words come first
+    # Prompt caching matches from the start of the prompt forward (docs: prompt caching): put what stays the same first and what changes every turn last.
+    harness = getattr(parts, "harness", None)
+    remembered = harness.memory_block() if harness is not None else ""
+    if remembered:  # what worked before in this game: fenced data, never an instruction; it changes only between games
+        text = remembered + "\n\n" + text
     if blocked:
-        text = blocked + "\n\n" + text
+        text = text + "\n\n" + blocked
     if labels:
-        text = labels + "\n\n" + text
+        text = text + "\n\n" + labels
     parts.safety.count_ai_call()
     images = [moment.image for moment in parts.memory.recent()] + [image]
     asked = timer.now()

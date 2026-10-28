@@ -33,6 +33,21 @@ MODEL = "muse-voice-transcribe-1.0"
 USD_PER_HOUR = 0.18
 BYTES_PER_SECOND = 24000 * 2  # 24 kHz, 16-bit, mono
 LANGUAGES = {"english": "English", "arabic": "Arabic"}
+
+
+def language_bias(language: str) -> list[str]:
+    """The languages the speaker is likely to use (docs: languageBias is a list and code-switching is supported). An Arabic player says game words in English too."""
+    main = LANGUAGES.get(language, "English")
+    return [main] if main == "English" else [main, "English"]
+
+
+def close_code(error: Exception) -> int | None:
+    """The WebSocket close code carried by a closed-connection error, if any (1013 means the stream limit was reached)."""
+    for holder in (error, getattr(error, "rcvd", None)):
+        code = getattr(holder, "code", None)
+        if isinstance(code, int):
+            return code
+    return None
 # Words a player says about any game, in English and Arabic; the card's own action names are added to these.
 GAME_WORDS = ("coins", "coin", "key", "door", "jump", "left", "right", "up", "down",
               "عملات", "عملة", "مفتاح", "باب", "اقفز", "يسار", "يمين", "فوق", "تحت")
@@ -98,7 +113,7 @@ class RealtimeTranscriber:
             raise BrainError("token_cap_day")
         url = ENDPOINTS["realtime"]
         handshake = {"authorization": {"accessToken": f"Bearer {self._key}"}, "audioEncoding": "PCM_24KHZ", "model": MODEL,
-                     "mode": "PUSH_TO_TALK", "languageBias": [LANGUAGES.get(language, "English")]}
+                     "mode": "PUSH_TO_TALK", "languageBias": language_bias(language)}
         if keywords:
             handshake["keywords"] = keywords
         options = {"proxy": None, "ssl": _ssl_context() if url.startswith("wss://") else None, "open_timeout": self._timeout,
@@ -120,6 +135,10 @@ class RealtimeTranscriber:
                     raw = connection.recv(timeout=self._timeout)
                 except TimeoutError:
                     raise BrainError("busy", retry=True, wait_seconds=3) from None
+                except Exception as error:  # the service closed the stream: 1013 is "stream limit reached, back off"
+                    if close_code(error) == 1013:
+                        raise BrainError("busy", retry=True, wait_seconds=10) from None
+                    raise
                 event = _event(raw)
                 if event.get("type") == "error" or "error" in event:
                     raise BrainError("brain_trouble", detail="the service reported an error")
