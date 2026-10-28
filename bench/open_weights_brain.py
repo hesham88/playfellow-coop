@@ -15,10 +15,19 @@ OPEN_MAX_TOKENS = 3000  # measured: this model always reasons and the budget inc
 COST_NOTE = "provisional: priced like muse-spark Standard until the partner's own prices are filled in"
 
 
+# The open-weight chat template turns reasoning_effort into a number (low 8, medium 32, high 256, xhigh 512, default xhigh); it always reasons; "none" and "max" are rejected
+# (docs: Muse Spark Open, recommended settings). The hosted service runs "minimal" as low, so we say low.
+OPEN_EFFORTS = {"minimal": "low", "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh"}
+
+
 class OpenWeightsBrain(MuseBrain):
     name = "open-weights"
 
     def __init__(self, api_key: str, model: str = OPEN_MODEL, **kw):
+        effort = kw.pop("effort", "low")
+        if effort not in OPEN_EFFORTS:
+            raise ValueError(f"the open-weight model takes reasoning effort {sorted(OPEN_EFFORTS)}; it always reasons, and none or max are refused")
+        kw["effort"] = OPEN_EFFORTS[effort]
         # no prompt_cache_key: the partner caches by prefix on its own (measured: 128 of 220 prompt tokens cached on a repeated prompt)
         super().__init__(model, api_key, base_url=OPEN_BASE, auth_scheme="Api-Key", cache_key=None, **kw)
         self.max_tokens = OPEN_MAX_TOKENS
