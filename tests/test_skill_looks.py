@@ -10,7 +10,8 @@ from bench import arena_run as ar
 from playfellow_coop.skills import run_skill
 from playfellow_coop.skills.book import SkillBook
 from playfellow_coop.skills.calibration import calibrate_look
-from playfellow_coop.skills.looks import calibrate, exact_look, load_looks, role_mask, save_looks
+from playfellow_coop.skills.looks import exact_look, load_looks, role_mask
+from playfellow_coop.skills.looks_build import calibrate, save_looks
 
 ENGINE = Path(os.environ["PLAYFELLOW_ENGINE"])
 

@@ -11,7 +11,8 @@ import numpy as np
 
 from playfellow_coop.skills import grid_chase, lane_runner, paddle_track, tile_merge
 from playfellow_coop.skills.box_pusher import TILE as BOX_TILE, TOP as BOX_TOP
-from playfellow_coop.skills.looks import Look, calibrate, patch_mean
+from playfellow_coop.skills.looks import Look, patch_mean
+from playfellow_coop.skills.looks_build import calibrate
 
 KEYS = {"snake": ("up", "down", "left", "right"), "box_push": ("up", "down", "left", "right"), "slide_2048": ("up", "down", "left", "right"),
         "lane_dash": ("left", "right", "up", "down") + (None,) * 10, "brick_breaker": ("left", "right", "space", None)}
