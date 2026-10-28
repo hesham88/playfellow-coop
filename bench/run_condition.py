@@ -115,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
     if len(episodes) < len(games) * args.seeds:
         print(f"incomplete: {len(episodes)} of {len(games) * args.seeds} episodes; no results file written, the checkpoint {checkpoint.path.name} keeps them")
         return 3
-    note = (args.note + " " if args.note else "") + f"marks={args.marks}; skills={args.skills}; effort={args.effort}; turns<= {args.turns}; the engine's public arena pack (unskinned)."
+    note = (args.note + " " if args.note else "") + f"marks={args.marks}; skills={args.skills}; effort={args.effort}; turns<= {args.turns}; " + ("looks=" + args.looks.name + " (re-skinned games read through calibrated looks)." if args.looks else "the engine's public arena pack (unskinned).")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     ar.write_results(args.out, f"{args.brain}-{args.marks}", args.brain, model, games, episodes, note)
     checkpoint.finish()

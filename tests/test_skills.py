@@ -340,3 +340,69 @@ def test_a_skill_says_whether_it_can_read_a_picture_so_a_blind_skill_is_never_of
     assert book.readable(Image.new("RGB", (440, 504), (30, 30, 60))) is False  # a look it does not know: nothing it can find
     assert SkillBook("box_push").readable(Image.new("RGB", (480, 400), (0, 0, 0))) is False
     assert SkillBook("lane_dash").readable(ar.load_game("lane_dash", 0).render()) is True
+
+
+def _asking_brain(answer):
+    class Inner:
+        model = "x"
+
+        def __init__(self):
+            self.seen = []
+
+        def ask(self, system, text, images):
+            self.seen.append(system)
+            return answer(len(self.seen))
+
+    return Inner()
+
+
+def test_a_skill_that_cannot_read_the_picture_is_not_offered_and_the_model_plays_the_turn():
+    import controls
+    from playfellow_coop.skills.skill_brain import SkillBrain
+
+    game = ar.load_game("snake", 4)
+    card = controls.load_card(ENGINE / "controls" / "arena_snake.yaml")
+    screen = ar.VirtualScreen(game)
+    screen.grab = lambda box: Image.new("RGB", (440, 440), (90, 90, 90))  # a new skin the skill has never seen
+    plan = json.dumps({"thought": "t", "say": "", "actions": ["UP"]})
+    inner = _asking_brain(lambda n: plan)
+    brain = SkillBrain(inner, SkillBook("snake"), screen, ar.VirtualHands(game, card), card)
+    assert brain.ask("rules", "turn", []) == plan and inner.seen == ["rules"] and brain.last_skill is None  # one call, no skills paragraph, nothing pressed by a skill
+
+
+def test_a_skill_that_turns_out_blind_hands_the_turn_back_to_the_model():
+    import controls
+    from playfellow_coop.skills.skill_brain import SkillBrain
+
+    game = ar.load_game("snake", 4)
+    card = controls.load_card(ENGINE / "controls" / "arena_snake.yaml")
+    book = SkillBook("snake")
+    screen = ar.VirtualScreen(game)
+    book.run = lambda name, parts, box, stop, max_steps=None: SimpleResult()  # readable on the way in, empty-handed when it runs
+    plan = json.dumps({"thought": "keys", "say": "", "actions": ["UP"]})
+    inner = _asking_brain(lambda n: json.dumps({"thought": "", "say": "", "actions": [], "skill": "chase_food"}) if n == 1 else plan)
+    events = []
+    brain = SkillBrain(inner, book, screen, ar.VirtualHands(game, card), card, on_event=lambda kind, data: events.append(kind))
+    assert brain.ask("rules", "turn", []) == plan and len(inner.seen) == 2 and "pressed nothing" in inner.seen[1] and "skill_blind" in events
+
+
+class SimpleResult:
+    skill, steps, stopped, keys = "chase_food", 0, "done:no head", []
+
+
+def test_a_resized_window_is_scaled_back_so_the_skill_still_wins():
+    import controls
+    from playfellow_coop.skills.skill_brain import SkillBrain
+    from playfellow_coop.universal.frames import resize, to_rgb
+
+    game = ar.load_game("snake", 4)
+    card = controls.load_card(ENGINE / "controls" / "arena_snake.yaml")
+    book = SkillBook("snake")
+    screen = ar.VirtualScreen(game)
+    assert book.readable(screen.grab(None)) and book.native_size is not None  # proven at the real size first, as a session does at start
+    width, height = book.native_size
+    screen.grab = lambda box, real=screen.grab: Image.fromarray(resize(to_rgb(real(box)), int(width * 1.5), int(height * 1.5)))  # the window was made bigger
+    inner = _asking_brain(lambda n: json.dumps({"thought": "", "say": "", "actions": [], "skill": "chase_food"}))
+    SkillBrain(inner, book, screen, ar.VirtualHands(game, card), card, stop=lambda: game.done).ask("rules", "turn", [])
+    assert game.is_won() and book.last.steps > 50
+

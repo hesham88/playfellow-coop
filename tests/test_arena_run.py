@@ -146,3 +146,16 @@ def test_the_runner_writes_a_checkpoint_per_episode_and_removes_it_when_the_resu
     assert run_condition.main(["--brain", "random", "--games", "snake", "--seeds", "2", "--turns", "4", "--out", str(out), "--engine", str(ENGINE)]) == 0
     doc = json.loads(out.read_text(encoding="utf-8"))
     assert doc["overall"]["episodes"] == 2 and not (tmp_path / "r.json.partial.jsonl").exists()
+
+
+def test_results_say_when_wins_had_local_skill_help_so_nobody_reports_them_as_the_model_alone(tmp_path):
+    helped = ar.Episode("snake", 0, won=True, progress=1.0, extra={"skill_steps": 120})
+    alone = ar.Episode("snake", 1, won=False, progress=0.2)
+    summary = ar.summarise([helped, alone])
+    assert summary["local_help_episodes"] == 1 and summary["skill_steps_total"] == 120
+    out = tmp_path / "r.json"
+    ar.write_results(out, "c", "b", "m", ["snake"], [helped, alone])
+    assert "local help" in json.loads(out.read_text(encoding="utf-8"))["note"]
+    plain = tmp_path / "p.json"
+    ar.write_results(plain, "c", "b", "m", ["snake"], [alone])
+    assert "local help" not in json.loads(plain.read_text(encoding="utf-8"))["note"]

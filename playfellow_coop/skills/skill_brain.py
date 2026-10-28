@@ -31,20 +31,34 @@ class SkillBrain:
         if hasattr(inner, "set_skills"):
             inner.set_skills(book.names)  # a strict-schema brain may then answer with the skill enum
 
+    def _can_see(self, box) -> bool:
+        """True when a skill can read the picture on screen right now (looks are tried again each turn, so a game that changes its skin falls back to the model by itself)."""
+        try:
+            return self.book.readable(self.screen.grab(box))
+        except Exception:  # a failed grab must never stop the model from playing
+            return False
+
     def __getattr__(self, name):  # model, last_request, last_timings, set_actions, close ...: all the inner brain's
         return getattr(self.inner, name)
 
     def ask(self, system: str, text: str, images: list) -> str:
+        box = self.screen.find(self.window)
+        if not self._can_see(box):
+            # the skill cannot read this picture (a new skin, another game, a window it does not know): do not offer it, the model plays the turn itself
+            return self.inner.ask(system, text, images)
         raw = self.inner.ask(system + self.book.system_text(), text, images)
         name = chosen_skill(raw)
         if name in (None, NONE) or name != self.book.skill.name:
             return raw
-        box = self.screen.find(self.window)
         parts = SimpleNamespace(card=self.card, screen=self.screen, hands=self.hands, safety=SimpleNamespace(stopped=False), wait_for_ticks=True)
         result = self.book.run(name, parts, box, self.stop, max_steps=self.max_steps)
         self.last_skill = result
         if result is not None:
             self.on_event("skill", {"name": name, "steps": result.steps, "stopped": result.stopped})
+            if result.steps == 0 and result.stopped.startswith("done"):
+                # it could not see after all: nothing was pressed, so ask again and let the model press keys itself
+                self.on_event("skill_blind", {"name": name, "stopped": result.stopped})
+                return self.inner.ask(system + "\n\nYour skill could not read this picture and pressed nothing. Press keys yourself this turn.", text, images)
         try:
             words = json.loads(raw)
             thought, say = str(words.get("thought", ""))[:200], str(words.get("say", ""))[:140]

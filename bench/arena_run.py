@@ -287,11 +287,16 @@ def summarise(episodes: list[Episode]) -> dict:
             "tokens_in": sum(e.tokens_in for e in episodes), "tokens_cached": sum(e.tokens_cached for e in episodes), "tokens_out": sum(e.tokens_out for e in episodes),
             "cost_usd": round(sum(e.cost_usd for e in episodes), 5),
             "tokens_per_win": round((sum(e.tokens_in + e.tokens_out for e in episodes) / wins), 1) if wins else None,
-            "usd_per_win": round(sum(e.cost_usd for e in episodes) / wins, 5) if wins else None}
+            "usd_per_win": round(sum(e.cost_usd for e in episodes) / wins, 5) if wins else None,
+            # how much of the play was done by local skills the model started: a win with skill steps is the SYSTEM winning with local help, not the model alone
+            "local_help_episodes": sum(1 for e in episodes if e.extra.get("skill_steps", 0) > 0),
+            "skill_steps_total": sum(e.extra.get("skill_steps", 0) for e in episodes)}
 
 
 def write_results(path: Path, condition: str, brain_name: str, model: str, games: list[str], episodes: list[Episode], note: str = "") -> None:
     by_game = {g: summarise([e for e in episodes if e.game == g]) for g in games}
+    if any(e.extra.get("skill_steps", 0) > 0 for e in episodes):
+        note = (note + " " if note else "") + "REPORTING: some wins used local skills that the model started; report them as the system winning with local help, not as the model alone."
     doc = {"schema": SCHEMA, "written": datetime.now().astimezone().isoformat(timespec="seconds"), "condition": condition, "brain": brain_name, "model": model,
            "note": note, "overall": summarise(episodes), "by_game": by_game, "episodes": [e.__dict__ for e in episodes]}
     with open(path, "x", encoding="utf-8", newline="\n") as handle:  # never overwrites a results file

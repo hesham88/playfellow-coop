@@ -19,12 +19,17 @@ class SkillBook:
         self.look_name = "arena"
         self.skill = SKILLS[game_key]()
         self.last: SkillResult | None = None
+        self.native_size: tuple[int, int] | None = None  # (width, height) of the picture the skill was proven to read; a resized window is scaled back to this
+        self.blind_runs = 0  # runs that ended before a single key: the skill cannot see this game any more
 
     def readable(self, picture) -> bool:
         """Can a skill read this game's picture? Tries the plain look, then each known re-skin; the first look the skill can read with is kept (`look_name`).
         A skill that cannot see must not be offered to the model: False when no look works."""
         from playfellow_coop.skills.base import Done, as_frame
         frame = as_frame(picture)
+        if self.native_size is not None and (frame.shape[1], frame.shape[0]) != self.native_size:
+            from playfellow_coop.universal.frames import resize
+            frame = resize(frame, *self.native_size)  # a resized window: judge it at the size the skill was proven on
         for look in [None] + self.looks:
             candidate = SKILLS[self.game_key](look) if look is not None else SKILLS[self.game_key]()
             candidate.reset()
@@ -35,6 +40,7 @@ class SkillBook:
             except Exception:
                 continue
             self.skill, self.look_name = candidate, (look.name if look is not None else "arena")
+            self.native_size = (frame.shape[1], frame.shape[0])
             return True
         return False
 
@@ -74,9 +80,22 @@ class SkillBook:
                 return
             parts.hands.do(Step(by_key[key]), box)
 
-        grab = lambda: parts.screen.grab(box)  # noqa: E731
+        grab = self._grab(parts, box)
         # a real-time game moves on its own clock: in a live session (the window or the in-app game) each step waits for the picture to move; the offline benchmark steps the game itself
         settle = make_settle(grab) if getattr(self.skill, "realtime", False) and getattr(parts, "wait_for_ticks", False) else None
         result = run_skill(self.skill, grab, press, stop, set(by_key), max_steps=max_steps, settle=settle)
         self.last = result
+        self.blind_runs = self.blind_runs + 1 if result.steps == 0 and result.stopped.startswith("done") else 0
         return result
+
+    def _grab(self, parts, box):
+        """The session's screen grab, scaled back to the picture size the skill was proven on, so a resized window or another display scale does not blind it."""
+        def grab():
+            picture = parts.screen.grab(box)
+            if self.native_size is None:
+                return picture
+            from playfellow_coop.universal.frames import resize, to_rgb
+            frame = to_rgb(picture)
+            width, height = self.native_size
+            return frame if (frame.shape[1], frame.shape[0]) == (width, height) else resize(frame, width, height)
+        return grab
