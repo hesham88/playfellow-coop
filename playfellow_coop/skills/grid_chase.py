@@ -164,5 +164,7 @@ class ChaseFood:
         return self._go(STEPS[best])
 
     def _go(self, step):
+        if step == self.heading and getattr(self, "live", False):
+            return None  # live on a real clock, already heading there: the same arrow changes nothing and costs a key hold; offline the key is what advances the game
         self.heading = step
         return next(key for key, delta in STEPS.items() if delta == step)

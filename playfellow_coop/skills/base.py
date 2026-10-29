@@ -37,17 +37,18 @@ def as_frame(picture) -> Frame:
     return picture if isinstance(picture, np.ndarray) else np.asarray(picture.convert("RGB"))
 
 
-def make_settle(grab: Callable[[], object], timeout: float = 0.6, poll: float = 0.01, sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic):
+def make_settle(grab: Callable[[], object], timeout: float = 0.6, poll: float = 0.005, sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic):
     """After a key, wait for the game's own clock to move the picture (a real-time game ticks by itself; pressing again before it does would stack keys on a stale picture).
-    Returns when the picture has changed from `before`, or after `timeout` seconds, whichever comes first."""
-    def settle(before) -> None:
+    Returns True when the picture has changed from `before`, False after `timeout` seconds without a change (the game did not move by itself)."""
+    def settle(before) -> bool:
         start = clock()
         small = np.asarray(before)[::8, ::8]
         while clock() - start < timeout:
             now = as_frame(grab())[::8, ::8]
             if now.shape != small.shape or not np.array_equal(now, small):
-                return
+                return True
             sleep(poll)
+        return False
     return settle
 
 

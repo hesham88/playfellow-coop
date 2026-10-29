@@ -69,10 +69,14 @@ class SkillBook:
                 wait_action = action_name
         from reply import Step
 
+        live_realtime = getattr(self.skill, "realtime", False) and getattr(parts, "wait_for_ticks", False)
+
         def press(key):
             if parts.safety.stopped:
                 return
             if key is None:
+                if live_realtime:
+                    return  # the game moves on its own clock and the next step waits for its tick anyway: nothing to press, nothing to wait for here
                 if wait_action is not None:
                     parts.hands.do(Step(wait_action), box)
                 else:
@@ -83,6 +87,15 @@ class SkillBook:
         grab = self._grab(parts, box)
         # a real-time game moves on its own clock: in a live session (the window or the in-app game) each step waits for the picture to move; the offline benchmark steps the game itself
         settle = make_settle(grab) if getattr(self.skill, "realtime", False) and getattr(parts, "wait_for_ticks", False) else None
+        self.skill.live = live_realtime  # a skill may skip a key that changes nothing, but only when the game's own clock moves it
+        if settle is not None:
+            waited = settle
+
+            def settle(before, _waited=waited):  # noqa: F811 - the same wait, plus one lesson from it
+                moved = _waited(before)
+                if moved is False:
+                    self.skill.live = False  # nothing moved without a key: this game advances on key presses, so every step presses again
+                return moved
         result = run_skill(self.skill, grab, press, stop, set(by_key), max_steps=max_steps, settle=settle)
         self.last = result
         self.blind_runs = self.blind_runs + 1 if result.steps == 0 and result.stopped.startswith("done") else 0
