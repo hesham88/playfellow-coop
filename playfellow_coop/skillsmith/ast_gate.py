@@ -103,6 +103,23 @@ class _Gate(ast.NodeVisitor):
     def visit_Yield(self, node: ast.Yield):
         raise SkillRejected("generators are not allowed")
 
+    def visit_YieldFrom(self, node: ast.YieldFrom):
+        raise SkillRejected("generators are not allowed")
+
+    def visit_Match(self, node: ast.Match):
+        # a class pattern names attributes as plain strings (`case int(__class__=c)`), which the attribute check never sees
+        raise SkillRejected("'match' is not allowed: use if and elif")
+
+    def visit_arg(self, node: ast.arg):
+        if node.arg.startswith("__"):
+            raise SkillRejected(f"the parameter name '{node.arg}' is not allowed")
+        self.generic_visit(node)
+
+    def visit_BinOp(self, node: ast.BinOp):
+        if isinstance(node.op, ast.Pow) and not (isinstance(node.right, ast.Constant) and isinstance(node.right.value, int) and 0 <= node.right.value <= 16):
+            raise SkillRejected("'**' is only allowed with a literal whole exponent from 0 to 16 (a huge power never finishes)")
+        self.generic_visit(node)
+
     def visit_Constant(self, node: ast.Constant):
         if isinstance(node.value, (int, float)) and abs(node.value) > 10 ** 9:
             raise SkillRejected("numbers larger than a billion are not allowed")

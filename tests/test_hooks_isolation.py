@@ -90,3 +90,35 @@ def test_gate_b_cannot_pass_a_trace_that_never_asked_the_question():
     assert gate_b(actions, calm).passed is False
     risky = [{"danger": 0.9, "escape": [1.0, 0.0]} for _ in range(10)]
     assert gate_b([{"move": [1.0, 0.0]}] * 5 + [{"move": [0.5, 0.5]}] * 5, risky).passed is True
+
+
+def test_hooks_reset_between_rounds_a_missing_state_key_is_not_a_pass_a_finished_match_may_stop_and_bad_specs_are_errors():
+    hooks = from_spec({"watchdog": {"max_steps": 2}, "gate": [{"check": "no_blank_fields"}]})
+    assert hooks.before_step({"step": 5}) == FORCE_FINISH and hooks.before_finish({})[0] is True
+    hooks.reset()
+    assert hooks.forced is None and hooks.before_step({"step": 1}) == CONTINUE
+    assert hooks.before_finish({"won": True})[0] is False  # the state never said whether fields are blank: refused
+    assert hooks.before_finish({"blank_fields": []})[0] is True
+    assert hooks.before_finish({"match_over": True})[0] is True  # a lost or won match the game reports as over can always stop
+    for bad in ({"watchdog": {"max_steps": -1}}, {"watchdog": {"max_usd": "five"}}, {"gate": [{"check": "progress_at_least"}]}, {"gate": ["won"]}):
+        with pytest.raises(ValueError):
+            from_spec(bad)
+    boom = CompletionGate([Check("x", lambda s: s["nope"])])
+    assert "KeyError" in boom.allow({})[1][0]
+
+
+def test_no_network_also_blocks_sends_and_extra_lookups():
+    with NoNetwork():
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            with pytest.raises(NetworkBlocked):
+                sock.sendto(b"x", ("127.0.0.1", 9))
+            with pytest.raises(NetworkBlocked):
+                socket.gethostbyaddr("127.0.0.1")
+        finally:
+            sock.close()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.sendto(b"x", ("127.0.0.1", 9))  # allowed again outside the block
+    finally:
+        sock.close()

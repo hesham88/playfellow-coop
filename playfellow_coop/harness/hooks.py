@@ -28,6 +28,9 @@ class Watchdog:
     clock: Callable[[], float] = time.monotonic
     started: float | None = None
 
+    def reset(self) -> None:
+        self.started = None
+
     def check(self, state: dict) -> str | None:
         """None while inside the limits; the reason when one is reached."""
         if self.started is None:
@@ -58,8 +61,9 @@ class CompletionGate:
         for c in self.checks:
             try:
                 ok = bool(c.test(state))
-            except Exception:  # a check that crashes must refuse, never wave the agent through
+            except Exception as error:  # a check that crashes must refuse, never wave the agent through
                 ok = False
+                c = Check(c.name, c.test, f"the check raised {type(error).__name__}")
             if not ok:
                 failed.append(f"{c.name}: {c.why or 'not satisfied'}")
         return (not failed), failed
@@ -81,9 +85,17 @@ class ControlHooks:
                 return FORCE_FINISH
         return CONTINUE
 
+    def reset(self) -> None:
+        """A new round: the watchdog's clock and a forced finish from the last round are forgotten, so an old stop cannot hold the gate open."""
+        self.forced = None
+        self.blocked = 0
+        if self.watchdog is not None:
+            self.watchdog.reset()
+
     def before_finish(self, state: dict) -> tuple[bool, list[str]]:
-        """May the agent stop now? A forced finish may always stop (the watchdog already decided); otherwise the completion gate must pass."""
-        if self.forced is not None or self.gate is None:
+        """May the agent stop now? A forced finish may always stop (the watchdog already decided), and so may a match the game itself reports as over (nothing is left to do);
+        otherwise the completion gate must pass."""
+        if self.forced is not None or self.gate is None or state.get("match_over"):
             return True, []
         ok, why = self.gate.allow(state)
         if not ok:
@@ -94,7 +106,7 @@ class ControlHooks:
 # ---- hooks as data ------------------------------------------------------------------------------------------------------------------
 STATE_CHECKS = {
     "won": lambda s: bool(s.get("won")),
-    "no_blank_fields": lambda s: not s.get("blank_fields"),
+    "no_blank_fields": lambda s: "blank_fields" in s and not s["blank_fields"],  # a state that does not say is not a pass
     "progress_at_least": None,  # built with a parameter below
 }
 
@@ -103,11 +115,20 @@ def from_spec(spec: dict) -> ControlHooks:
     """{"watchdog": {"max_steps": 600, "max_seconds": 120, "max_usd": 0.2}, "gate": [{"check": "won"}, {"check": "progress_at_least", "value": 0.9}]}. Unknown checks are an error, so a
     typo can never turn a gate into an open door."""
     wd = spec.get("watchdog")
+    if wd:
+        for limit in ("max_steps", "max_seconds", "max_usd"):
+            value = wd.get(limit)
+            if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0):
+                raise ValueError(f"{limit} must be a positive number")
     watchdog = Watchdog(wd.get("max_steps"), wd.get("max_seconds"), wd.get("max_usd")) if wd else None
     checks = []
     for item in spec.get("gate", []):
+        if not isinstance(item, dict):
+            raise ValueError("each gate item is a mapping like {\"check\": \"won\"}")
         name = item.get("check")
         if name == "progress_at_least":
+            if "value" not in item:
+                raise ValueError("progress_at_least needs a value")
             floor = float(item["value"])
             checks.append(Check(name, lambda s, f=floor: float(s.get("progress", 0.0)) >= f, f"progress must reach {floor}"))
         elif name in STATE_CHECKS and STATE_CHECKS[name] is not None:

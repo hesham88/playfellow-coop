@@ -42,7 +42,7 @@ def parse(text: str) -> list[Chunk]:
     head = parts[0].split()
     try:
         dx, dy, dz = (int(float(v)) for v in (head + ["0", "0", "0"])[:3])
-    except ValueError:
+    except (ValueError, OverflowError):  # "inf" and "nan" parse as floats and cannot become whole numbers
         return []
     if max(abs(dx), abs(dy), abs(dz)) > MAX_MOUSE:
         return []
@@ -103,9 +103,17 @@ class Backend(Protocol):
 class Executor:
     """Plays a plan with a clock. `clock()` returns milliseconds; `sleep(ms)` waits. A real run uses perf_counter and a sleep with a short spin tail; a test passes fakes."""
 
-    def __init__(self, backend: Backend, clock: Callable[[], float] = lambda: time.perf_counter() * 1000.0, sleep: Callable[[float], None] = lambda ms: time.sleep(ms / 1000.0)):
-        self.backend, self.clock, self.sleep = backend, clock, sleep
+    def __init__(self, backend: Backend, clock: Callable[[], float] = lambda: time.perf_counter() * 1000.0, sleep: Callable[[float], None] | None = None):
+        self.backend, self.clock = backend, clock
+        self.sleep = sleep or self._wait  # the default waits the coarse part with a normal sleep and the last 1.5 ms on the clock (Windows sleeps can be 15 ms late)
         self.late_ms: list[float] = []
+
+    def _wait(self, ms: float) -> None:
+        target = self.clock() + ms
+        if ms > 1.5:
+            time.sleep((ms - 1.5) / 1000.0)
+        while self.clock() < target:
+            pass
 
     def run(self, events: list[Event], should_stop: Callable[[], bool] = lambda: False) -> int:
         """Play the events in time. Stops early when `should_stop()` says so, and ALWAYS releases every key that is still down. Returns how many events were performed."""
@@ -132,13 +140,20 @@ class Executor:
                 else:
                     self.backend.mouse_move(event.dx, event.dy)
                 done += 1
-        finally:
-            failed = None
-            for key in sorted(down):  # a stop, an error or the end: nothing stays pressed, even when one release raises
-                try:
-                    self.backend.key_up(key)
-                except Exception as error:  # noqa: BLE001 - keep releasing the rest, then say what failed
-                    failed = failed or error
-            if failed is not None:
-                raise failed
+        except BaseException:
+            self._release(down)  # an error is already on its way up: free every key and let that error through, not a release error
+            raise
+        failed = self._release(down)
+        if failed is not None:
+            raise failed
         return done
+
+    def _release(self, down: set[str]) -> Exception | None:
+        """Lift every key still down, one by one; a release that raises does not stop the others. Returns the first failure, if any."""
+        failed = None
+        for key in sorted(down):
+            try:
+                self.backend.key_up(key)
+            except Exception as error:  # noqa: BLE001 - keep releasing the rest
+                failed = failed or error
+        return failed

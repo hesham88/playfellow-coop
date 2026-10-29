@@ -1,6 +1,6 @@
 """Layer 3: operating-system containment for the skill worker, so a gap in the two language layers (static gate, proxied modules) is not a full escape.
 
-On Windows, `contain(process)` does two things to the already-started worker, before it has been sent any code (it is blocked reading its first message, so there is no race):
+On Windows, `contain(process)` does two things to the already-started worker, before it has been sent any code (the worker may still be starting Python, but it cannot run skill code until its first message arrives, which is sent after this returns):
 
   * lowers the worker's integrity level to Low (S-1-16-4096). A Low process cannot write to anything a normal user file or registry key owns, which is the "arbitrary file write" case;
     lowering one's own level needs no privilege, raising it back needs SeTcb, which the worker does not have
@@ -20,7 +20,8 @@ LOW_INTEGRITY_SID = "S-1-16-4096"
 
 
 def contain(process) -> str:
-    """Apply what this platform offers to a started `subprocess.Popen`. Returns "low-integrity+job" on Windows, "none" if it could not be applied (never raises)."""
+    """Apply what this platform offers to a started `subprocess.Popen`. Returns "low-integrity+job" on Windows when both applied, "low-integrity" or "job" when only one did, and "none"
+    when neither did or on another system (never raises). Network access is not restricted by either layer."""
     if sys.platform == "win32":
         try:
             return _contain_windows(process)
@@ -54,7 +55,10 @@ def _contain_windows(process) -> str:
 
             label = TOKEN_MANDATORY_LABEL(sid, SE_GROUP_INTEGRITY)
             advapi.SetTokenInformation.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
-            if advapi.SetTokenInformation(token, TokenIntegrityLevel, ctypes.byref(label), ctypes.sizeof(label) + ctypes.sizeof(ctypes.c_void_p)):
+            advapi.GetLengthSid.argtypes = [ctypes.c_void_p]
+            advapi.GetLengthSid.restype = wintypes.DWORD
+            size = ctypes.sizeof(TOKEN_MANDATORY_LABEL) + advapi.GetLengthSid(sid)  # the structure plus the length of the SID it points at
+            if advapi.SetTokenInformation(token, TokenIntegrityLevel, ctypes.byref(label), size):
                 applied.append("low-integrity")
             kernel.LocalFree.argtypes = [ctypes.c_void_p]
             kernel.LocalFree(sid)
@@ -96,4 +100,7 @@ def _contain_windows(process) -> str:
         if ok and kernel.AssignProcessToJobObject(job, handle):
             applied.append("job")
             process._pf_job = job  # keep the handle open for the life of the process: closing it kills the worker, which is what we want at close()
+        else:
+            kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+            kernel.CloseHandle(job)  # nothing was assigned, so the handle is not needed
     return "+".join(applied) or "none"

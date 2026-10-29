@@ -17,21 +17,24 @@ class NetworkBlocked(OSError):
 
 @contextmanager
 def NoNetwork():
-    """Inside the block, opening a connection, resolving a name or sending to a socket raises NetworkBlocked. Everything is put back on exit."""
-    original = (socket.socket.connect, socket.socket.connect_ex, socket.create_connection, socket.getaddrinfo, socket.gethostbyname)
+    """Inside the block, opening a connection, resolving a name or sending on a socket raises NetworkBlocked. Everything is put back on exit. It is process-wide (every thread is
+    affected, including the program's own) and it does not stop a child process such as curl, nor a function imported by name before the block began."""
+    names = ("connect", "connect_ex", "send", "sendall", "sendto")
+    originals = {n: getattr(socket.socket, n) for n in names}
+    original = (socket.create_connection, socket.getaddrinfo, socket.gethostbyname, socket.gethostbyname_ex, socket.gethostbyaddr, socket.getnameinfo)
 
     def blocked(*args, **kwargs):
         raise NetworkBlocked("the network is switched off during this evaluation")
 
-    socket.socket.connect = blocked
-    socket.socket.connect_ex = blocked
-    socket.create_connection = blocked
-    socket.getaddrinfo = blocked
-    socket.gethostbyname = blocked
+    for n in names:
+        setattr(socket.socket, n, blocked)
+    socket.create_connection = socket.getaddrinfo = socket.gethostbyname = socket.gethostbyname_ex = socket.gethostbyaddr = socket.getnameinfo = blocked
     try:
         yield
     finally:
-        socket.socket.connect, socket.socket.connect_ex, socket.create_connection, socket.getaddrinfo, socket.gethostbyname = original
+        for n in names:
+            setattr(socket.socket, n, originals[n])
+        socket.create_connection, socket.getaddrinfo, socket.gethostbyname, socket.gethostbyname_ex, socket.gethostbyaddr, socket.getnameinfo = original
 
 
 def estimate_tokens(text: str) -> int:

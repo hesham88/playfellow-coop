@@ -19,6 +19,9 @@ from playfellow_coop.universal.motion import motion_level
 from playfellow_coop.universal.tiers import REFLEX, Router, Signals
 
 
+MOTION_WORKED = 0.002  # the share of pixels that must change after an action for it to count as having done something
+
+
 @dataclass
 class LiveLoop:
     router: Router = field(default_factory=lambda: Router(stall_ticks=6, repeat_limit=5, calm_ticks=4, tactical_cooldown=1, strategic_cooldown=8))
@@ -34,12 +37,14 @@ class LiveLoop:
 
     def look(self, frame: np.ndarray, ended: bool = False, skill_fault: bool = False) -> str:
         """Called once per turn with the new picture, before anything is asked. Settles whether the previous action worked (it changed the picture) and returns the tier that should decide now."""
-        moved = motion_level(self._last_frame, frame) if self._last_frame is not None and self._last_frame.shape == frame.shape else 0.0
-        if self._last_pending is not None:
+        comparable = self._last_frame is not None and self._last_frame.shape == frame.shape  # a resized window is a new situation, not a failed key
+        moved = motion_level(self._last_frame, frame) if comparable else 0.0
+        if self._last_pending is not None and comparable:
             before, names = self._last_pending
-            self.memory.record(before, None, tuple(names), worked=moved > 0.002)
-            self._last_pending = None
-        failed = self._asked_last and moved <= 0.002  # the last answer came from the model and the picture did not answer
+            self.memory.record(before, None, tuple(names), worked=moved > MOTION_WORKED)
+        self._last_pending = None
+        failed = comparable and self._asked_last and moved <= MOTION_WORKED  # the last answer came from the model and the picture did not answer
+        self._asked_last = False
         signals = Signals(novelty=min(1.0, moved * 4.0), progress_delta=moved, repeat_count=self._repeat, skill_fault=skill_fault, tactical_failed=failed, ended=ended)
         self.tier = self.router.observe(signals).tier
         self._last_frame = frame
@@ -50,10 +55,19 @@ class LiveLoop:
         if self.tier != REFLEX:
             return None
         hit = self.memory.lookup(frame, None)
-        if hit is not None:
+        if hit:  # an empty remembered action would only fall through to the model, so it is not a hit
             self.served += 1
             return list(hit)
         return None
+
+    def reset(self) -> None:
+        """A new round or a new game: forget the picture, the pending action and the router's counters."""
+        self._last_frame = None
+        self._last_pending = None
+        self._repeat = 0
+        self._last_names = []
+        self._asked_last = False
+        self.memory.clear()
 
     def acted(self, frame: np.ndarray, names: list[str], from_cache: bool = False) -> None:
         if not from_cache:
@@ -85,7 +99,7 @@ class ChunkBackend:
 
 def run_chunks(raw: str, allowed: set[str], backend, should_stop=lambda: False, sleep=None, allow_mouse: bool = False) -> int:
     """Play the chunks in a model answer with the card's keys only (anything else is dropped before it is pressed). Returns how many events were performed; 0 when the answer has no chunks."""
-    chunks = [c for c in parse(raw)]
+    chunks = parse(raw)
     if not chunks:
         return 0
     allowed = {k.lower() for k in allowed}

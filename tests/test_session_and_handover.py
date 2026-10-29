@@ -427,3 +427,17 @@ def test_the_dollar_limit_is_real_what_the_model_calls_report_adds_up_and_ends_t
     parts.hooks = from_spec({"watchdog": {"max_usd": 0.1}})
     reason = session.play_session(parts, cfg, "system", StageTimer(), wait=lambda s: False)
     assert reason == "hook_limit" and 3 <= parts.brain.calls <= 5
+
+
+def test_a_resized_window_is_not_a_failed_key_and_the_live_loop_forgets_everything_on_reset():
+    import numpy as np
+    from playfellow_coop.universal.live import LiveLoop
+    live = LiveLoop()
+    small, large = np.zeros((40, 40, 3), np.uint8), np.zeros((60, 60, 3), np.uint8)
+    live.look(small)
+    live.acted(small, ["UP"])
+    live.look(large)  # the shape changed: nothing is recorded, nothing counts as a failure
+    assert len(live.memory) == 0 and live._asked_last is False
+    live.acted(large, ["UP"])
+    live.reset()
+    assert live._last_frame is None and live._last_pending is None and len(live.memory) == 0

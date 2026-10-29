@@ -178,6 +178,14 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     return reply
 
 
+def _value(parts, name: str, default):
+    """A session fact that `parts` may carry as a function (`parts.won()`) or as a plain value; `default` when it carries nothing."""
+    found = getattr(parts, name, None)
+    if found is None:
+        return default
+    return found() if callable(found) else found
+
+
 def _press(parts, settings, box, reply, chat, latency, on_event) -> None:
     for step in reply.steps:
         if parts.safety.stopped or not parts.screen.in_front(settings.game_window):
@@ -232,6 +240,10 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
     parts.hands.resume()
     errors = turns = 0
     hooks = getattr(parts, "hooks", None)  # control-loop rules (watchdog, completion gate): code in the loop, not a request in the prompt
+    if hooks is not None:
+        hooks.reset()  # a new session starts a new clock
+    if getattr(parts, "live", None) is not None:
+        parts.live.reset()
     watch = getattr(parts, "screen_watch", None)
     ends_seen = 0
     try:
@@ -240,14 +252,15 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                 safety.stop("round_done")
                 break
             if hooks is not None:
-                state = {"step": turns, "spent_usd": float(getattr(parts, "spent_usd", lambda: getattr(parts, "_spent", 0.0))()), "won": bool(getattr(parts, "won", lambda: False)())}
+                state = {"step": turns, "spent_usd": float(_value(parts, "spent_usd", getattr(parts, "_spent", 0.0))), "won": bool(_value(parts, "won", False)),
+                         "progress": float(_value(parts, "progress", 0.0))}
                 if hooks.before_step(state) == FORCE_FINISH:
                     on_event("status", tr("Stopping: " + str(hooks.forced) + ".", "توقفت: " + str(hooks.forced) + "."))
                     safety.stop("hook_limit")
                     break
             if watch is not None and getattr(parts, "stop_on_end", False) and watch.end_candidates > ends_seen:
                 ends_seen = watch.end_candidates
-                if hooks is None or hooks.before_finish({"step": turns, "won": bool(getattr(parts, "won", lambda: False)()), "match_over": True})[0]:
+                if hooks is None or hooks.before_finish({"step": turns, "won": bool(_value(parts, "won", False)), "match_over": True})[0]:
                     on_event("status", tr("The match looks over: stopping.", "تبدو المباراة انتهت: أتوقف."))
                     safety.stop("match_over")
                     break

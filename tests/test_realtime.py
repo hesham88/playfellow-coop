@@ -299,3 +299,23 @@ def test_a_drag_follows_a_curve_to_exactly_the_end_point_and_the_precise_sleep_s
 
     winio.precise_sleep(10.0, clock=clock, sleep=lambda s: (slept.append(s), now.__setitem__(0, now[0] + s * 1000.0)), spin_ms=1.5)
     assert slept == [pytest.approx(0.0085)] and now[0] >= 10.0 and now[0] < 11.0  # a coarse sleep for all but the last 1.5 ms, then a spin to the target
+
+
+def test_a_chunk_answer_with_inf_or_nan_movement_is_dropped_not_a_crash_and_a_failed_press_still_releases_the_rest():
+    from playfellow_coop.universal.chunks import Executor, parse, plan
+    assert parse("<|action_start|>inf 0 0; w<|action_end|>") == [] and parse("<|action_start|>nan 0 0; w<|action_end|>") == []
+    released = []
+
+    class Backend:
+        def key_down(self, key):
+            if key == "b":
+                raise OSError("driver refused")
+        def key_up(self, key):
+            released.append(key)
+        def mouse_move(self, dx, dy):
+            pass
+
+    events = plan(parse("<|action_start|>0 0 0; a b<|action_end|>"))
+    with pytest.raises(OSError, match="driver refused"):  # the original error comes through, not a release error
+        Executor(Backend(), sleep=lambda ms: None).run(events)
+    assert {"a", "b"} <= set(released)

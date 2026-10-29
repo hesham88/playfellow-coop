@@ -317,3 +317,17 @@ def test_frame_walks_and_format_string_attribute_reads_are_refused_by_the_gate()
         ok, why = check(skeleton.format(body=body))
         assert not ok and "not allowed" in why, (body, why)
     assert check(skeleton.format(body="s = sum(i * 2 for i in range(3))"))[0]  # an ordinary generator expression is still fine
+
+
+def test_pattern_matching_yield_from_dunder_parameters_and_huge_powers_are_refused_and_the_two_member_lists_agree():
+    from playfellow_coop.skillsmith import ast_gate
+    skeleton = "class GeneratedArenaSkill:\n    def compute_action(self, obs):\n        {body}\n        return {{}}\n"
+    for body in ("match obs:\n            case int(__class__=c):\n                pass", "x = (yield from [1])", "y = 9 ** 9 ** 9", "z = 2 ** obs"):
+        assert not ast_gate.check(skeleton.format(body=body))[0], body
+    assert not ast_gate.check("class GeneratedArenaSkill:\n    def compute_action(self, __obs):\n        return {}\n")[0]
+    assert ast_gate.check(skeleton.format(body="s = 3 ** 2 + 2 ** 8"))[0]
+    import pathlib, re
+    worker = (pathlib.Path(ast_gate.__file__).parent / "_worker.py").read_text(encoding="utf-8")
+    block = re.search(r"NUMPY_ALLOWED = \[(.*?)\]", worker, re.S).group(1)
+    in_worker = set(re.findall(r'"(\w+)"', block))
+    assert in_worker == set(ast_gate.NUMPY_ALLOWED) - {"linalg"}  # one list kept by hand in two files: this test is the only thing that keeps them equal
