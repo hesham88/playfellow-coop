@@ -1,0 +1,5 @@
+# Goldfish 3: implementation readiness (2026-10-29)
+
+Reader: a fresh read-only session asked whether design.md alone holds everything needed to rebuild the live loop, the sandbox and the hooks in one pass. Answer: no; the document was a rationale, not a specification (4 Blocker, 9 Major, 4 Nit).
+
+Resolution: a new file, `interfaces.md`, gives the signatures, call order, state keys, message formats, action schema, gate and promotion data shapes, chunk grammar, card format, grounding thresholds, result-file shapes and platform dependencies. Findings 1 to 4 (interfaces, hooks, sandbox protocol, formats), 5 to 11 (gate definitions, router and cache detail, chunk grammar, wiring, promotion shapes) and 13 and 17 (platform, grounding thresholds) are answered there; 12 was checked (defaults 6, 5, 4, 1, 8 and three failures confirmed); 15 and 16 are answered by the source note and the file table. Where a number lives in a named constant the file names the constant instead of copying the list, so there is one source.

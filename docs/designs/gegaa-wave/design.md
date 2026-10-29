@@ -57,6 +57,8 @@ Public repository `playfellow-coop`:
 | `playfellow_coop/session.py`, `playfellow_coop/__main__.py` | wiring and the flags `--live`, `--stop-on-end`, `--max-steps`, `--input scancode` |
 | `tests/test_eog.py`, `test_skin_grounding.py`, `test_flow_grounding.py`, `test_realtime.py`, `test_skillsmith.py`, `test_hooks_isolation.py`, `test_session_and_handover.py` | the checks for each piece |
 | `docs/gegaa.md`, `docs/egm.md`, `README.md` files | the explanation a new reader starts from |
+| `docs/designs/gegaa-wave/interfaces.md` | signatures, message formats, file formats and thresholds, so the design can be rebuilt |
+| `results/unseen/`, `results/glass/` | the result files the numbers in this document come from |
 
 Private repository: `tools/live_skills.py`, `tools/eog_check.py`, `tools/grounding_check.py`, `tools/flow_check.py`, `tools/gym_check.py` measure the pieces on the new look; `software/nav/self_model.py` finds motion on smooth sprites; the glass window runs the private engine's own loop and does not yet use `universal/live.py` or the hooks.
 
