@@ -19,6 +19,7 @@ CHUNK_MS = 1000.0 / 30.0
 START, END = "<|action_start|>", "<|action_end|>"
 BLOCK = re.compile(re.escape(START) + r"(.*?)" + re.escape(END), re.S)
 MAX_CHUNKS = 16
+SLICE_MS = 25.0
 MAX_MOUSE = 2000
 
 
@@ -114,8 +115,11 @@ class Executor:
         try:
             for event in events:
                 wait = event.t_ms - (self.clock() - start)
-                if wait > 0:
-                    self.sleep(wait)
+                while wait > 0:  # a long hold is waited out in short slices so a stop (F12, the window losing focus) is noticed within a slice
+                    self.sleep(min(wait, SLICE_MS))
+                    if should_stop():
+                        break
+                    wait = event.t_ms - (self.clock() - start)
                 self.late_ms.append(max(0.0, (self.clock() - start) - event.t_ms))
                 if should_stop():
                     break
@@ -129,6 +133,12 @@ class Executor:
                     self.backend.mouse_move(event.dx, event.dy)
                 done += 1
         finally:
-            for key in sorted(down):  # a stop, an error or the end: nothing stays pressed
-                self.backend.key_up(key)
+            failed = None
+            for key in sorted(down):  # a stop, an error or the end: nothing stays pressed, even when one release raises
+                try:
+                    self.backend.key_up(key)
+                except Exception as error:  # noqa: BLE001 - keep releasing the rest, then say what failed
+                    failed = failed or error
+            if failed is not None:
+                raise failed
         return done

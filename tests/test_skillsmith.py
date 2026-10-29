@@ -306,3 +306,14 @@ def test_a_contained_process_cannot_write_a_normal_file_or_start_another_process
     assert osjail.contain(proc) == "low-integrity+job"
     out, _ = proc.communicate("go\n", timeout=60)
     assert out.strip() == "write denied,spawn denied"
+
+
+def test_frame_walks_and_format_string_attribute_reads_are_refused_by_the_gate():
+    from playfellow_coop.skillsmith.ast_gate import check
+    skeleton = "class GeneratedArenaSkill:\n    def compute_action(self, obs):\n        {body}\n        return {{}}\n"
+    escapes = ["g = (1 for _ in range(1))\n        h = g.gi_frame.f_back.f_globals", "x = '{0.__class__}'.format(obs)", "x = format(obs, '')", "y = obs.f_locals",
+               "z = (1 for _ in range(1))\n        w = z.gi_code", "t = obs.mro"]
+    for body in escapes:
+        ok, why = check(skeleton.format(body=body))
+        assert not ok and "not allowed" in why, (body, why)
+    assert check(skeleton.format(body="s = sum(i * 2 for i in range(3))"))[0]  # an ordinary generator expression is still fine

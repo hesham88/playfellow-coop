@@ -81,3 +81,12 @@ def test_the_cost_ledger_adds_up_by_kind_and_shows_how_much_the_search_cost_agai
     assert ledger.overhead_vs_final() == pytest.approx(10.0)
     with pytest.raises(ValueError):
         ledger.add("lunch", 1.0)
+
+
+def test_gate_b_cannot_pass_a_trace_that_never_asked_the_question():
+    from playfellow_coop.skillsmith.verify import gate_b
+    calm = [{"danger": 0.0} for _ in range(10)]
+    actions = [{"move": [0.0, 0.0]} for _ in range(10)]
+    assert gate_b(actions, calm).passed is False
+    risky = [{"danger": 0.9, "escape": [1.0, 0.0]} for _ in range(10)]
+    assert gate_b([{"move": [1.0, 0.0]}] * 5 + [{"move": [0.5, 0.5]}] * 5, risky).passed is True

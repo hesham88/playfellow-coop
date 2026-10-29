@@ -101,6 +101,9 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     asked = timer.now()
     raw = parts.brain.ask(system, text, images)
     whole = timer.now() - asked
+    spent = (getattr(parts.brain, "last_request", None) or {}).get("cost_usd")
+    if spent:
+        parts._spent = float(getattr(parts, "_spent", 0.0)) + float(spent)  # what this session has paid, for the watchdog's dollar limit
     inside = getattr(parts.brain, "last_timings", None)  # a brain that times its own inside (encode, request) says so
     if inside and set(inside) <= {"encode", "request"}:
         for name, seconds in inside.items():
@@ -157,7 +160,7 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         if live is not None and backend is not None and "<|action_start|>" in raw:  # timed key holds, only keys the card binds
             from playfellow_coop.universal.live import run_chunks
             allowed = {k for a in parts.card.actions.values() for k in getattr(a, "keys", ())}
-            played = run_chunks(raw, allowed, backend, should_stop=lambda: parts.safety.stopped or not parts.screen.in_front(settings.game_window))
+            played = run_chunks(raw, allowed, backend, should_stop=lambda: parts.safety.stopped or not parts.screen.in_front(settings.game_window), allow_mouse=bool(getattr(parts.card, "uses_clicks", False)))
             if played:
                 on_event("tier", "chunks")
         if not played:
@@ -237,7 +240,7 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                 safety.stop("round_done")
                 break
             if hooks is not None:
-                state = {"step": turns, "spent_usd": float(getattr(parts, "spent_usd", lambda: 0.0)()), "won": bool(getattr(parts, "won", lambda: False)())}
+                state = {"step": turns, "spent_usd": float(getattr(parts, "spent_usd", lambda: getattr(parts, "_spent", 0.0))()), "won": bool(getattr(parts, "won", lambda: False)())}
                 if hooks.before_step(state) == FORCE_FINISH:
                     on_event("status", tr("Stopping: " + str(hooks.forced) + ".", "توقفت: " + str(hooks.forced) + "."))
                     safety.stop("hook_limit")

@@ -14,6 +14,7 @@ import numpy as np
 
 from playfellow_coop.universal.cache import StateActionMemory
 from playfellow_coop.universal.chunks import Executor, parse, plan
+from playfellow_coop.universal.hold import SocdCleaner
 from playfellow_coop.universal.motion import motion_level
 from playfellow_coop.universal.tiers import REFLEX, Router, Signals
 
@@ -29,6 +30,7 @@ class LiveLoop:
     _last_pending: tuple[np.ndarray, list[str]] | None = None
     _repeat: int = 0
     _last_names: list[str] = field(default_factory=list)
+    _asked_last: bool = False
 
     def look(self, frame: np.ndarray, ended: bool = False, skill_fault: bool = False) -> str:
         """Called once per turn with the new picture, before anything is asked. Settles whether the previous action worked (it changed the picture) and returns the tier that should decide now."""
@@ -37,7 +39,8 @@ class LiveLoop:
             before, names = self._last_pending
             self.memory.record(before, None, tuple(names), worked=moved > 0.002)
             self._last_pending = None
-        signals = Signals(novelty=min(1.0, moved * 4.0), progress_delta=moved, repeat_count=self._repeat, skill_fault=skill_fault, ended=ended)
+        failed = self._asked_last and moved <= 0.002  # the last answer came from the model and the picture did not answer
+        signals = Signals(novelty=min(1.0, moved * 4.0), progress_delta=moved, repeat_count=self._repeat, skill_fault=skill_fault, tactical_failed=failed, ended=ended)
         self.tier = self.router.observe(signals).tier
         self._last_frame = frame
         return self.tier
@@ -55,6 +58,7 @@ class LiveLoop:
     def acted(self, frame: np.ndarray, names: list[str], from_cache: bool = False) -> None:
         if not from_cache:
             self.asked += 1
+        self._asked_last = not from_cache
         self._repeat = self._repeat + 1 if names and names == self._last_names else 0
         self._last_names = list(names)
         self._last_pending = (frame, list(names))
@@ -79,15 +83,18 @@ class ChunkBackend:
         self.backend.moveRel(dx, dy)
 
 
-def run_chunks(raw: str, allowed: set[str], backend, should_stop=lambda: False, sleep=None) -> int:
+def run_chunks(raw: str, allowed: set[str], backend, should_stop=lambda: False, sleep=None, allow_mouse: bool = False) -> int:
     """Play the chunks in a model answer with the card's keys only (anything else is dropped before it is pressed). Returns how many events were performed; 0 when the answer has no chunks."""
     chunks = [c for c in parse(raw)]
     if not chunks:
         return 0
+    allowed = {k.lower() for k in allowed}
+    socd = SocdCleaner("neutral")  # left and right (or up and down) together press nothing, as on the ordinary key path
     cleaned = []
     for c in chunks:
-        keys = frozenset(k for k in c.keys if k in allowed)
-        cleaned.append(type(c)(c.dx, c.dy, c.dz, keys))
+        keys = frozenset(socd.clean({k for k in c.keys if k.lower() in allowed}))
+        dx, dy, dz = (c.dx, c.dy, c.dz) if allow_mouse else (0, 0, 0)  # mouse motion is only played when the card is a mouse card
+        cleaned.append(type(c)(dx, dy, dz, keys))
     events = plan(cleaned)
     executor = Executor(ChunkBackend(backend)) if sleep is None else Executor(ChunkBackend(backend), sleep=sleep)
     return executor.run(events, should_stop)

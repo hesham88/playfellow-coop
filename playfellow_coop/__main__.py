@@ -107,6 +107,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                         help="on: the tier router, the state-action memory (a situation that worked before is answered with no model call) and timed key chunks")
     parser.add_argument("--stop-on-end", action="store_true", help="stop the session when the end-of-game signals say the match is over (needs the screen watch)")
     parser.add_argument("--max-steps", type=int, default=None, help="a watchdog in the loop: end the session after this many turns")
+    parser.add_argument("--max-seconds", type=float, default=None, help="a watchdog in the loop: end the session after this many seconds")
+    parser.add_argument("--max-usd", type=float, default=None, help="a watchdog in the loop: end the session when the model calls of this session have cost this many dollars")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
@@ -142,9 +144,10 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     if args.live == "on":
         from playfellow_coop.universal.live import LiveLoop
         parts.live = LiveLoop()
-    if args.max_steps is not None:
+    limits = {k: v for k, v in (("max_steps", args.max_steps), ("max_seconds", args.max_seconds), ("max_usd", args.max_usd)) if v is not None}
+    if limits:
         from playfellow_coop.harness.hooks import from_spec
-        parts.hooks = from_spec({"watchdog": {"max_steps": args.max_steps}})
+        parts.hooks = from_spec({"watchdog": limits})
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise

@@ -12,7 +12,7 @@ ALLOWED = {"math", "numpy", "typing", "dataclasses"}
 SAFE = ["abs", "all", "any", "bool", "dict", "divmod", "enumerate", "float", "int", "isinstance", "len", "list", "map", "max", "min", "pow", "range", "reversed", "round", "set",
         "slice", "sorted", "str", "sum", "tuple", "zip", "True", "False", "None", "ValueError", "TypeError", "KeyError", "IndexError", "ZeroDivisionError", "Exception",
         "ArithmeticError", "StopIteration", "__build_class__", "NotImplementedError", "AttributeError", "RuntimeError", "OverflowError", "FloatingPointError", "hash", "repr", "callable",
-        "filter", "next", "iter", "format", "ord", "chr", "frozenset", "bytes", "bytearray", "complex"]
+        "filter", "next", "iter", "ord", "chr", "frozenset", "bytes", "bytearray", "complex"]
 real_import = builtins.__import__
 # The skill never gets the real numpy module: only this proxy, built from the same name list the static gate uses, so a file-touching function (memmap, loadtxt ...) is simply absent.
 NUMPY_ALLOWED = ["array", "asarray", "zeros", "ones", "full", "arange", "linspace", "clip", "sqrt", "abs", "dot", "mean", "median", "std", "sum", "min", "max", "argmax", "argmin",

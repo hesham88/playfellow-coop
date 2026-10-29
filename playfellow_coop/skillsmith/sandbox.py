@@ -50,7 +50,7 @@ class SandboxedProgram:
     """Any model-written class run in the isolated worker: `call(method, *args)` returns the method's JSON-able result, or None when the program is late, dead or faulted. A skill is the
     special case `SandboxedSkill`; a world model (init_state, transition, render) is another."""
 
-    def __init__(self, code: str, class_name: str = "GeneratedArenaSkill", methods: tuple[str, ...] = ("compute_action",), step_timeout_ms: float = 50.0, python: str | None = None):
+    def __init__(self, code: str, class_name: str = "GeneratedArenaSkill", methods: tuple[str, ...] = ("compute_action",), step_timeout_ms: float = 50.0, python: str | None = None, require_containment: bool = False):
         ok, why = ast_gate.check(code, class_name, methods)
         if not ok:
             raise ast_gate.SkillRejected(why)
@@ -60,6 +60,7 @@ class SandboxedProgram:
         self.faulted = False
         self.fault = ""
         self.containment = "none"
+        self.require_containment = require_containment
         self.steps = 0
         self.latencies_ms: list[float] = []
         self._proc: subprocess.Popen | None = None
@@ -74,6 +75,10 @@ class SandboxedProgram:
         self._proc = subprocess.Popen([self._python, "-I", str(WORKER), *numpy_location()], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,
                                       env=env, cwd=self._folder.name)
         self.containment = osjail.contain(self._proc)  # before the code is sent: the worker is still waiting for its first message
+        if self.require_containment and self.containment == "none":
+            self.close()
+            self._fail("the operating-system containment could not be applied and it was required")
+            return
         threading.Thread(target=self._pump, args=(self._proc,), daemon=True).start()
         reply = self._ask({"code": self.code, "class": self.class_name}, START_TIMEOUT)
         if reply is None or not reply.get("ready"):

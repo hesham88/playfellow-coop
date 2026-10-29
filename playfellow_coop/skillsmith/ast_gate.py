@@ -10,9 +10,14 @@ import ast
 
 ALLOWED_MODULES = frozenset({"math", "numpy", "typing", "dataclasses"})
 BANNED_NAMES = frozenset({"eval", "exec", "compile", "open", "input", "getattr", "setattr", "delattr", "globals", "locals", "vars", "dir", "__import__", "breakpoint", "help",
-                          "exit", "quit", "memoryview", "super", "type", "object", "classmethod", "staticmethod", "property", "print"})
+                          "exit", "quit", "memoryview", "super", "type", "object", "classmethod", "staticmethod", "property", "print", "format"})
 BANNED_ATTRS = frozenset({"system", "popen", "environ", "getenv", "load", "loads", "dump", "dumps", "read", "write", "open", "save", "savetxt", "fromfile", "tofile", "ctypeslib",
-                          "f2py", "testing", "distutils", "lib", "ctypes", "core", "__class__"})
+                          "f2py", "testing", "distutils", "lib", "ctypes", "core", "__class__",
+                          # frames and tracebacks: a generator expression gives f_back and f_globals, a walk up to the worker's own variables
+                          "gi_frame", "gi_code", "gi_yieldfrom", "gi_running", "f_back", "f_globals", "f_locals", "f_builtins", "f_code", "f_trace", "tb_frame", "tb_next", "cr_frame", "cr_await",
+                          "ag_frame", "ag_await", "func_globals", "mro",
+                          # str.format reads attributes named inside the string ("{0.__class__}"), which the gate cannot see
+                          "format", "format_map"})
 # numpy is an allow-list, not a deny-list: the real module reaches files (memmap, loadtxt, genfromtxt, fromregex, DataSource ...) by more names than any list can keep up with. The worker
 # hands the skill a proxy holding exactly these names (the same set), and the gate refuses any other attribute on a numpy alias, so a gap in one layer is closed by the other.
 NUMPY_ALLOWED = frozenset({"array", "asarray", "zeros", "ones", "full", "arange", "linspace", "clip", "sqrt", "abs", "dot", "mean", "median", "std", "sum", "min", "max", "argmax", "argmin",

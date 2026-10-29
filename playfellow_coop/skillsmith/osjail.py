@@ -8,7 +8,7 @@ On Windows, `contain(process)` does two things to the already-started worker, be
     atoms, the desktop or system parameters
 
 Reads of world-readable files are not blocked by integrity levels; the scrubbed environment and the proxied modules are what keep secrets out of reach there. Elsewhere (Linux, macOS) `contain`
-applies address-space and process-count limits through `resource` in the child and reports `"limits"`; it never claims more than it did. The returned string says what was applied, so a test or a
+applies nothing and reports `"none"` (there are no address-space or process limits there); it never claims more than it did. The returned string says what was applied, so a test or a
 report can state the real protection instead of assuming it.
 """
 from __future__ import annotations

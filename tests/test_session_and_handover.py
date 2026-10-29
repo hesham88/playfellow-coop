@@ -380,3 +380,50 @@ def test_a_chunk_answer_is_played_as_timed_holds_on_the_cards_keys_only_and_ever
     assert keys <= {"left", "right"} and "q" not in keys  # q is not a key on this card
     downs, ups = [e for e in log if e[0] == "down"], [e for e in log if e[0] == "up"]
     assert downs and sorted(k for _, k in downs) == sorted(k for _, k in ups)
+
+
+def test_chunks_press_card_keys_only_in_any_letter_case_no_mouse_on_a_key_card_no_opposite_pair_and_a_failed_release_still_frees_the_rest():
+    from playfellow_coop.universal.live import run_chunks
+    from playfellow_coop.universal.chunks import Executor, plan, parse
+    log = []
+
+    class Backend:
+        def keyDown(self, k): log.append(("down", k))
+        def keyUp(self, k): log.append(("up", k))
+        def moveRel(self, dx, dy): log.append(("move", dx, dy))
+
+    run_chunks("<|action_start|>500 400 0; Left; left right; Space<|action_end|>", {"Left", "right"}, Backend(), sleep=lambda ms: None)
+    assert not [e for e in log if e[0] == "move"]  # no mouse on a card without clicks
+    assert {e[1] for e in log if e[0] == "down"} <= {"left", "right"} and ("down", "left") in log  # "Left" matched the card's "Left"
+    assert not any(e[1] == "space" for e in log)
+    first_pair = [e for e in log if e[0] == "down"]
+    assert ("down", "right") not in first_pair[:1]
+    log.clear()
+    run_chunks("<|action_start|>30 0 0; left<|action_end|>", {"left"}, Backend(), sleep=lambda ms: None, allow_mouse=True)
+    assert ("move", 30, 0) in [(e[0], e[1], e[2]) for e in log if e[0] == "move"] or any(e[0] == "move" for e in log)
+
+    released = []
+
+    class Flaky:
+        def key_down(self, k): pass
+        def key_up(self, k):
+            released.append(k)
+            if k == "a":
+                raise OSError("driver hiccup")
+        def mouse_move(self, dx, dy): pass
+
+    events = plan(parse("<|action_start|>0 0 0; a b<|action_end|>"))
+    try:
+        Executor(Flaky(), sleep=lambda ms: None).run(events)
+    except OSError:
+        pass
+    assert {"a", "b"} <= set(released)  # b was released although a's release raised
+
+
+def test_the_dollar_limit_is_real_what_the_model_calls_report_adds_up_and_ends_the_session():
+    from playfellow_coop.harness.hooks import from_spec
+    parts, cfg = make(max_calls=500)
+    parts.brain.last_request = {"cost_usd": 0.03}
+    parts.hooks = from_spec({"watchdog": {"max_usd": 0.1}})
+    reason = session.play_session(parts, cfg, "system", StageTimer(), wait=lambda s: False)
+    assert reason == "hook_limit" and 3 <= parts.brain.calls <= 5

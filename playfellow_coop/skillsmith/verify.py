@@ -93,6 +93,8 @@ def gate_b(actions: list[dict], trace: list[dict]) -> GateResult:
     entropy = _entropy([tuple(a["move"]) for a in actions])
     if entropy <= 0.0 and len(actions) > 20:
         return GateResult("B", False, "one single move for the whole trace (a wall lock)", entropy)
+    if not dangerous:  # a trace that never asked the question cannot answer it: not exercised is not passed
+        return GateResult("B", False, "the trace has no dangerous step with a safe direction: gate B was not exercised, so it cannot pass", 0.0)
     return GateResult("B", True, f"safe on {share:.0%} of {len(dangerous)} dangerous steps, move entropy {entropy:.2f} bits", share)
 
 
