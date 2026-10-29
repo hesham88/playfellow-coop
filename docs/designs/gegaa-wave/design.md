@@ -1,6 +1,6 @@
 # Design: a game-agnostic play loop with honest cost control and a sandbox for model-written skills
 
-Written after the fact for work already built (waves 1 to 10, 27 to 29 October 2026), so that fresh readers can test whether the document alone explains the system. Method: `docs/egm.md`.
+Written after the fact for work already built (27 to 29 October 2026), so that fresh readers can test whether the document alone explains the system. Method: `docs/egm.md`.
 
 ## Problem
 
@@ -60,4 +60,37 @@ Public repository `playfellow-coop`:
 
 Private repository: `tools/live_skills.py`, `tools/eog_check.py`, `tools/grounding_check.py`, `tools/flow_check.py`, `tools/gym_check.py` measure the pieces on the new look; `software/nav/self_model.py` finds motion on smooth sprites; the glass window runs the private engine's own loop and does not yet use `universal/live.py` or the hooks.
 
-Not done and stated plainly: no live run on a real window yet (the desktop was locked); the OS containment layer exists only on Windows; the tiers router, memory and chunks are not in the glass window's loop.
+## How the pieces decide (added after the first goldfish review)
+
+**Who owns the loop.** `session.play_session` owns it: each turn it calls `take_turn`, which grabs the picture, runs the screen watch, optionally the live loop, asks the model or a skill, and presses keys. The hooks are checked before every turn. `live.py` is a helper object (`parts.live`) the turn consults; it does not run anything by itself.
+
+**Router.** Each turn it gets: novelty (how much of the picture changed, 0 to 1; 0.35 or more counts as novel), whether progress stalled (no change for a set number of ticks), how many times the same action repeated, whether a skill failed, and whether the end-of-game signals fired. Reflex is the default. Any of those wakes the tactical speed if its cooldown allows. An end, or three tactical failures in a row, wakes the strategic speed, with a longer cooldown. The router drops back to reflex only after a calm stretch.
+
+**State-action memory.** A picture is reduced to a 64-bit difference hash (a 9 by 8 grey thumbnail, each pixel compared with its right neighbour). "Near-identical" means at most 4 differing bits and the same coarse HUD reading. Each remembered action carries a trust score, the mean of a Beta(1 + successes, 1 + failures); it is served only at 0.7 or more and only in the reflex speed. After every use the next picture decides success: if the picture changed, the action worked; if not, trust drops, and a distrusted entry is replaced. The memory is cleared when the game or skin changes, so a stale entry cannot outlive its game.
+
+**End of game.** The signals are listed under End-of-game detection. A candidate end is the signals firing on two looks in a row. The free verifier then presses a few different keys that the controls card allows and checks whether anything answers; if nothing does, the match is treated as over. With `--stop-on-end` the session stops; without it the model is told the match may be over.
+
+**Controls card.** A small YAML file per game (the engine's format) listing the allowed actions, the keys behind each, hold times and a short spoken description. The engine drops every action not on it. It is the allow-list, and the chunk executor checks keys against it too.
+
+**Skill interface.** A skill is a class `GeneratedArenaSkill` with `compute_action(obs)`. `obs` is a small dictionary of what the perception step saw (avatar, enemies, items, HUD values, a danger level, a safe direction). The answer is `{"move": [dx, dy] each in -1..1, "buttons": [names], "hold_ms": 0..3000}`; anything else, a late answer or an error becomes the neutral action (press nothing) and marks the skill faulted. The shipped hand-written skills in `skills/` read pixels through calibrated looks instead.
+
+**Three offline gates for a model-written skill.** A: every step answers inside the time limit with a valid action and never raises. B: on recorded steps marked dangerous, at least 70 percent of moves point away from danger, and the moves are not all one direction (a wall lock). C: a short live trial in which the game's own score, or a vision comparison of the HUD, must improve.
+
+**Promotion.** A candidate replaces the current skill only if its score on the validation tasks strictly improves on the current one. The held-out test tasks are never used to choose. The search has a hard cap on dollars and calls, and a second selection round on the same tasks is refused unless the validation set is new (the cited study saw 76.4 fall to 59.1 percent after a second round).
+
+**Sandbox threat model.** The code is untrusted: it may be buggy or hostile. The goal is that it cannot read or write the player's files, see keys in the environment, start other programs or use unbounded memory. Layer one refuses imports outside math, numpy, typing and dataclasses, and any attribute outside a short list per module. The numpy case: the real module reaches files through many functions (memory-mapped files, text loaders, file-based constructors), so blocking names loses; only a short list of array functions exists in the namespace the worker gives the skill. Layer two runs the code in a separate Python process with a clean environment and a per-step time limit. Layer three (Windows) lowers the process's integrity level and puts it in a job object.
+
+**Flags.** `--live on` (router, memory, chunks), `--stop-on-end` (stop when the end is confirmed; needs the screen watch, which is on by default), `--max-steps N` (watchdog), `--input scancode` (press scan codes instead of virtual-key calls). They are independent of one another.
+
+## Glossary
+
+- **Skin or look**: how a game is drawn (colours, sprites); a "look" is the file that tells a skill which colours mean what.
+- **Grounding**: finding which thing on screen the keys control.
+- **Jump**: a move too large to track as a slide, such as changing lane, measured as where the thing appeared against where it vanished.
+- **Change-point test**: a running sum that grows when the picture's summary drifts away from its usual value and fires when the sum crosses a limit.
+- **Held-out check**: the screen classifier was fitted on some games and tested on a game it had never seen; it failed.
+- **Glass window**: the new desktop window of the private product (private repository, out of scope here). **Private engine**: the older private play loop that window runs.
+- **GEGAA**: Generalist Embodied Game-Agnostic Agents, the name in `docs/gegaa.md`. **EGM**: the Elephant-Goldfish Model, `docs/egm.md`. This document does not depend on either to be understood.
+- **Sources of the numbers above**: `results/unseen/` (27 October, 0 of 15, $1.19) and `results/glass/muse-skills-20261029.json` (29 October, 15 of 15, $0.042).
+
+Not done and stated plainly: no live run on a real window yet (the desktop was locked, so key holds, focus and pacing on a real window are untested, and every result so far is on the game's own paused clock); the OS containment layer exists only on Windows; the tiers router, memory and chunks are not in the glass window's loop.
