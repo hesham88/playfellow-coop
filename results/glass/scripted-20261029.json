@@ -1,0 +1,475 @@
+{
+ "schema": "pf-arena-run/1",
+ "written": "2026-10-29T07:12:25+03:00",
+ "condition": "scripted-none",
+ "brain": "scripted",
+ "model": "scripted-chooser",
+ "note": "glass look, free row: scripted chooser starts the skill (wiring check, not a model) marks=none; skills=True; effort=minimal; turns<= 3; looks=playfellow_looks (re-skinned games read through calibrated looks). REPORTING: some wins used local skills that the model started; report them as the system winning with local help, not as the model alone.",
+ "overall": {
+  "episodes": 15,
+  "wins": 15,
+  "win_rate": 1.0,
+  "wilson95": [
+   0.796,
+   1.0
+  ],
+  "mean_progress": 1.0,
+  "mean_turns": 1.0,
+  "mean_seconds": 126.39,
+  "invalid_plan_rate": 0.0,
+  "tokens_in": 0,
+  "tokens_cached": 0,
+  "tokens_out": 0,
+  "cost_usd": 0.0,
+  "tokens_per_win": 0.0,
+  "usd_per_win": 0.0,
+  "local_help_episodes": 15,
+  "skill_steps_total": 24628
+ },
+ "by_game": {
+  "snake": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 4.68,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 375
+  },
+  "box_push": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 1.18,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 117
+  },
+  "slide_2048": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 9.33,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 435
+  },
+  "lane_dash": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 36.7,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 1800
+  },
+  "brick_breaker": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 580.04,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 21901
+  }
+ },
+ "honesty": {
+  "rung": {
+   "key": "local_floor",
+   "number": 0,
+   "title": "Local floor (no model)",
+   "clock": "paused"
+  },
+  "label": "[Assisted: Human Local Skill]",
+  "action_share": {
+   "human_skill": 1.0,
+   "model_skill": 0.0,
+   "model_chunk": 0.0,
+   "fallback": 0.0
+  },
+  "progress_iqm": {
+   "estimate": 1.0,
+   "ci95": [
+    1.0,
+    1.0
+   ]
+  }
+ },
+ "episodes": [
+  {
+   "game": "snake",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 113,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 4.55,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 113,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "snake",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 141,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 5.24,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 141,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "snake",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 121,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 4.26,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 121,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 39,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.15,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 39,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 39,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.19,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 39,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 39,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.21,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 39,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 152,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 10.3,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 152,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 140,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 9.03,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 140,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 143,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 8.67,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 143,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 600,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 38.39,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 600,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 600,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 36.07,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 600,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 600,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 35.64,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 600,
+    "look": "glass"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 5994,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 459.37,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 5994,
+    "look": "arena"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 8026,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 717.8,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 8026,
+    "look": "arena"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 7881,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 562.95,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 7881,
+    "look": "arena"
+   }
+  }
+ ]
+}
