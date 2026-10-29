@@ -330,3 +330,53 @@ def test_a_watchdog_hook_ends_the_session_at_its_step_limit_and_a_match_over_sto
     parts.stop_on_end = True
     assert session.play_session(parts, cfg, "system", StageTimer(), wait=lambda s: False, max_turns=60) == "match_over"
     assert 8 < parts.brain.calls < 60
+
+
+def _alternating_grab(parts):
+    import numpy as np
+    state = {"n": 0}
+
+    def grab(box):
+        frame = np.full((box.height, box.width, 3), (60, 90, 120), np.uint8)
+        x = 20 if state["n"] % 2 == 0 else 40  # a small avatar hops between two places: calm, repeating play
+        frame[50:62, x:x + 12] = (250, 80, 80)
+        state["n"] += 1
+        return Image.fromarray(frame)
+
+    parts.screen.grab = grab
+
+
+def test_in_calm_repeating_play_the_state_action_memory_answers_without_the_model_and_a_plain_run_asks_every_time():
+    from playfellow_coop.universal.live import LiveLoop
+    plain, cfg = make(max_calls=500)
+    _alternating_grab(plain)
+    session.play_session(plain, cfg, "system", StageTimer(), wait=lambda s: False, max_turns=14)
+    assert plain.brain.calls == 14
+
+    parts, cfg = make(max_calls=500)
+    _alternating_grab(parts)
+    parts.live = LiveLoop()
+    session.play_session(parts, cfg, "system", StageTimer(), wait=lambda s: False, max_turns=14)
+    assert parts.live.served > 0 and parts.brain.calls < 14 and parts.live.summary()["served_from_memory"] == parts.live.served
+    assert parts.hands.pressed.count(MOVE) >= 14  # every turn still pressed its key, from the model or from memory
+
+
+def test_a_chunk_answer_is_played_as_timed_holds_on_the_cards_keys_only_and_every_key_comes_back_up():
+    from playfellow_coop.universal.live import LiveLoop
+    parts, cfg = make(max_calls=50)
+    log = []
+
+    class Backend:
+        def keyDown(self, k): log.append(("down", k))
+        def keyUp(self, k): log.append(("up", k))
+        def moveRel(self, dx, dy): log.append(("move", dx, dy))
+
+    parts.hands.backend = Backend()
+    parts.live = LiveLoop()
+    parts.brain.ask = lambda system, text, images: '<|action_start|>0 0 0; left; left right; q<|action_end|> {"thought": "go", "actions": []}'
+    parts.safety.start()
+    session.take_turn(parts, cfg, "system", StageTimer())
+    keys = {e[1] for e in log if e[0] in ("down", "up")}
+    assert keys <= {"left", "right"} and "q" not in keys  # q is not a key on this card
+    downs, ups = [e for e in log if e[0] == "down"], [e for e in log if e[0] == "up"]
+    assert downs and sorted(k for _, k in downs) == sorted(k for _, k in ups)

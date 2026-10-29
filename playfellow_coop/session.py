@@ -5,6 +5,7 @@ the keys. Each step sits inside a stage of the StageTimer. While the player has 
 no picture is taken for the AI and no AI is asked. Safety limits, F12 and the mouse corner work exactly as in the engine."""
 from __future__ import annotations
 
+import json
 import time
 from typing import Any, Callable
 
@@ -78,6 +79,23 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
         text = text + "\n\n" + blocked
     if labels:
         text = text + "\n\n" + labels
+    live = getattr(parts, "live", None)  # --live on: tier router, state-action memory, chunk executor
+    frame = None
+    if live is not None:
+        import numpy as np
+        frame = np.asarray(picture.convert("RGB"))
+        live.look(frame, ended=bool(seen is not None and seen.end_candidate))
+        remembered_names = live.cached(frame)
+        if remembered_names:  # a near-identical picture, seen before in calm play, where this worked: no model call at all
+            reply = parse_reply(json.dumps({"thought": "same situation as before", "say": "", "actions": remembered_names}), parts.card, settings.max_actions_per_step)
+            on_event("thought", reply.thought)
+            on_event("tier", "memory")
+            _press(parts, settings, box, reply, chat, None, on_event)
+            live.acted(frame, reply.action_names(), from_cache=True)
+            parts.memory.add(Moment(shrink(image, MEMORY_IMAGE_WIDTH), reply.thought, tuple(reply.action_names()), reply.say))
+            if watch is not None:
+                watch.note_action(1.0 if reply.steps else 0.0)
+            return reply
     parts.safety.count_ai_call()
     images = [moment.image for moment in parts.memory.recent()] + [image]
     asked = timer.now()
@@ -134,14 +152,19 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     if reply.dropped:
         on_event("dropped", reply.dropped)
     with timer.stage("key_down"):
-        for step in reply.steps:
-            if parts.safety.stopped or not parts.screen.in_front(settings.game_window):
-                break  # F12, the corner, a limit, or the player clicked away: nothing more is pressed
-            parts.hands.do(step, box)
-            if chat and latency is not None:  # this turn acted on something the player said: stop the voice stopwatch once
-                latency.key_pressed()
-                latency = None
+        played = 0
+        backend = getattr(parts.hands, "backend", None)
+        if live is not None and backend is not None and "<|action_start|>" in raw:  # timed key holds, only keys the card binds
+            from playfellow_coop.universal.live import run_chunks
+            allowed = {k for a in parts.card.actions.values() for k in getattr(a, "keys", ())}
+            played = run_chunks(raw, allowed, backend, should_stop=lambda: parts.safety.stopped or not parts.screen.in_front(settings.game_window))
+            if played:
+                on_event("tier", "chunks")
+        if not played:
+            _press(parts, settings, box, reply, chat, latency, on_event)
     on_event("actions", reply.action_names())
+    if live is not None and frame is not None:
+        live.acted(frame, reply.action_names())
     if tracer is not None:
         tracer.turn(actions=reply.action_names())
     if stuck is not None:
@@ -150,6 +173,16 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     if watch is not None:
         watch.note_action(1.0 if reply.steps else 0.0)  # the next look can tell whether the picture answered these keys
     return reply
+
+
+def _press(parts, settings, box, reply, chat, latency, on_event) -> None:
+    for step in reply.steps:
+        if parts.safety.stopped or not parts.screen.in_front(settings.game_window):
+            break  # F12, the corner, a limit, or the player clicked away: nothing more is pressed
+        parts.hands.do(step, box)
+        if chat and latency is not None:  # this turn acted on something the player said: stop the voice stopwatch once
+            latency.key_pressed()
+            latency = None
 
 
 def _chosen_skill(raw: str) -> str | None:

@@ -103,6 +103,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
                         help="scancode (Windows): press hardware scan codes with the extended flag and absolute or relative mouse, the way games read input; the same safety rules apply")
     parser.add_argument("--screen-watch", choices=("on", "off"), default="on",
                         help="on: a frozen loading screen is waited out without asking the model, and menu, game-over and victory screens are named in the prompt")
+    parser.add_argument("--live", choices=("on", "off"), default="off",
+                        help="on: the tier router, the state-action memory (a situation that worked before is answered with no model call) and timed key chunks")
     parser.add_argument("--stop-on-end", action="store_true", help="stop the session when the end-of-game signals say the match is over (needs the screen watch)")
     parser.add_argument("--max-steps", type=int, default=None, help="a watchdog in the loop: end the session after this many turns")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
@@ -137,6 +139,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
             raise BrainError("brain_trouble", detail="--input scancode needs Windows")
         parts.hands.backend = DirectInputCompat()  # the engine's own hands and safety rules, now pressing scan codes
     parts.stop_on_end = args.stop_on_end
+    if args.live == "on":
+        from playfellow_coop.universal.live import LiveLoop
+        parts.live = LiveLoop()
     if args.max_steps is not None:
         from playfellow_coop.harness.hooks import from_spec
         parts.hooks = from_spec({"watchdog": {"max_steps": args.max_steps}})
