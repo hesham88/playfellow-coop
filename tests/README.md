@@ -1,0 +1,68 @@
+# tests
+
+The `tests` folder.
+
+## Files
+
+- `conftest.py`: The plugin imports the PlayFellow engine as an installed package.
+- `test_adk_app.py`: PlayFellow on Google ADK: the guardrails are plain functions, the episode graph runs on ADK's real runner with fakes and with a real game, and importing the package does not load ADK.
+- `test_agent.py`: Learning the rules of an unseen game: beliefs that are tested and revised, a model-written world model that is checked and used for lookahead, and short summaries of earlier episodes.
+- `test_arena_run.py`: The headless arena benchmark: real turn loop, virtual screen and hands, honest per-episode numbers, Wilson intervals, no overwrite.
+- `test_backoff.py`: The error policy from the docs: what to retry, how long to wait, when to slow down; and the brain using it.
+- `test_bench.py`: The speed bench writes one pf-results/1 file with only measured numbers.
+- `test_control_words.py`: The hand-over control words: matched exactly, in English and Arabic, applied without the AI, and never mistaken for a longer sentence.
+- `test_cua_brain.py`: The computer-use brain against a fake Responses server on 127.0.0.1: the observe-act loop, the translation onto the controls card, and safety checks that only the player can acknowledge.
+- `test_eog.py`: End-of-game detection: the signals fire on a finished or cut-away game without any "game over" banner, stay quiet in play, and never end a match on an unreadable answer.
+- `test_evalkit.py`: Evaluation done honestly: known-value checks for the statistics, attribution labels, the ladder, the LSIAP measures, the cost model and the receipt.
+- `test_fastpath.py`: The Rust fast path and its Python twin must give the same answers.
+- `test_flow_grounding.py`: Grounding in worlds that move on their own: the avatar is the region whose velocity changes with the keys; obstacles slide the same whatever is pressed.
+- `test_gym.py`: The gym: a Gymnasium-style environment with a dense, complete reward, and oracles that win every game from pixels, so the reward is proven reachable before any paid run.
+- `test_handoff_phrases.py`: The hand-off phrases in English and Arabic: both languages, never mixed, and the numbers in them are counted ones.
+- `test_harness.py`: The four parts of the harness: context and memory, tools and flow, runtime security and privacy, evaluation.
+- `test_harness_cookbook.py`: Patterns from the Meta cookbook, built into the harness: the five ends of a loop and the doom-loop stop, policy with scopes and protected tools, staged plans, the goal and its oracle, compaction, deterministic replay fixtures and their...
+- `test_harness_loop.py`: propose, probe, compose (method adopted from Harness², our own code): the budget identity, the safety rules and the decision rules, all offline.
+- `test_hooks_isolation.py`: Control-loop hooks (watchdog, completion gate) and the clean-evaluation helpers (no network, prompt budget, cost ledger).
+- `test_main.py`: The entry point wires F9 and F12, chooses the brain, and finds the key only in the environment or the credential manager.
+- `test_marked_frame_and_loop.py`: The marked Practice Arena frame, and the marks inside the composed loop (offline, fake SAM server).
+- `test_muse_brain.py`: MuseBrain against a real fake server on 127.0.0.1: request shape, reply, error mapping, pinned URL, no proxy, no env CA, the key never shown, and a daily budget that stops calls before they are sent.
+- `test_open_weights_brain.py`: The open-weights bench brain: pinned partner address, the partner's key scheme, the same schema and effort as the Muse brain, no cache key, an https-only rule.
+- `test_overlay_panel_and_spike.py`: The overlay's toolkit-free model and the spike's measurement functions, with no window anywhere.
+- `test_overlay_pump.py`: The summon-key message loop, with a fake user32 and kernel32 (no real hotkey is registered, no window exists).
+- `test_overlay_qt.py`: The Qt floating command center: glass look, no focus, click-through pill, English and Arabic.
+- `test_overlay_runner.py`: --overlay is a real switch: the session's events reach the panel through a queue (never from the session's thread), the summon key opens and closes it, the panel follows the hand-over, and the window closes exactly once when the session...
+- `test_overlay_windows.py`: The overlay's Windows-level rules, decided and tested with a fake user32 (no window is created and nothing is drawn).
+- `test_prompt_prefix.py`: The prompt's stable prefix.
+- `test_real_fixtures.py`: The parsers against the REAL Meta answers saved on credit day (tests/fixtures/real/*.json, written by demo/first_real_calls.py).
+- `test_realtime.py`: The real-time machinery: hold timing physics, opposite-key cleaning, action chunks with held keys, the state-action memory, the three-loop router, and Windows focus/DPI/scan-code logic (tested through a fake Windows).
+- `test_realtime_voice.py`: Realtime push-to-talk against a FAKE WebSocket server on 127.0.0.1 and a pretend microphone: the handshake, live partials, the key only in the handshake frame, no proxy, no redirect, the budget, the hold-to-talk flow, and the...
+- `test_record_replay.py`: The replay recorder: a raw session log (pf-session-log/1, JSON lines) becomes a pf-replay/1 module for the web page.
+- `test_repo_rules.py`: Rules for what may be in this repo: no banned wording, no personal paths or keys, no copy of an engine file, and no import of anything the public engine does not ship.
+- `test_sam_marks.py`: SAM marks against a fake server built from the Practice Arena's own truth.
+- `test_sam_protocol.py`: The SAM 3.1 wire format, checked against the examples printed in the vendor's docs (reading segmentation output, segmenting with prompts, client libraries).
+- `test_sam_video.py`: SAM on a recorded clip: encoding, the upload (expiry first, file last), the streamed answer read frame by frame, billing from the service's own count, and the clip file always deleted.
+- `test_scan_backend.py`: The engine's own hands pressing scan codes: same cards, same safety rules, different packets.
+- `test_scrub_fixtures.py`: The scrub step for the credit-day fixtures: ids, e-mails, key shapes, paths and anything account-bound become fixed placeholders OF THE SAME TYPE, the shape of every file stays intact, and a test FAILS if an id-like field survives in...
+- `test_selfimprove.py`: The self-improvement loop end to end on a real game: a model-written controller (here a scripted stand-in for the model) is checked by the static gate, run in the sandbox against pixels read through a look, scored by the gym on...
+- `test_serve.py`: The tactical WebSocket session (without a socket or a GPU), the Truss handler's honesty, and the model routing matrix.
+- `test_session_and_handover.py`: The composed loop and the hand-over, with pretend eyes, hands and brain (no key, no screen, no network).
+- `test_session_log.py`: --log: the session can write a raw log (pf-session-log/1) for the replay recorder.
+- `test_skill_looks.py`: A skill reads a game through a look, so the same skill reads the same game drawn another way: calibrate a look from labelled frames, then play from pixels only.
+- `test_skills.py`: Skills: local controllers started by one model decision.
+- `test_skillsmith.py`: Model-written skills: the static gate refuses what it must, the sandbox contains and times what runs, the gates separate good skills from unsafe ones, the library only writes inside its folder, and promotion follows TORSI's rules.
+- `test_skin_grounding.py`: Zero-shot grounding: the avatar is found from the keys alone, whatever its colour, and a skill's look is re-pointed at it.
+- `test_smoke.py`: The first-real-calls tool, against fake servers only: refuses without the key or the YES, saves scrubbed fixtures, reports a shape difference in one line, and never spends past its cap.
+- `test_smoke_install.py`: Smoke test: clone the engine at the pre-hackathon tag, install it and this package editable, and in a FRESH Python run one turn through the engine's own building blocks with the Muse brain pointed at a fake server on 127.0.0.1.
+- `test_smoke_realtime.py`: The one capped REALTIME voice call of the credit-day script, against a fake socket only: at most 5 s of audio, paced at real time, a wall-clock stop, every frame saved with the key replaced and the audio itself never saved.
+- `test_spatial.py`: The "your last move did nothing" note: said only when a direction key was pressed and ME did not move, from the marks alone.
+- `test_stage_timer.py`: The stage timer: real durations in the right stage, honest summaries, no invented numbers.
+- `test_trace.py`: pf-trace/1: one JSON line per request (stage, model, prefix hash, tokens in / cached / out, latency, finish reason, cost, parse validity) and one per turn.
+- `test_trace_perfetto.py`: pf-trace/1 to a Chrome-trace file that Perfetto opens: the shape Perfetto reads, nothing private, order kept, never overwrites.
+- `test_trace_report.py`: demo/trace_report.py: a pf-trace/1 file in, the numbers the credit-day trials are judged by out (cost per turn and per win, cache hit share, p50/p95 latency, parse-valid share).
+- `test_tracking.py`: The tracker keeps SAM's objects between SAM calls, says when it must ask again, and keeps ids across answers by overlap.
+- `test_train_baseline.py`: The built-in navigator's score on the held-out split (the "base baseline" row): offline, a fresh navigator per row, cold and warm kept apart, the bake-off's raw format so the accuracy tool can score it, and no number typed in.
+- `test_train_dataset.py`: T-1: the training data.
+- `test_universal.py`: The universal game interface: four pillars (input and output, perception, clock and process, evaluation and guardrails), tested with made-up pictures and no game.
+- `test_vlm_grounding.py`: Grounding by the model itself on the 0-1000 grid, and the schema and request rules from the docs that our own requests must meet.
+- `test_voice.py`: Voice commands: Muse Voice Transcribe against a fake server, a typed fallback, and the command reaching the planner (with the marks) so that only keys on the controls card are pressed.
+- `test_voice_latency_controls.py`: A spoken control phrase ("you take it") is consumed without the AI, so it must not leave its "key released" stopwatch behind: otherwise the NEXT real command would be paired with the OLD release and its latency would be wrong (found in...
+- `test_web_arena_parity.py`: D-2: the web arena twin.
