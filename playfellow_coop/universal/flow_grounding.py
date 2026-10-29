@@ -133,14 +133,37 @@ def probe_flow(act: Callable[[str], None], grab: Callable[[], np.ndarray], keys:
             if best is not None:
                 winners[key].append((best[1], best[2], best[3]))
     answered = {k: v for k, v in winners.items() if v}
+    others = _distinct(others)
     if not answered:
         return FlowGrounding(obstacles=others[:8])
-    centres = np.array([[(b[0] + b[2]) / 2, (b[1] + b[3]) / 2] for v in answered.values() for b, _, _ in v])
-    middle = np.median(centres, axis=0)
-    first = min((w for v in answered.values() for w in v), key=lambda w: float(np.hypot((w[0][0] + w[0][2]) / 2 - middle[0], (w[0][1] + w[0][3]) / 2 - middle[1])))
-    result = FlowGrounding(avatar_box=first[0], quiet_velocity=first[1])
+    # The avatar is the place the keys keep answering at: the winning box that overlaps the most winning boxes of other keys (a runner moves a little between keys, so exact boxes
+    # differ), the largest total change breaking a tie. A single stray winner from one key therefore cannot beat a region that several keys agree on.
+    flat = [(key, w) for key, v in answered.items() for w in v]
+    near = lambda a, b: _overlap(_pad(a, 12), b)  # noqa: E731 - reads as a sentence at the call site; a little slack for a sprite that moved between keys
+    def support(item):
+        key, (box, _, change) = item
+        agreeing = {k for k, (b, _, _) in flat if near(box, b)}
+        return (len(agreeing), float(np.hypot(*change)))
+    _, (avatar, quiet, _) = max(flat, key=support)
+    result = FlowGrounding(avatar_box=avatar, quiet_velocity=quiet)
     for key, found in answered.items():
-        result.bindings[key] = (float(np.mean([c[0] for _, _, c in found])), float(np.mean([c[1] for _, _, c in found])))
-    result.obstacles = others[:8]
-    result.confidence = min(1.0, len(answered) / max(1, len(keys)))
+        mine = [c for b, _, c in found if near(avatar, b)]  # only winners at the avatar's place: a stray region does not pollute the average
+        if mine:
+            result.bindings[key] = (float(np.mean([c[0] for c in mine])), float(np.mean([c[1] for c in mine])))
+    result.obstacles = [b for b in others if not near(avatar, b)][:8]
+    agree = len(result.bindings) / max(1, len(keys))  # the share of keys that answered at the avatar's place
+    result.confidence = min(1.0, agree)
     return result
+
+
+def _pad(box: Box, n: int) -> Box:
+    return (box[0] - n, box[1] - n, box[2] + n, box[3] + n)
+
+
+def _distinct(boxes: list[Box]) -> list[Box]:
+    """The boxes with near-duplicates removed (the same region seen again for every key and round)."""
+    out: list[Box] = []
+    for b in boxes:
+        if not any(_overlap(_pad(b, 4), _pad(o, 4)) for o in out):
+            out.append(b)
+    return out
