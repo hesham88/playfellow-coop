@@ -228,10 +228,16 @@ def skill_tool(book, parts, box, stop: Callable[[], bool]) -> Tool:
 
 
 def memory_tool(bank, game: str) -> Tool:
-    """Search the long-term facts for this game ('load memory' when the agent decides). Read-only; the answer is fenced data."""
-    def run(limit: int = 4) -> dict:
-        return {"status": "ok", "facts": bank.context_for(game, max(1, min(int(limit), 8)))}
-    return Tool("memory.search", "Recall what worked before in this game.", run, kind="function")
+    """Search the long-term facts for this game ('load memory' when the agent decides). Read-only; the answer is fenced data. With a question, the facts closest to it in
+    meaning (`MemoryBank.search`); without one, the most useful facts. The game is bound here, never an argument the model could change."""
+    def run(query: str = "", limit: int = 4) -> dict:
+        limit = max(1, min(int(limit), 8))
+        question = str(query or "")[:200]
+        matches = len(bank.search(game, question, limit)) if question else len(bank.recall(game, limit))
+        return {"status": "ok", "facts": bank.context_for(game, limit, query=question), "matches": matches}
+    schema = {"type": "object", "properties": {"query": {"type": "string", "maxLength": 200, "description": "what you want to remember, in your own words"},
+                                               "limit": {"type": "integer", "minimum": 1, "maximum": 8}}}
+    return Tool("memory.search", "Recall what worked before in this game; ask in your own words.", run, kind="function", schema=schema)
 
 
 class McpClient(Protocol):
