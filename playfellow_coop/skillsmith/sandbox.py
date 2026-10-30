@@ -46,15 +46,20 @@ def numpy_location() -> list[str]:
     return []
 
 
+def real_python(path: str | Path) -> bool:
+    """A python*.exe file outside any venv: the interpreter itself, not a venv launcher that starts the interpreter as a second process."""
+    path = Path(path)
+    name = path.name.lower()
+    return name.startswith("python") and name.endswith(".exe") and path.is_file() and not any((folder / "pyvenv.cfg").is_file() for folder in (path.parent, path.parent.parent))
+
+
 def worker_python() -> str:
     """The interpreter the worker runs on: a real python.exe, never a venv launcher. In a venv on Windows `sys.executable` is a launcher that starts the real interpreter as a child; the
     job allows one process, so that child is refused when the job lands first ("Not enough quota", exit 101) and runs outside the job when it does not. The base interpreter is used when
-    it is a python*.exe file outside any venv, otherwise `sys.executable` as before. The worker runs with -I and is handed numpy's folder, so it needs nothing else from the venv."""
-    base = Path(getattr(sys, "_base_executable", "") or "")
-    name = base.name.lower()
-    if name.startswith("python") and name.endswith(".exe") and base.is_file() and not any((folder / "pyvenv.cfg").is_file() for folder in (base.parent, base.parent.parent)):
-        return str(base)
-    return sys.executable
+    it is a real python.exe, otherwise `sys.executable`, which the sandbox then starts on Windows only if it is a real python.exe itself. The worker runs with -I and is handed numpy's
+    folder, so it needs nothing else from the venv."""
+    base = getattr(sys, "_base_executable", "") or ""
+    return base if base and real_python(base) else sys.executable
 
 
 class SandboxedProgram:
@@ -81,6 +86,9 @@ class SandboxedProgram:
 
     # ---- process handling ----------------------------------------------------------------------------------------------------------
     def _start(self) -> None:
+        if sys.platform == "win32" and not real_python(self._python):  # a launcher's interpreter is a second process: refused by the job, or outside it while reported contained
+            self._fail("refused: the worker's python is not a real python.exe, so the containment could not hold the process that runs the code")
+            return
         env = scrubbed_environment()
         env["TEMP"] = env["TMP"] = self._folder.name
         self._proc = subprocess.Popen([self._python, "-I", str(WORKER), *numpy_location()], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,

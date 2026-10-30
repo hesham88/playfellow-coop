@@ -347,6 +347,31 @@ def test_the_worker_interpreter_falls_back_unless_the_base_is_a_real_python_exe(
     assert sandbox.worker_python() == sys.executable
 
 
+def test_on_windows_a_worker_python_that_is_not_the_real_one_is_refused_never_started(monkeypatch, tmp_path):
+    """The fallback must not run with a containment it cannot hold: a venv launcher's child would be refused or run outside the job while the report said contained."""
+    import subprocess, sys
+    if sys.platform != "win32":
+        pytest.skip("the venv launcher and the job object are Windows things")
+    started = []
+
+    def recording(*args, **kwargs):
+        started.append(args)
+        raise OSError("this test starts no process")
+
+    monkeypatch.setattr(sandbox.subprocess, "Popen", recording)
+    launcher = tmp_path / "venv" / "Scripts" / "python.exe"
+    launcher.parent.mkdir(parents=True)
+    launcher.write_bytes(b"")
+    (tmp_path / "venv" / "pyvenv.cfg").write_text("home = x\n")
+    programs = [SandboxedSkill(GOOD, step_timeout_ms=2000, python=str(launcher))]
+    if sys.prefix != sys.base_prefix:  # here the fallback itself is this venv's launcher
+        monkeypatch.setattr(sys, "_base_executable", "", raising=False)
+        programs.append(SandboxedSkill(GOOD, step_timeout_ms=2000))
+    assert started == [] and all(p.faulted and "not a real python.exe" in p.fault and p.containment == "none" for p in programs)
+    assert programs[0].step({}) == NEUTRAL
+    assert subprocess.Popen is recording
+
+
 def test_closing_a_program_releases_its_pipes_and_its_folder_whether_its_worker_was_alive_or_had_died(monkeypatch, tmp_path):
     import pathlib, subprocess, time
     started, real = [], subprocess.Popen

@@ -7,6 +7,9 @@ On Windows, `contain(process)` does two things to the already-started worker, be
   * puts it in a Job object that kills it when we close, allows no second process (no spawning a shell), caps its memory, and forbids touching other windows, the clipboard, global
     atoms, the desktop or system parameters
 
+Both hold the process they are given and whatever it starts afterwards, never a process it started before: a venv's python.exe is a launcher that starts the interpreter as a
+second process, so the sandbox starts only a real python.exe on Windows and refuses anything else rather than report a containment that does not hold the code.
+
 Reads of world-readable files are not blocked by integrity levels; the scrubbed environment and the proxied modules are what keep secrets out of reach there. Elsewhere (Linux, macOS) `contain`
 applies nothing and reports `"none"` (there are no address-space or process limits there); it never claims more than it did. The returned string says what was applied, so a test or a
 report can state the real protection instead of assuming it.
