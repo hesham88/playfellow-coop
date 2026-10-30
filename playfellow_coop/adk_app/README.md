@@ -6,6 +6,8 @@ PlayFellow on Google ADK (research R1 section 1.2 and 4.2, R2 section 1.3).
 
 - `agents.py`: The ADK graph for one episode (research R1 section 1.2): a loop of perceive, route, decide, act, check.
 - `callbacks.py`: The guardrails as plain functions (research R1 section 2.4 and 4.2): they run before a tool or an action, mutate it to something safe, and say what they changed.
+- `tracing.py`: AD4: ADK's own tracing, beside our pf-trace/1 and the Perfetto export: one file to look at for the ADK side and the app side.
+- `arena_eval/`: AD3: ADK's own evaluator scores our arena runs (`agent.py` is the agent it runs, `run.py` exports the evalset with our harness and writes the result).
 
 ## Environment (AD1)
 
