@@ -25,7 +25,7 @@ import httpx
 from brain import BrainError
 from playfellow_coop import _http
 from playfellow_coop.sam_protocol import MAX_VIDEO_FRAMES, MIN_BILLED_VIDEO_FRAMES, Parsed, build_object_prompt, parse, request_metadata, sam_cost
-from playfellow_coop.sam_protocol import PromptObject
+from playfellow_coop.sam_protocol import PromptObject, StrictReader
 
 BASE = "https://api.meta.ai/v1"
 MODEL = "sam-3.1"
@@ -163,6 +163,193 @@ def read_stream(lines: Iterable[str]) -> tuple[StreamReader, list[Parsed]]:
     for line in lines:
         frames.extend(reader.feed(line))
     return reader, frames
+
+
+def _index(value) -> int | None:
+    """A lane index: a non-negative whole number (a JSON -0 or 0.0 is 0); anything else is not one."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    if isinstance(value, float) and value.is_integer() and value >= 0:
+        return int(value)
+    return None
+
+
+def _lane_dict(lane: tuple | None) -> dict | None:
+    return None if lane is None else {"item_id": lane[0], "output_index": lane[1], "content_index": lane[2]}
+
+
+class StrictStream:
+    """The stream adapter of the published protocol ("Streaming and outcomes"), on official Responses stream events. Exactly one output-text lane (item_id,
+    output_index, content_index) is read: another lane, an invalid lane, text after the lane is final, final text that differs from the deltas, or a repeated
+    finalizer is a `response_lane` error. `response.output_text.done` and an `output_text` `response.content_part.done` may each finalize the lane once, with the
+    same text; a `reasoning_text` part is ignored. Refusals, failed responses and error events are typed terminal errors. A completed or explicitly incomplete
+    response needs a final lane; the end of the input without one is an `eof` incomplete outcome. Text goes through `StrictReader` as it arrives."""
+
+    def __init__(self, media: str | None = None):
+        self.reader = StrictReader(media)
+        self.status = "in_progress"  # completed, incomplete or failed
+        self.outcome: dict | None = None
+        self.error: dict | None = None
+        self.frames_billed: int | None = None
+        self.lane: tuple | None = None
+        self._deltas = False
+        self._text = ""
+        self._final: str | None = None
+        self._finalizers: set[str] = set()
+
+    @property
+    def parsed(self) -> Parsed:
+        return self.reader.parsed
+
+    def feed(self, line: str) -> None:
+        """One server-sent-events line."""
+        line = line.strip()
+        if not line.startswith("data:"):
+            return
+        data = line[5:].strip()
+        if data == "[DONE]":
+            return
+        try:
+            event = json.loads(data)
+        except ValueError:
+            return
+        if isinstance(event, dict):
+            self.event(event)
+
+    def event(self, event: dict) -> None:
+        if self.status != "in_progress":
+            return  # nothing counts after a terminal outcome or error
+        kind = event.get("type", "")
+        if kind == "response.output_text.delta":
+            lane = self._lane(event)
+            if lane is None:
+                return
+            if self._final is not None:
+                self._lane_error("Output text arrived after its lane was final.", self.lane, lane)
+                return
+            delta = event.get("delta") if isinstance(event.get("delta"), str) else ""
+            self._deltas, self._text = True, self._text + delta
+            self.reader.feed(delta)
+        elif kind == "response.output_text.done":
+            self._finalize("output_text.done", event, event.get("text"))
+        elif kind == "response.content_part.done":
+            part = event.get("part") if isinstance(event.get("part"), dict) else {}
+            if part.get("type") == "refusal":
+                self._fail("response_refusal", str(part.get("refusal") if part.get("refusal") is not None else part.get("text", "")))
+            elif part.get("type") == "output_text":
+                self._finalize("content_part.done", event, part.get("text"))
+        elif kind == "response.refusal.delta":
+            self._fail("response_refusal", str(event.get("delta", "")))
+        elif kind == "response.refusal.done":
+            self._fail("response_refusal", str(event.get("refusal", "")))
+        elif kind == "response.completed":
+            self._terminal({"status": "completed"}, event)
+        elif kind == "response.incomplete":
+            details = (event.get("response") or {}).get("incomplete_details") or {}
+            outcome = {"status": "incomplete", "reason": "response"}
+            if isinstance(details.get("reason"), str):
+                outcome["detail"] = details["reason"]
+            self._terminal(outcome, event)
+        elif kind == "response.failed":
+            error = (event.get("response") or {}).get("error") or {}
+            self._fail("response_failed", str(error.get("message", "")))
+        elif kind == "error":
+            self._fail("response_error", str(event.get("message", "")))
+
+    def finish(self) -> None:
+        """The input ended. Without a terminal event that is an `eof` incomplete outcome; a last line without a newline is still read."""
+        if self.status == "in_progress":
+            self.reader.finish()
+            self.status, self.outcome = "incomplete", {"status": "incomplete", "reason": "eof"}
+
+    def fail_source(self, operation: str) -> None:
+        """The event source itself failed (`iterator`, `next` or `return`, the cleanup). A cleanup failure is not skipped, even after a final outcome."""
+        if self.error is None:
+            self.status, self.outcome = "failed", None
+            self.error = {"code": "source_error", "message": f"The Responses event source failed during {operation}.", "source_operation": operation}
+
+    # ---- internals
+    def _lane(self, event: dict) -> tuple | None:
+        item, out, content = event.get("item_id"), _index(event.get("output_index")), _index(event.get("content_index"))
+        if not (isinstance(item, str) and item) or out is None or content is None:
+            self._lane_error("The output text event has an invalid lane identity.", None, None)
+            return None
+        lane = (item, out, content)
+        if self.lane is None:
+            self.lane = lane
+        elif lane != self.lane:
+            self._lane_error("The response interleaved multiple output text lanes.", self.lane, lane)
+            return None
+        return lane
+
+    def _finalize(self, kind: str, event: dict, text) -> None:
+        lane = self._lane(event)
+        if lane is None:
+            return
+        if not isinstance(text, str):
+            self._lane_error("The final output text is missing.", self.lane, lane)
+        elif kind in self._finalizers:
+            self._lane_error("The output text lane was finalized twice by the same event type.", self.lane, lane)
+        elif self._final is not None:
+            if text != self._final:
+                self._lane_error("A second final output text differs from the first.", self.lane, lane)
+            else:
+                self._finalizers.add(kind)  # the other event type with the same text: allowed once, and it does not feed the parser again
+        elif self._deltas and text != self._text:
+            self._lane_error("The final output text differs from the text streamed for its lane.", self.lane, lane)
+        else:
+            self._finalizers.add(kind)
+            self._final = text
+            if not self._deltas:
+                self.reader.feed(text)  # no deltas: the final text is the whole answer
+
+    def _terminal(self, outcome: dict, event: dict) -> None:
+        if self._final is None:
+            self._lane_error("The response ended before its output text lane was final.", self.lane, None)
+            return
+        self.reader.finish()
+        usage = (event.get("response") or {}).get("usage") or {}
+        frames = usage.get("video_frames_processed")
+        self.frames_billed = frames if isinstance(frames, int) and not isinstance(frames, bool) else None
+        self.status, self.outcome = outcome["status"], outcome
+
+    def _lane_error(self, message: str, expected: tuple | None, received: tuple | None) -> None:
+        self._fail("response_lane", message, expected_lane=_lane_dict(expected), received_lane=_lane_dict(received))
+
+    def _fail(self, code: str, message: str, **extra) -> None:
+        self.status, self.outcome = "failed", None
+        self.error = {"code": code, "message": message, **extra}
+
+
+def read_stream_strict(lines: Iterable[str], media: str | None = None) -> StrictStream:
+    """Read a whole stream with `StrictStream`. A source that fails while starting, while reading, or while cleaning up becomes a `source_error`, never a crash."""
+    stream = StrictStream(media)
+    try:
+        iterator = iter(lines)
+    except Exception:  # noqa: BLE001 (any failure of the source is reported the same way)
+        stream.fail_source("iterator")
+        return stream
+    try:
+        while stream.status == "in_progress":
+            try:
+                line = next(iterator)
+            except StopIteration:
+                break
+            except Exception:  # noqa: BLE001
+                stream.fail_source("next")
+                break
+            stream.feed(line)
+    finally:
+        close = getattr(iterator, "close", None)
+        if callable(close):
+            try:
+                close()
+            except Exception:  # noqa: BLE001
+                stream.fail_source("return")
+    stream.finish()
+    return stream
 
 
 @dataclass

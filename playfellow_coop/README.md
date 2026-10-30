@@ -20,6 +20,7 @@ playfellow-coop: event work that plugs into the open PlayFellow engine.
 - `muse_brain.py`: The Muse brain: asks a Muse model on the Meta Model API what to do next.
 - `push_to_talk.py`: Hold a key, speak, release: the spoken words become a command for the buddy.
 - `realtime_voice.py`: Realtime push-to-talk: hold a key, speak, release; the words become a command for the buddy.
+- `sam_conformance.py`: Conformance of our SAM reader with the vendor's shared cases (github.com/meta-models/meta-sam), read from a local clone kept outside this repository.
 - `sam_eval.py`: Score SAM marks against the Practice Arena's own truth: precision, recall and latency, offline.
 - `sam_marks.py`: SAM 3.1 marks: ask Meta's segmentation model where things are, and turn the answer into the engine's own marks.
 - `sam_protocol.py`: The SAM 3.1 wire format, read and written exactly as the published docs describe it (dev.meta.ai/docs/sam: segmenting, reading segmentation output, client libraries).
