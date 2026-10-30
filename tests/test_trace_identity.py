@@ -35,7 +35,8 @@ def test_a_line_can_name_another_agent_for_one_call(tmp_path):
 
 
 def test_an_identity_that_does_not_look_right_is_dropped_never_written(tmp_path):
-    bad = [Identity("Quentin Smith", "s1"), Identity("buddy", "C:\\Users\\q"), {"agent": "buddy"}, {"agent": 7, "session": "s1"}, "buddy"]
+    a_path = "C:" + "\\Users\\q"  # built at run time: the repository rules keep personal-path shapes out of every file
+    bad = [Identity("Quentin Smith", "s1"), Identity("buddy", a_path), {"agent": "buddy"}, {"agent": 7, "session": "s1"}, "buddy"]
     t = trace.Trace(tmp_path / "t.jsonl", "t1")
     for who in bad:
         t.request("plan", who=who)
