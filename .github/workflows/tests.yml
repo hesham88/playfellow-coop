@@ -36,3 +36,28 @@ jobs:
           PF_REQUIRE_NODE: "1"
           PLAYFELLOW_ENGINE: ${{ github.workspace }}/engine/software
         run: python -m pytest -q -W error
+
+  adk:
+    # Optional: Google ADK in an environment of its own (google-adk 2.13.0 needs websockets below 16, this package needs 16 or later), made from the lock by
+    # tools/adk_env.py, which also checks the pinned version; only the ADK tests run here. The job above never installs ADK.
+    runs-on: windows-latest
+    continue-on-error: true
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Clone the engine at the pinned tag (the tests read it from the clone; it is not installed here)
+        shell: bash
+        run: git clone --depth 1 --branch pre-hackathon https://github.com/hesham88/playfellow.git engine
+      - name: Make the ADK environment from the lock, outside the repository, and check it
+        shell: pwsh
+        run: python tools/adk_env.py --venv "$env:RUNNER_TEMP\adk-venv" --from-lock
+      - name: Test (only tests/test_adk_*.py; warnings are errors)
+        shell: pwsh
+        env:
+          PLAYFELLOW_ENGINE: ${{ github.workspace }}/engine/software
+          SDL_VIDEODRIVER: dummy
+        run: |
+          & "$env:RUNNER_TEMP\adk-venv\Scripts\python.exe" -m pytest -q -W error (Get-ChildItem tests -Filter "test_adk_*.py").FullName
