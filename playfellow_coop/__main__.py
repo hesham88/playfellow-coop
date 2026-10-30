@@ -225,7 +225,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     trace_plan = getattr(parts, "trace_plan", None)
     if trace_plan:  # --trace: opened before anything starts, and never over an existing file
         try:
-            tracer = Trace(trace_plan["path"], trace_plan["trial"], commit=git_commit())
+            identity = getattr(getattr(parts, "harness", None), "identity", None)  # who acts, on every line (H4-25); no harness, no session to name
+            tracer = Trace(trace_plan["path"], trace_plan["trial"], commit=git_commit(), who=identity)
         except FileExistsError:
             say(tr("That --trace file already exists: nothing was overwritten. Pick a new file name.",
                    "ملف --trace موجود بالفعل: لم يُكتب فوقه شيء. اختر اسم ملف جديدًا."))

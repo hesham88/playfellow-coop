@@ -35,9 +35,17 @@ def _us(ms) -> int:
     return int(round(float(ms) * 1000)) if isinstance(ms, (int, float)) and not isinstance(ms, bool) and ms >= 0 else 0
 
 
+def _agent(record: dict) -> dict:
+    """{"who": agent} for a line that says who acted (H4-25), else nothing."""
+    who = record.get("who")
+    return {"who": who["agent"]} if isinstance(who, dict) and isinstance(who.get("agent"), str) else {}
+
+
 def to_events(records: list[dict]) -> dict:
     header = records[0]
-    events = [{"ph": "M", "pid": PID, "name": "process_name", "args": {"name": f"Playfellow trial {header.get('trial', '')}"}}]
+    session = header.get("who", {}).get("session") if isinstance(header.get("who"), dict) else None
+    title = f"Playfellow trial {header.get('trial', '')}" + (f", session {session}" if session else "")
+    events = [{"ph": "M", "pid": PID, "name": "process_name", "args": {"name": title}}]
     for name, tid in TRACKS.items():
         events.append({"ph": "M", "pid": PID, "tid": tid, "name": "thread_name", "args": {"name": name}})
     clock = {tid: 0 for tid in TRACKS.values()}
@@ -54,6 +62,7 @@ def to_events(records: list[dict]) -> dict:
             total = sum(d for _, d in parts) or _us(record.get("audio_ms")) or 1000
             start = max(cursor, clock[tid])
             args = {k: record[k] for k in ("model", "status", "finish_reason", "error", "tokens", "cost_usd", "parse", "images", "image_bytes") if k in record}
+            args.update(_agent(record))
             events.append({"ph": "X", "pid": PID, "tid": tid, "ts": start, "dur": total, "name": f"{stage} #{record.get('n', '')}", "cat": stage, "args": args})
             at = start
             for label, duration in parts:
@@ -69,9 +78,9 @@ def to_events(records: list[dict]) -> dict:
             events.append({"ph": "C", "pid": PID, "ts": cursor, "name": "cost_usd", "args": {"total": round(cost, 6)}})
         elif kind == "turn":
             events.append({"ph": "i", "s": "t", "pid": PID, "tid": TRACKS["turns"], "ts": cursor, "name": f"turn {record.get('n', '')}", "cat": "turn",
-                           "args": {k: record[k] for k in ("actions", "won", "progress", "bumps") if k in record}})
+                           "args": {**{k: record[k] for k in ("actions", "won", "progress", "bumps") if k in record}, **_agent(record)}})
     return {"traceEvents": events, "displayTimeUnit": "ms",
-            "metadata": {"source": SCHEMA, "trial": header.get("trial"), "started": header.get("started"),
+            "metadata": {"source": SCHEMA, "trial": header.get("trial"), "started": header.get("started"), "session": session,
                          "timeline": "requests are laid end to end in the order they were made: positions show order and duration, not the time of day"}}
 
 
