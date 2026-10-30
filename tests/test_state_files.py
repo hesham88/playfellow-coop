@@ -21,6 +21,18 @@ def test_every_skill_game_ships_a_fitted_file_for_each_look(game, look):
     assert len(model.scale) == dims and all(len(centre) == dims for centre in model.centres.values())
 
 
+def test_every_state_file_is_package_data_so_an_installed_copy_has_it():
+    """setuptools ships package data by glob under the package folder, where * stops at a folder: a file no pattern reaches is missing from an installed copy."""
+    import glob
+    import tomllib
+    from pathlib import Path
+    root = Path(state_fit.__file__).resolve().parents[1]
+    patterns = tomllib.loads((root.parent / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["setuptools"]["package-data"]["playfellow_coop"]
+    shipped = {Path(found).as_posix() for pattern in patterns for found in glob.glob(pattern, root_dir=root)}
+    files = {path.relative_to(root).as_posix() for path in (root / "universal" / "states").rglob("*.json")}
+    assert files and files <= shipped, sorted(files - shipped)
+
+
 def test_collect_keeps_pictures_at_the_size_the_watch_reads():
     class Big:
         keys = ("a",)
