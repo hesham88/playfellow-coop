@@ -1,6 +1,7 @@
 """PlayFellow on Google ADK: the guardrails are plain functions, the episode graph runs on ADK's real runner with fakes and with a real game, and importing the package does not load ADK."""
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 
@@ -8,6 +9,17 @@ import pytest
 
 from playfellow_coop.adk_app.agents import Deps, run_episode
 from playfellow_coop.adk_app.callbacks import MAX_HOLD_MS, episode_should_stop, guard_action
+
+
+def _has_adk() -> bool:
+    try:
+        return importlib.util.find_spec("google.adk") is not None
+    except ModuleNotFoundError:
+        return False
+
+
+# ADK is never installed into the app's environment (AD1). These tests run in the ADK environment: `python tools/adk_env.py --venv <folder>`, then that python.
+NEEDS_ADK = pytest.mark.skipif(not _has_adk(), reason="ADK lives in its own environment (AD1): run with the python of `tools/adk_env.py --venv <folder>`")
 
 
 # ---- guardrails (no ADK needed) -----------------------------------------------------------------------------------------------------
@@ -39,6 +51,7 @@ def test_the_loop_exit_rule():
 
 
 # ---- the graph on ADK's real runner -------------------------------------------------------------------------------------------------
+@NEEDS_ADK
 def test_an_episode_runs_perceive_route_decide_act_watch_in_a_loop_and_the_watcher_ends_it():
     pressed, grabs = [], []
 
@@ -59,6 +72,7 @@ def test_an_episode_runs_perceive_route_decide_act_watch_in_a_loop_and_the_watch
     assert any("opposite" in n for n in result["guard_notes"])
 
 
+@NEEDS_ADK
 def test_the_step_budget_ends_an_episode_nobody_wins_and_a_player_takeover_ends_it_at_once():
     deps = Deps(grab=lambda: {}, max_steps=3)
     assert run_episode(deps)["step"] == 3
@@ -67,6 +81,7 @@ def test_the_step_budget_ends_an_episode_nobody_wins_and_a_player_takeover_ends_
     assert result["step"] == 1 and result["episode_terminated"]  # one pass, then the watcher sees the player has the controls
 
 
+@NEEDS_ADK
 def test_a_real_game_is_played_through_the_graph_with_a_local_skill_as_the_decider():
     from bench import arena_run as ar
     from playfellow_coop.gym import PlayfellowGym
