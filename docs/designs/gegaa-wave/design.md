@@ -29,7 +29,7 @@ hooks (watchdog, completion gate) wrap the loop; an honest report says who produ
 
 ## Alternatives
 
-- **A screen classifier for game over.** Rejected: measured on every test game it failed the held-out check, so nothing ships; only a strict black-frozen loading rule remains.
+- **A screen classifier for game over.** Rejected at first: its whole-picture measurements failed the held-out check on every test game. Kept since 2026-10-30 (UH4) in another form: the fit learns the two screen regions where a game writes how a round ended and reads the colour of the ink there, on pictures of the size the screen watch reads, one file per look (`playfellow_coop/universal/states/` classic, `states/glass/`). It ships for the five skill games because each passed the held-out check on seeds the fit never saw (gameplay 0.93 to 1.00, end screens 0.83 to 1.00; lane_dash is the lowest on both looks). The strict black-frozen rule still decides loading screens, and the classifier only adds a hint to the prompt.
 - **Ask the model on every turn.** Rejected: measured at 0 wins of 15 and $1.19 for raw-pixel play on 27 October; one decision that starts a skill won 12 of the first 12 episodes in the next paid run (2026-10-29).
 - **Block dangerous numpy functions by name.** Rejected after a security review: the module reaches files by more names than a list can keep up with. The gate and the worker allow-list members instead.
 - **Run skills in the main process with restricted builtins.** Rejected: one gate bug would reach the player's files and keys.

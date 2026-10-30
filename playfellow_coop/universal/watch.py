@@ -15,6 +15,8 @@ from playfellow_coop.universal.frames import normalize
 from playfellow_coop.universal.motion import motion_level
 from playfellow_coop.universal.state import StateClassifier, looks_loading
 
+WATCH_SIDE = 160  # the watch reads every picture shrunk to this long side; a classifier is fitted on pictures of the same size (state_fit.collect)
+
 END_NOTE = "The picture has stopped answering the keys (the match may be over): look at the screen before pressing more."
 NOTES = {"menu": "The screen looks like a menu.", "dead": "The screen looks like a game-over screen.", "victory": "The screen looks like a victory screen."}
 
@@ -48,7 +50,7 @@ class ScreenWatch:
         self._action = max(0.0, min(1.0, float(magnitude)))
 
     def look(self, picture) -> Look:
-        frame = normalize(picture, max_side=160)  # a small copy is enough to tell screens apart, and fast
+        frame = normalize(picture, max_side=WATCH_SIDE)  # a small copy is enough to tell screens apart, and fast
         previous, self._previous = self._previous, frame
         state, confidence = self.classifier.classify(frame, previous)
         motion = motion_level(previous, frame) if previous is not None and previous.shape == frame.shape else 1.0

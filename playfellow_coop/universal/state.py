@@ -59,19 +59,109 @@ def looks_loading(frame: np.ndarray) -> bool:
     return bool((top < 45).mean() >= 0.85 and float(grey(small).mean()) < 40.0)
 
 
+# A region is (top, bottom, left, right) as fractions of the picture. Many games say how a round ended with a few words in a corner ("You win!" in green, "Game over" in red) over
+# a board that looks just like play; the whole-picture measurements above cannot see a few letters, a region that holds them can. `fit(..., regions=n)` finds the n regions that
+# best tell this game's screens apart, at build time, from labelled pictures; at play time only the pixels in them are read.
+INKS = ("ink", "green", "red", "light", "gold")  # per region: how much bright ink it holds, and which share of that ink is green, red, white-grey or gold
+GRID_ROWS = 16
+SPANS = ((0.0, 0.25), (0.25, 0.5), (0.5, 0.75), (0.75, 1.0), (0.0, 0.5), (0.25, 0.75), (0.5, 1.0), (0.0, 1.0))
+
+
+def _ink(patch: np.ndarray) -> list[float]:
+    p = patch[::2, ::2].astype(np.float32)
+    if p.size == 0:
+        return [0.0] * len(INKS)
+    r, g, b = p[..., 0], p[..., 1], p[..., 2]
+    top, bottom = p.max(axis=2), p.min(axis=2)
+    bright = top > 110
+    n = int(bright.sum())
+    if n == 0:
+        return [0.0] * len(INKS)
+    green = bright & (g > r * 1.25) & (g > b * 1.05)
+    red = bright & (r > g * 1.35) & (r > b * 1.05)
+    light = bright & (bottom > 140) & (top - bottom < 60)
+    gold = bright & (r > 150) & (g > 120) & (b < g * 0.7) & (r >= g * 0.9)
+    return [min(1.0, n / bright.size * 4), float(green.sum()) / n, float(red.sum()) / n, float(light.sum()) / n, float(gold.sum()) / n]
+
+
+def _crop(frame: np.ndarray, region) -> np.ndarray:
+    h, w = frame.shape[:2]
+    y0, y1, x0, x1 = region
+    top, left = int(y0 * h), int(x0 * w)
+    return frame[top:max(int(y1 * h), top + 1), left:max(int(x1 * w), left + 1)]
+
+
+def region_features(frame: np.ndarray, regions) -> np.ndarray:
+    """`len(INKS)` numbers per region, each 0..1: the ink in that part of the picture and its colour."""
+    out: list[float] = []
+    for region in regions:
+        out.extend(_ink(_crop(frame, region)))
+    return np.array(out, dtype=np.float32)
+
+
+def candidate_regions() -> list[tuple[float, float, float, float]]:
+    return [(row / GRID_ROWS, (row + 1) / GRID_ROWS, x0, x1) for row in range(GRID_ROWS) for x0, x1 in SPANS]
+
+
+def _overlap(a, b) -> bool:
+    return a[0] < b[1] and b[0] < a[1] and a[2] < b[3] and b[2] < a[3]
+
+
+def learn_regions(labelled: list[tuple[np.ndarray, str, np.ndarray | None]], count: int) -> list[tuple[float, float, float, float]]:
+    """The `count` non-overlapping regions whose ink best separates the most common screen (gameplay, as a rule) from each other kind of screen (Fisher's ratio per kind,
+    summed as log(1 + ratio) so a region must help with every kind, not just one)."""
+    labels = [label for _, label, _ in labelled]
+    kinds = sorted(set(labels))
+    if len(kinds) < 2:
+        raise ValueError("learning regions needs at least two kinds of screen")
+    common = max(kinds, key=labels.count)
+    scored = []
+    for region in candidate_regions():
+        values = np.array([_ink(_crop(frame, region)) for frame, _, _ in labelled], dtype=np.float32)
+        base = values[[label == common for label in labels]]
+        score = 0.0
+        for kind in kinds:
+            if kind == common:
+                continue
+            other = values[[label == kind for label in labels]]
+            ratio = ((other.mean(axis=0) - base.mean(axis=0)) ** 2 / (other.var(axis=0) + base.var(axis=0) + 1e-3)).sum()
+            score += float(np.log1p(ratio))
+        scored.append((score, region))
+    scored.sort(key=lambda item: -item[0])
+    chosen: list[tuple[float, float, float, float]] = []
+    for _, region in scored:
+        if not any(_overlap(region, kept) for kept in chosen):
+            chosen.append(region)
+        if len(chosen) == count:
+            break
+    return chosen
+
+
 @dataclass
 class StateClassifier:
     centres: dict[str, np.ndarray] = field(default_factory=lambda: {k: v.copy() for k, v in DEFAULT_CENTRES.items()})
     scale: np.ndarray = field(default_factory=lambda: np.full(len(FEATURES), 0.25, dtype=np.float32))
     fitted: bool = False  # True once centres were learned from this game's own pictures; the built-in centres are only a rough guide (see the note on DEFAULT_CENTRES)
+    regions: list[tuple[float, float, float, float]] = field(default_factory=list)  # learned by fit(..., regions=n); empty = whole-picture measurements only
 
-    def fit(self, labelled: list[tuple[np.ndarray, str, np.ndarray | None]]) -> "StateClassifier":
-        """Re-learn the centres from `(picture, label, previous picture or None)` examples. A label with no example keeps its built-in centre."""
-        by_label: dict[str, list[np.ndarray]] = {}
-        for frame, label, previous in labelled:
+    def vector(self, frame: np.ndarray, previous: np.ndarray | None = None) -> np.ndarray:
+        whole = features(frame, previous)
+        return np.concatenate([whole, region_features(frame, self.regions)]) if self.regions else whole
+
+    def fit(self, labelled: list[tuple[np.ndarray, str, np.ndarray | None]], regions: int = 0) -> "StateClassifier":
+        """Re-learn the centres from `(picture, label, previous picture or None)` examples. A label with no example keeps its built-in centre.
+
+        With `regions=n` it first learns the n regions that best tell the labels apart; such a classifier knows only the screens it was shown (a built-in centre has no region part,
+        and loading screens stay with the strict `looks_loading` rule)."""
+        for _, label, _ in labelled:
             if label not in STATES:
                 raise ValueError(f"unknown state {label!r}; use one of {STATES}")
-            by_label.setdefault(label, []).append(features(frame, previous))
+        if regions:
+            self.regions = learn_regions(labelled, regions)
+            self.centres = {}
+        by_label: dict[str, list[np.ndarray]] = {}
+        for frame, label, previous in labelled:
+            by_label.setdefault(label, []).append(self.vector(frame, previous))
         self.fitted = True
         for label, rows in by_label.items():
             self.centres[label] = np.mean(rows, axis=0)
@@ -81,7 +171,10 @@ class StateClassifier:
         return self
 
     def to_json(self) -> dict:
-        return {"centres": {k: [round(float(x), 5) for x in v] for k, v in self.centres.items()}, "scale": [round(float(x), 5) for x in self.scale], "fitted": self.fitted}
+        data = {"centres": {k: [round(float(x), 5) for x in v] for k, v in self.centres.items()}, "scale": [round(float(x), 5) for x in self.scale], "fitted": self.fitted}
+        if self.regions:
+            data["regions"] = [[round(float(x), 5) for x in region] for region in self.regions]
+        return data
 
     @classmethod
     def from_json(cls, data: dict) -> "StateClassifier":
@@ -89,11 +182,12 @@ class StateClassifier:
         model.centres = {k: np.array(v, dtype=np.float32) for k, v in data["centres"].items()}
         model.scale = np.array(data["scale"], dtype=np.float32)
         model.fitted = bool(data.get("fitted", True))
+        model.regions = [tuple(float(x) for x in region) for region in data.get("regions", [])]
         return model
 
     def classify(self, frame: np.ndarray, previous: np.ndarray | None = None) -> tuple[str, float]:
         """(state, confidence 0..1). Confidence is how much closer the best centre is than the second best; near 0 means "could be either"."""
-        vector = features(frame, previous)
+        vector = self.vector(frame, previous)
         distances = {label: float(np.sqrt((((vector - centre) / self.scale) ** 2).sum())) for label, centre in self.centres.items()}
         ranked = sorted(distances.items(), key=lambda item: item[1])
         best, second = ranked[0], ranked[1]
