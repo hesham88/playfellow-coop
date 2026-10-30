@@ -1,0 +1,463 @@
+{
+  "eval_set_id": "arena",
+  "name": "Arena levels played with a local skill",
+  "description": "Exported by playfellow_coop.harness.adk_compat for ADK's own evaluator (AD3).",
+  "eval_cases": [
+    {
+      "eval_id": "snake-seed0",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play snake, seed 0."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "chase_food"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won snake."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "snake-seed1",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play snake, seed 1."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "chase_food"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won snake."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "snake-seed2",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play snake, seed 2."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "chase_food"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won snake."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "box_push-seed0",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play box_push, seed 0."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "push_boxes"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won box_push."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "box_push-seed1",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play box_push, seed 1."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "push_boxes"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won box_push."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "box_push-seed2",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play box_push, seed 2."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "push_boxes"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won box_push."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "slide_2048-seed0",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play slide_2048, seed 0."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "slide_merge"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won slide_2048."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "slide_2048-seed1",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play slide_2048, seed 1."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "slide_merge"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won slide_2048."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "slide_2048-seed2",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play slide_2048, seed 2."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "slide_merge"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won slide_2048."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "lane_dash-seed0",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play lane_dash, seed 0."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "run_lanes"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won lane_dash."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "lane_dash-seed1",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play lane_dash, seed 1."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "run_lanes"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won lane_dash."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "lane_dash-seed2",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Play lane_dash, seed 2."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "start_skill",
+                "args": {
+                  "skill": "run_lanes"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I won lane_dash."
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "playfellow",
+        "user_id": "player",
+        "state": {}
+      }
+    }
+  ]
+}

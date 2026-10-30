@@ -1,0 +1,101 @@
+{
+ "schema": "pf-adk-eval/1",
+ "written": "2026-10-30T06:50:47+02:00",
+ "evaluator": "google-adk AgentEvaluator",
+ "agent": "playfellow_coop.adk_app.arena_eval.agent",
+ "chooser": "random",
+ "criterion": "tool_trajectory_avg_score >= 1.0",
+ "games": [
+  "snake",
+  "box_push",
+  "slide_2048",
+  "lane_dash"
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "cases": 12,
+ "matched": 1,
+ "share": 0.0833,
+ "share_95": [
+  0.0149,
+  0.3539
+ ],
+ "games_won": 1,
+ "per_case": [
+  {
+   "case": "box_push-seed0",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won box_push."
+  },
+  {
+   "case": "box_push-seed2",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost box_push."
+  },
+  {
+   "case": "lane_dash-seed0",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost lane_dash."
+  },
+  {
+   "case": "lane_dash-seed2",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost lane_dash."
+  },
+  {
+   "case": "snake-seed1",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost snake."
+  },
+  {
+   "case": "slide_2048-seed2",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost slide_2048."
+  },
+  {
+   "case": "slide_2048-seed0",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost slide_2048."
+  },
+  {
+   "case": "lane_dash-seed1",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost lane_dash."
+  },
+  {
+   "case": "slide_2048-seed1",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost slide_2048."
+  },
+  {
+   "case": "snake-seed0",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost snake."
+  },
+  {
+   "case": "snake-seed2",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost snake."
+  },
+  {
+   "case": "box_push-seed1",
+   "score": 0.0,
+   "status": "FAILED",
+   "answer": "I lost box_push."
+  }
+ ]
+}

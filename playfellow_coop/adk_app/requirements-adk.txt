@@ -1,7 +1,7 @@
 # AD1: the ADK side runs in its OWN virtual environment, never the app's (the app never imports ADK). Make it with:
 #   python tools/adk_env.py --venv <a folder outside this repository>
 # The exact set that environment resolved to is in requirements-adk.lock (written by the same script; Windows, Python 3.13).
-google-adk==2.13.0
+google-adk[eval]==2.13.0  # the eval extra: ADK's own evaluator (AD3)
 pytest>=8.0
 # what the ADK side needs from this package and the engine (the arena games are played through the graph)
 numpy>=2.0

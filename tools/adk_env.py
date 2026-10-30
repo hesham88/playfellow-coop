@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PINS = ROOT / "playfellow_coop" / "adk_app" / "requirements-adk.txt"
 LOCK = PINS.with_suffix(".lock")
-PIN = re.compile(r"^\s*([A-Za-z0-9_.\-]+)\s*==\s*([A-Za-z0-9_.\-+]+)\s*$")
+PIN = re.compile(r"^\s*([A-Za-z0-9_.\-]+)(?:\[[A-Za-z0-9_,.\- ]+\])?\s*==\s*([A-Za-z0-9_.\-+]+)\s*$")  # name, optional [extras], == version
 
 
 def pinned(path: Path = PINS) -> dict[str, str]:

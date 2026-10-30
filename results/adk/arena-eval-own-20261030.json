@@ -1,0 +1,101 @@
+{
+ "schema": "pf-adk-eval/1",
+ "written": "2026-10-30T06:50:24+02:00",
+ "evaluator": "google-adk AgentEvaluator",
+ "agent": "playfellow_coop.adk_app.arena_eval.agent",
+ "chooser": "own",
+ "criterion": "tool_trajectory_avg_score >= 1.0",
+ "games": [
+  "snake",
+  "box_push",
+  "slide_2048",
+  "lane_dash"
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "cases": 12,
+ "matched": 12,
+ "share": 1.0,
+ "share_95": [
+  0.7575,
+  1.0
+ ],
+ "games_won": 12,
+ "per_case": [
+  {
+   "case": "lane_dash-seed2",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won lane_dash."
+  },
+  {
+   "case": "slide_2048-seed1",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won slide_2048."
+  },
+  {
+   "case": "box_push-seed2",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won box_push."
+  },
+  {
+   "case": "snake-seed0",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won snake."
+  },
+  {
+   "case": "snake-seed2",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won snake."
+  },
+  {
+   "case": "lane_dash-seed1",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won lane_dash."
+  },
+  {
+   "case": "snake-seed1",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won snake."
+  },
+  {
+   "case": "box_push-seed0",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won box_push."
+  },
+  {
+   "case": "lane_dash-seed0",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won lane_dash."
+  },
+  {
+   "case": "box_push-seed1",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won box_push."
+  },
+  {
+   "case": "slide_2048-seed0",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won slide_2048."
+  },
+  {
+   "case": "slide_2048-seed2",
+   "score": 1.0,
+   "status": "PASSED",
+   "answer": "I won slide_2048."
+  }
+ ]
+}

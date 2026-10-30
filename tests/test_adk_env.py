@@ -11,7 +11,7 @@ spec.loader.exec_module(adk_env)
 
 def test_adk_is_pinned_to_one_exact_version_and_the_lock_agrees():
     pins = adk_env.pinned()
-    assert pins["google-adk"] == "2.13.0"
+    assert pins["google-adk"] == "2.13.0"  # written with its [eval] extra: the name is still google-adk
     assert "pytest" not in pins  # a range is not a pin
     lock = adk_env.pinned(adk_env.LOCK)
     assert lock["google-adk"] == pins["google-adk"] and len(lock) > 20  # the full resolved set, not just the top line
