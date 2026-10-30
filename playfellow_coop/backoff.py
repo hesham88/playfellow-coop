@@ -109,3 +109,71 @@ class RateGuard:
             low = (self.remaining_requests is not None and self.remaining_requests < self.low_requests) or \
                   (self.remaining_tokens is not None and self.remaining_tokens < self.low_tokens)
         return self.pause if low else 0.0
+
+
+class CircuitBreaker:
+    """Stop hammering a service that keeps failing, one circuit per host.
+
+    Closed until `threshold` failures in a row; then open for `cooldown` seconds plus up to 25 percent of jitter, during which
+    before() says how long to wait and nothing is sent; then half-open: exactly ONE probe is let through. A success closes the
+    circuit; a failure opens it again for twice as long (never more than `max_cooldown`). A probe that ends with no verdict
+    (a 504, or an unexpected error) must call neutral(), so the circuit is never left waiting for an answer that is not coming."""
+
+    def __init__(self, threshold: int = 5, cooldown: float = 30.0, max_cooldown: float = 300.0, clock=time.monotonic, rng=random.random):
+        self.threshold, self.cooldown, self.max_cooldown, self._clock, self._rng = threshold, cooldown, max_cooldown, clock, rng
+        self._circuits: dict[str, dict] = {}
+        self._lock = threading.Lock()
+
+    def _fresh(self) -> dict:
+        return {"fails": 0, "open_until": 0.0, "cooldown": self.cooldown, "probing": False}
+
+    def _circuit(self, key: str) -> dict:
+        return self._circuits.setdefault(key, self._fresh())
+
+    def _open(self, c: dict) -> None:
+        c["open_until"] = self._clock() + c["cooldown"] * (1 + 0.25 * self._rng())
+
+    def before(self, key: str) -> float:
+        """0.0 means go ahead. Above 0 the circuit is open: wait that many seconds and do not call the service."""
+        with self._lock:
+            c = self._circuit(key)
+            if c["fails"] < self.threshold:
+                return 0.0
+            remaining = c["open_until"] - self._clock()
+            if remaining > 0:
+                return remaining
+            if c["probing"]:
+                return 1.0  # a probe is in flight: everybody else waits a moment
+            c["probing"] = True  # half-open: this caller is the one probe
+            return 0.0
+
+    def success(self, key: str) -> None:
+        with self._lock:
+            self._circuits[key] = self._fresh()
+
+    def failure(self, key: str) -> None:
+        with self._lock:
+            c = self._circuit(key)
+            if c["probing"]:  # the probe failed: open again, twice as long
+                c["probing"] = False
+                c["cooldown"] = min(self.max_cooldown, c["cooldown"] * 2)
+                self._open(c)
+                return
+            c["fails"] += 1
+            if c["fails"] >= self.threshold:
+                self._open(c)
+
+    def neutral(self, key: str) -> None:
+        with self._lock:
+            self._circuit(key)["probing"] = False
+
+    def state(self, key: str) -> str:
+        with self._lock:
+            c = self._circuit(key)
+            if c["fails"] < self.threshold:
+                return "closed"
+            return "open" if c["open_until"] - self._clock() > 0 else "half-open"
+
+    def reset(self) -> None:
+        with self._lock:
+            self._circuits.clear()
