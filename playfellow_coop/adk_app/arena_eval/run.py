@@ -67,6 +67,7 @@ def summarize(rows: list[dict], chooser: str, games, seeds) -> dict:
 
 async def evaluate(folder: Path, chooser: str, games, seeds) -> dict:
     from google.adk.evaluation.agent_evaluator import AgentEvaluator
+    before = os.environ.get("PF_ADK_CHOOSER")
     os.environ["PF_ADK_CHOOSER"] = chooser
     evalset_path = write_inputs(folder, games, seeds)
     rows_path = folder / f"rows-{chooser}.csv"
@@ -74,6 +75,11 @@ async def evaluate(folder: Path, chooser: str, games, seeds) -> dict:
         await AgentEvaluator.evaluate(AGENT_MODULE, str(evalset_path), num_runs=1, print_detailed_results=False, output_file=str(rows_path))
     except AssertionError:
         pass  # ADK raises when a case misses the criterion (its pytest style); the rows still say which, and the control is expected to miss
+    finally:
+        if before is None:
+            os.environ.pop("PF_ADK_CHOOSER", None)
+        else:
+            os.environ["PF_ADK_CHOOSER"] = before
     return summarize(read_rows(rows_path), chooser, games, seeds)
 
 
