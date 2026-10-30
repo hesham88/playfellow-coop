@@ -55,11 +55,11 @@ def test_no_network_blocks_connections_and_lookups_and_puts_everything_back():
             socket.create_connection(("example.com", 80), timeout=1)
         with pytest.raises(NetworkBlocked):
             socket.getaddrinfo("example.com", 80)
-        with pytest.raises(NetworkBlocked):
-            socket.socket().connect(("127.0.0.1", 9))
+        with pytest.raises(NetworkBlocked), socket.socket() as blocked:  # closed either way: -W error turns an open socket into a failure
+            blocked.connect(("127.0.0.1", 9))
     assert (socket.create_connection, socket.getaddrinfo) == before
-    with pytest.raises(OSError) as err:  # reachable code again: the refusal is the OS's, not ours
-        socket.socket().connect(("127.0.0.1", 9))
+    with pytest.raises(OSError) as err, socket.socket() as plain:  # reachable code again: the refusal is the OS's, not ours
+        plain.connect(("127.0.0.1", 9))
     assert not isinstance(err.value, NetworkBlocked)
 
 
