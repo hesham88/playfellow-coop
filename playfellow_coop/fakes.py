@@ -1,6 +1,6 @@
 """A fake SAM server for offline demos and tests. It NEVER talks to Meta: it answers on 127.0.0.1 from the Practice Arena's own
-truth, in the box-token format of the SAM 3.1 docs, so the marker, the marks and the harness can be exercised without credits.
-Anything made with it must say so."""
+truth, as the published protocol has it (a picture's records on frame 0, every box with its mask), so the marker, the marks and the harness can be exercised
+without credits. Anything made with it must say so."""
 from __future__ import annotations
 
 import http.server
@@ -9,6 +9,9 @@ import threading
 import time
 
 from playfellow_coop.sam_eval import arena_truth_boxes
+
+# a one_bit mask envelope (marker, a length prefix of 4, four zero bytes) for 4 rows of 8 columns: the fake draws no real mask, and the marks use the box
+PLACEHOLDER_MASK = "x=0;y=0;data=4,8,!!!!!&!!!!!"
 
 
 class FakeSam:
@@ -30,7 +33,7 @@ class FakeSam:
                     time.sleep(owner.delay)
                 width, height = owner.game.pixel_size
                 boxes = list(arena_truth_boxes(owner.game).get(kind, [])) + list(owner.extra.get(kind, []))
-                tokens = "".join(f"<1f>{n}<|box;x1={b[0]};y1={b[1]};x2={b[2]};y2={b[3]};w={width};h={height}|><|mask;lossless|>"
+                tokens = "\n".join(f"<0f>{n}<|box;x1={b[0]};y1={b[1]};x2={b[2]};y2={b[3]};w={width};h={height}|><|mask;{PLACEHOLDER_MASK}|>"
                                  for n, b in enumerate(boxes, start=1))
                 data = json.dumps({"output": [{"content": [{"type": "output_text", "text": tokens}]}]}).encode("utf-8")
                 self.send_response(owner.statuses.get(phrase, 200))

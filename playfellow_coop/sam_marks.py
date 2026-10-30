@@ -224,7 +224,7 @@ class SamMarker:
         except ValueError:
             self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": False})
             raise BrainError("brain_trouble", detail="the answer was not in the expected shape") from None
-        records = [r for r in sam_protocol.parse(text).records if r.confidence is None or r.confidence >= MIN_CONFIDENCE]
+        records = [r for r in sam_protocol.parse(text, strict=True, media="image").records if r.confidence is None or r.confidence >= MIN_CONFIDENCE]
         boxes = big_enough([((float(r.box.left), float(r.box.top), float(r.box.right), float(r.box.bottom)), (float(r.box.width), float(r.box.height))) for r in records])
         self.last_confidences = [r.confidence for r in records]
         self._trace(started, status=response.status_code, cost_usd=USD_PER_IMAGE, parse={"valid": bool(boxes), "boxes": len(boxes)})

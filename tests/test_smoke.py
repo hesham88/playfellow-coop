@@ -16,7 +16,7 @@ from tests.test_realtime_voice import FakeRealtime
 KEY = "smoke-test-key-S3cr3tValue"
 CHAT = {"choices": [{"message": {"role": "assistant", "content": '{"thought": "t", "say": "", "actions": []}'}}],
         "usage": {"prompt_tokens": 120, "completion_tokens": 15}}
-SAM = {"output": [{"content": [{"type": "output_text", "text": "<1f>1<|box;x1=10;y1=20;x2=58;y2=68;w=480;h=432|><|mask;lossless|>"}]}]}
+SAM = {"output": [{"content": [{"type": "output_text", "text": "<0f>1<|box;x1=10;y1=20;x2=58;y2=68;w=480;h=432|><|mask;x=0;y=0;data=4,8,!!!!!&!!!!!|>"}]}]}
 VOICE = {"sessionId": "s", "transcript": "grab the coins", "audioDurationMs": 1500, "turns": []}
 SAM_NONE = {"output": [{"content": [{"type": "output_text", "text": "No matching objects."}]}]}
 

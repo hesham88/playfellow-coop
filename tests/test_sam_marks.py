@@ -56,6 +56,27 @@ def test_the_published_protocol_rules_fields_by_name_confidence_order_payload_te
     assert records[1]["box"] == (0.0, 0.0, 1.0, 1.0)
 
 
+def test_the_live_marks_read_the_answer_strictly_as_the_published_protocol_says(game, tmp_path, monkeypatch):
+    """The service's answer is read with the strict reading: a picture's records are on frame 0 and each carries a complete mask; a record that breaks the grammar is
+    dropped, never guessed. The recorded real answer reads the same both ways (test_sam_conformance)."""
+    mask = "x=0;y=0;data=3,3,!!!!!&!!!!!"
+    text = "\n".join(["<0f>1<|box;x1=10;y1=20;x2=58;y2=68;w=480;h=432|><|mask;" + mask + "|>",
+                      "<1f>2<|box;x1=100;y1=20;x2=148;y2=68;w=480;h=432|><|mask;" + mask + "|>",  # a picture's record on frame 1
+                      "<0f>3<|box;x1=200;y1=20;x2=248;y2=68;w=480;h=432|><|mask;lossless|>"])  # a mask without its data
+
+    class Answer:
+        status_code = 200
+
+        def json(self):
+            return {"output_text": text}
+
+    monkeypatch.setattr(sam_marks._http, "post", lambda *args, **kwargs: Answer())
+    m = marker(tmp_path)
+    marks = m(game.render())
+    assert m.last_confidences == [None] and len(marks) == len({mark.kind for mark in marks}) > 0
+    m.close()
+
+
 def test_both_answer_wrappers_are_read():
     assert answer_text({"output_text": "A"}) == "A"
     assert answer_text({"output": [{"content": [{"text": "A"}, {"text": "B"}]}]}) == "A\nB"
