@@ -46,6 +46,17 @@ def numpy_location() -> list[str]:
     return []
 
 
+def worker_python() -> str:
+    """The interpreter the worker runs on: a real python.exe, never a venv launcher. In a venv on Windows `sys.executable` is a launcher that starts the real interpreter as a child; the
+    job allows one process, so that child is refused when the job lands first ("Not enough quota", exit 101) and runs outside the job when it does not. The base interpreter is used when
+    it is a python*.exe file outside any venv, otherwise `sys.executable` as before. The worker runs with -I and is handed numpy's folder, so it needs nothing else from the venv."""
+    base = Path(getattr(sys, "_base_executable", "") or "")
+    name = base.name.lower()
+    if name.startswith("python") and name.endswith(".exe") and base.is_file() and not any((folder / "pyvenv.cfg").is_file() for folder in (base.parent, base.parent.parent)):
+        return str(base)
+    return sys.executable
+
+
 class SandboxedProgram:
     """Any model-written class run in the isolated worker: `call(method, *args)` returns the method's JSON-able result, or None when the program is late, dead or faulted. A skill is the
     special case `SandboxedSkill`; a world model (init_state, transition, render) is another."""
@@ -56,7 +67,7 @@ class SandboxedProgram:
             raise ast_gate.SkillRejected(why)
         self.class_name = class_name
         self.code, self.step_timeout = code, step_timeout_ms / 1000.0
-        self._python = python or sys.executable
+        self._python = python or worker_python()
         self.faulted = False
         self.fault = ""
         self.containment = "none"
@@ -74,12 +85,12 @@ class SandboxedProgram:
         env["TEMP"] = env["TMP"] = self._folder.name
         self._proc = subprocess.Popen([self._python, "-I", str(WORKER), *numpy_location()], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1,
                                       env=env, cwd=self._folder.name)
+        threading.Thread(target=self._pump, args=(self._proc,), daemon=True).start()  # the one reader of the worker's output, from its start to its end
         self.containment = osjail.contain(self._proc)  # before the code is sent: the worker is still waiting for its first message
         if self.require_containment and self.containment == "none":
             self.close()
             self._fail("the operating-system containment could not be applied and it was required")
             return
-        threading.Thread(target=self._pump, args=(self._proc,), daemon=True).start()
         reply = self._ask({"code": self.code, "class": self.class_name}, START_TIMEOUT)
         if reply is None or not reply.get("ready"):
             self._fail(reply.get("error", "the skill did not start") if isinstance(reply, dict) else "the skill did not start in time")
@@ -91,6 +102,10 @@ class SandboxedProgram:
         except (OSError, ValueError):
             pass
         self._lines.put("")  # end of stream
+        try:
+            proc.stdout.close()  # type: ignore[union-attr]  # closed by its only reader, so close() never waits on a read in progress
+        except OSError:
+            pass
 
     def _ask(self, message: dict, timeout: float) -> dict | None:
         proc = self._proc
@@ -118,23 +133,29 @@ class SandboxedProgram:
         self.close()
 
     def close(self) -> None:
+        """Stop the worker and release everything the program holds: the process, its input pipe (the reader thread closes the output pipe) and the temporary folder."""
         proc, self._proc = self._proc, None
-        if proc is not None and proc.poll() is None:
-            proc.kill()
+        if proc is not None:
+            if proc.poll() is None:
+                proc.kill()
+                try:
+                    proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:  # pragma: no cover
+                    pass
             try:
-                proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:  # pragma: no cover
+                proc.stdin.close()  # type: ignore[union-attr]  # also when the worker had died: an open pipe outlives the process object otherwise
+            except OSError:
                 pass
+        try:
+            self._folder.cleanup()
+        except OSError:  # the worker may still hold the folder for a moment on Windows
+            pass
 
     def __enter__(self):
         return self
 
     def __exit__(self, *exc) -> None:
         self.close()
-        try:
-            self._folder.cleanup()
-        except OSError:  # the worker may still hold the folder for a moment on Windows
-            pass
 
     def call(self, method: str, *args: Any) -> Any:
         """Call a method of the program. None (and the program is marked faulted) when it did not answer in time or raised."""

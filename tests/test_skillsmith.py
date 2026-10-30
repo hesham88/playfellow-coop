@@ -302,10 +302,68 @@ def test_a_contained_process_cannot_write_a_normal_file_or_start_another_process
     target = tempfile.NamedTemporaryFile(delete=False).name
     script = ("import sys,subprocess\nsys.stdin.readline()\nr=[]\ntry:\n open(%r,'w').write('x'); r.append('wrote')\nexcept OSError: r.append('write denied')\n"
               "try:\n subprocess.run([sys.executable,'-c','1'],timeout=10); r.append('spawned')\nexcept Exception: r.append('spawn denied')\nprint(','.join(r),flush=True)\n") % target
-    proc = subprocess.Popen([sys.executable, "-I", "-c", script], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    proc = subprocess.Popen([sandbox.worker_python(), "-I", "-c", script], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
     assert osjail.contain(proc) == "low-integrity+job"
     out, _ = proc.communicate("go\n", timeout=60)
     assert out.strip() == "write denied,spawn denied"
+
+
+def _run_with_the_job_first(python):
+    """`python -I -c ...` started suspended, contained, then resumed: the job is in place before the program's first instruction, the order that decides the sandbox's start race."""
+    import ctypes, subprocess
+    from playfellow_coop.skillsmith import osjail
+    proc = subprocess.Popen([python, "-I", "-c", "print('ran')"], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=0x4)  # CREATE_SUSPENDED
+    contained = osjail.contain(proc)
+    ntdll = ctypes.WinDLL("ntdll")
+    ntdll.NtResumeProcess.argtypes = [ctypes.c_void_p]
+    ntdll.NtResumeProcess(int(proc._handle))
+    out, err = proc.communicate(timeout=60)
+    return contained, proc.returncode, out.strip(), err
+
+
+def test_the_worker_interpreter_runs_inside_the_job_where_a_venv_launchers_child_is_refused():
+    import pathlib, sys
+    if sys.platform != "win32":
+        pytest.skip("job objects and the venv launcher are Windows features")
+    assert _run_with_the_job_first(sandbox.worker_python())[:3] == ("low-integrity+job", 0, "ran")
+    if sys.prefix != sys.base_prefix and not list(pathlib.Path(sys.executable).parent.glob("python3*.dll")):  # a venv launcher: its real interpreter is a second process
+        contained, code, out, err = _run_with_the_job_first(sys.executable)
+        assert contained == "low-integrity+job" and code != 0 and out == "", (code, out, err)
+
+
+def test_the_worker_interpreter_falls_back_unless_the_base_is_a_real_python_exe(tmp_path, monkeypatch):
+    import sys
+    real, launcher, other = tmp_path / "base" / "python.exe", tmp_path / "venv" / "Scripts" / "python.exe", tmp_path / "base" / "app.exe"
+    for path in (real, launcher, other):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"")
+    (tmp_path / "venv" / "pyvenv.cfg").write_text("home = x\n")
+    monkeypatch.setattr(sys, "_base_executable", str(real), raising=False)
+    assert sandbox.worker_python() == str(real)
+    for wrong in (str(launcher), str(other), str(tmp_path / "missing" / "python.exe"), ""):
+        monkeypatch.setattr(sys, "_base_executable", wrong, raising=False)
+        assert sandbox.worker_python() == sys.executable, wrong
+    monkeypatch.delattr(sys, "_base_executable", raising=False)
+    assert sandbox.worker_python() == sys.executable
+
+
+def test_closing_a_program_releases_its_pipes_and_its_folder_whether_its_worker_was_alive_or_had_died(monkeypatch, tmp_path):
+    import pathlib, subprocess, time
+    started, real = [], subprocess.Popen
+    monkeypatch.setattr(sandbox.subprocess, "Popen", lambda *a, **k: started.append(real(*a, **k)) or started[-1])
+    alive = SandboxedSkill(GOOD, step_timeout_ms=2000)
+    assert not alive.faulted, alive.fault
+    alive.close()  # close() alone, as verify.replay does, must release everything
+    dead_worker = tmp_path / "dead.py"
+    dead_worker.write_text("raise SystemExit(3)\n")
+    monkeypatch.setattr(sandbox, "WORKER", dead_worker)
+    dead = SandboxedSkill(GOOD, step_timeout_ms=2000)  # its worker exits at once, so the program faults and closes itself
+    assert dead.faulted
+    deadline = time.monotonic() + 10
+    while not all(p.stdout.closed for p in started) and time.monotonic() < deadline:  # the reader thread closes the output pipe once the stream ends
+        time.sleep(0.05)
+    assert len(started) == 2 and all(p.stdin.closed and p.stdout.closed for p in started)
+    assert not [s for s in (alive, dead) if pathlib.Path(s._folder.name).exists()]
 
 
 def test_frame_walks_and_format_string_attribute_reads_are_refused_by_the_gate():
