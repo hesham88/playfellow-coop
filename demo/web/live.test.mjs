@@ -4,9 +4,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import data from './data.mjs';
 import { WebArena } from './arena.mjs';
-import { LiveService, marksFor, sceneFor, planRequest } from './service.mjs';
+import { LiveService, marksFor, sceneFor, planRequest, ERRORS, LOCAL_CODES } from './service.mjs';
 import { encodeWav, resample, toBase64, RATE } from './voice.mjs';
-import { startPage } from './page.mjs';
+import { startPage, WORDS } from './page.mjs';
+import { CircuitBreaker } from './backoff.mjs';
 
 const arena = () => new WebArena(data.levels[0].rows, data.texts, 'english');
 const KEYS = 'adult_confirmed,command,frame,session_id,state';
@@ -136,4 +137,41 @@ test('Arabic: the live words are Arabic and the English note is gone', () => {
   assert.match(on.nodes.ask.textContent, /فيلو/);
   assert.match(on.nodes.talk.textContent, /تحدث/);
   assert.doesNotMatch(on.nodes.live.textContent, /Live:/);
+});
+
+test('Arabic has a text for every message the live demo can show, and none of it is English', () => {
+  for (const code of [...Object.keys(ERRORS), ...LOCAL_CODES, 'other']) {
+    const text = WORDS.arabic.errors[code];
+    assert.ok(text, `an Arabic text for ${code}`);
+    assert.match(text, /[؀-ۿ]/, code);
+    assert.doesNotMatch(text.replace(/\{n\}/g, ''), /[A-Za-z]/, `${code}: no Latin letters on the Arabic page (the {n} placeholder is filled with a number)`);
+  }
+});
+
+test('a failed live call is shown in the page\'s language: Arabic text in Arabic mode, the service\'s own text in English mode', async () => {
+  for (const [language, expected] of [['arabic', /[؀-ۿ]/], ['english', /busy/]]) {
+    const on = pageDocument();
+    const live = new LiveService({ base: 'https://x.example', fetchImpl: fake({ ok: false, error: 'rate_limited' }, 429) });
+    const page = startPage(on.doc, { language, recording: null, live, sleep: async () => {}, keyGapMs: 0 });
+    await page.runLive('go', 1);
+    assert.match(on.nodes.live.textContent, expected, language);
+    if (language === 'arabic') assert.doesNotMatch(on.nodes.live.textContent, /[A-Za-z]/);
+  }
+});
+
+test('an unknown error code and the resting message are Arabic too, and the resting message names the seconds', async () => {
+  const on = pageDocument();
+  const odd = new LiveService({ base: 'https://x.example', fetchImpl: fake({ ok: false, error: 'something_new' }, 418) });
+  const page = startPage(on.doc, { language: 'arabic', recording: null, live: odd, sleep: async () => {}, keyGapMs: 0 });
+  await page.runLive('go', 1);
+  assert.equal(on.nodes.live.textContent, WORDS.arabic.errors.other);
+  const rest = pageDocument();
+  const f = fake({ ok: false, error: 'provider_error' }, 502);
+  // a breaker without jitter, so the cooldown (and the number of seconds the page names) is exactly 15
+  const steady = new CircuitBreaker({ threshold: 3, cooldownMs: 15000, random: () => 0 });
+  const tired = startPage(rest.doc, { language: 'arabic', recording: null, live: new LiveService({ base: 'https://x.example', fetchImpl: f, breaker: steady }), sleep: async () => {}, keyGapMs: 0 });
+  for (let i = 0; i < 4; i++) await tired.runLive('go', 1); // three failures open the circuit; the fourth is told to rest
+  assert.equal(f.calls.length, 3);
+  assert.match(rest.nodes.live.textContent, /15/, 'the seconds are named');
+  assert.doesNotMatch(rest.nodes.live.textContent, /[A-Za-z]/);
 });

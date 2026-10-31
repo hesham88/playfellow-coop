@@ -35,7 +35,7 @@ export function planRequest(arena, command, sessionId, extra = {}) {
   };
 }
 
-const ERRORS = {
+export const ERRORS = {
   origin_not_allowed: 'This page is not allowed to use the live demo.',
   demo_misconfigured: 'The live demo is not set up yet.',
   kill_switch: 'The live demo is paused.',
@@ -45,6 +45,9 @@ const ERRORS = {
   provider_unreachable: 'The model service did not answer.',
   provider_error: 'The model service had a problem.',
 };
+
+// The answers the page makes itself (not the service): the page's Arabic table must have a text for each, as it does for every code in ERRORS.
+export const LOCAL_CODES = ['not_configured', 'offline', 'timeout', 'resting'];
 
 export function newSessionId(random = Math.random) {
   return 's' + Array.from({ length: 18 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(random() * 36)]).join('');
@@ -75,7 +78,7 @@ export class LiveService {
     const wait = this.breaker.before();
     if (wait > 0) { // the service keeps failing: nothing is sent until the circuit lets one probe through
       const seconds = Math.max(1, Math.ceil(wait / 1000));
-      return { ok: false, error: 'resting', message: `The live demo is resting after some problems. Try again in ${seconds} seconds, or watch the recorded session.` };
+      return { ok: false, error: 'resting', seconds, message: `The live demo is resting after some problems. Try again in ${seconds} seconds, or watch the recorded session.` };
     }
     // every request has a time limit: a hung one is given up instead of leaving the page busy for ever
     const controller = typeof AbortController === 'function' ? new AbortController() : null;
