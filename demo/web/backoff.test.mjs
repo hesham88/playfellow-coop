@@ -5,9 +5,13 @@ import assert from 'node:assert/strict';
 import data from './data.mjs';
 import { WebArena } from './arena.mjs';
 import { CircuitBreaker } from './backoff.mjs';
-import { LiveService } from './service.mjs';
+import { LiveService, REQUEST_TIMEOUT_MS } from './service.mjs';
 
 const arena = () => new WebArena(data.levels[0].rows, data.texts, 'english');
+
+// What the demo service can legitimately take to answer one plan: a model call is given 15 s (its default provider timeout), and it tries up to 3 times with
+// back-offs capped at 2 s. If the service's defaults change, this number and REQUEST_TIMEOUT_MS must change together.
+const SERVICE_WORST_CASE_MS = 3 * 15000 + 2 * 2000;
 
 function clock() {
   let t = 1_000_000;
@@ -169,5 +173,9 @@ test('every request carries the time limit signal and still sends no cookies', a
   await live.plan(arena(), 'go');
   assert.equal(f.calls[0].init.credentials, 'omit');
   assert.ok(f.calls[0].init.signal, 'a signal is passed so the request can be abandoned');
-  assert.equal(live.timeoutMs, 25000);
+  assert.equal(live.timeoutMs, REQUEST_TIMEOUT_MS);
+});
+
+test('the page waits longer than the service can legitimately take, so a slow but valid plan is never abandoned as a failure', () => {
+  assert.ok(REQUEST_TIMEOUT_MS >= SERVICE_WORST_CASE_MS + 10000, `the page limit (${REQUEST_TIMEOUT_MS} ms) must clear the service's worst case (${SERVICE_WORST_CASE_MS} ms) by 10 s for the network and a voice upload`);
 });

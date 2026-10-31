@@ -52,7 +52,10 @@ export function newSessionId(random = Math.random) {
 
 // The service saying that the MODEL side is down. Everything else it answers (paused, budget, busy for you, origin) is a deliberate answer, not a failure.
 const SERVICE_DOWN = new Set(['provider_unreachable', 'provider_error']);
-export const REQUEST_TIMEOUT_MS = 25000; // the same limit as the Python client's
+// A backstop for a request that never answers, NOT a tight limit: the demo service gives each model call 15 s and tries up to 3 times with back-offs of at most 2 s,
+// so it can legitimately take 3 x 15 + 2 x 2 = 49 s to answer a plan (voice makes one 15 s call). The page must wait longer than that, or a slow but valid plan is
+// abandoned and counted as a failure. backoff.test.mjs pins this relationship.
+export const REQUEST_TIMEOUT_MS = 60000;
 
 export class LiveService {
   constructor({ base, fetchImpl, sessionId = newSessionId(), turnstileToken = null, breaker = new CircuitBreaker(), timeoutMs = REQUEST_TIMEOUT_MS }) {
