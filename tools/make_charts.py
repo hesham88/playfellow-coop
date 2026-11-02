@@ -185,10 +185,11 @@ def _collect_json_numbers(obj: Any, raw_values: set[float], formatted: set[str])
     if isinstance(obj, (int, float)):
         val = float(obj)
         raw_values.add(val)
+        raw_values.add(abs(val))
         return
     if isinstance(obj, str):
         for m in _NUM_RE.findall(obj):
-            clean = m.replace(",", "")
+            clean = m.replace(",", "").lstrip("+-")
             formatted.add(clean)
             try:
                 raw_values.add(float(clean))
@@ -223,11 +224,22 @@ def allowed_numbers(results_dir: Path, committed_only: bool = True) -> set[str]:
     raw_values: set[float] = set()
     formatted: set[str] = set()
     for path in list_result_files(results_dir, committed_only=committed_only):
+        _collect_json_numbers(path.name, raw_values, formatted)
         data = json.loads(path.read_text(encoding="utf-8"))
         _collect_json_numbers(data, raw_values, formatted)
     for val in list(raw_values):
         _add_forms(val, formatted)
     return {s.replace(",", "") for s in formatted}
+
+
+def set_and_file_label(filename: str, data: dict[str, Any]) -> str:
+    """Return the benchmark set description and source filename for a result row."""
+    suite = str(data.get("suite") or "").strip().lower()
+    if suite == "glass" or "20261029" in filename:
+        return f"glass look, 5 skill games, 29 Oct · {filename}"
+    if suite == "unseen" or "20261027" in filename:
+        return f"unseen games, 27 Oct · {filename}"
+    return f"{suite or 'arena'} · {filename}"
 
 
 def visible_lines(svg_path: Path) -> list[str]:
@@ -308,14 +320,11 @@ def _build_arena_wins_and_cost(arena_rows: list[tuple[str, dict[str, Any]]], out
         assisted = ASSISTED_LABEL in mode
 
         accent = AMBER if harness else (CYAN if assisted else VIOLET)
-        suite = data.get("suite") or ""
-        suite_tag = f", {suite}" if suite else ""
-        model_title = f"{data.get('model')} ({data.get('brain')}{suite_tag})"
-        if harness:
-            model_title = f"{model_title} — {HARNESS_CHECK_LABEL}"
+        set_tag = set_and_file_label(filename, data)
+        model_title = f"{data.get('model')} ({data.get('brain')}) — {set_tag}"
 
-        c.text(104, y + 44, model_title, size=22, fill=INK, bold=True)
-        c.text(104, y + 78, mode, size=18, fill=accent, bold=True)
+        c.text(104, y + 42, model_title, size=18, fill=INK, bold=True)
+        c.text(104, y + 76, mode, size=18, fill=accent, bold=True)
 
         c.rect(bar_x, y + 26, bar_w, 32, BG_0, stroke=LINE, radius=8, stroke_width=1)
         fill_w = max(8 if win_rate > 0 else 0, round(bar_w * win_rate))
