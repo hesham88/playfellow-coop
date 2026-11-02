@@ -6,6 +6,32 @@ PlayFellow is an open-source engine that plays a PC game *with* you: it watches 
 
 "Coop" here means human-AI co-play: you and the buddy share one game, and you can take the controls back at any moment. The interface is **game-agnostic** (any window, pixels in, keys out); it is not "plays any game" — perception and skills are still fitted per game or work in 2D only, and the honest status of each piece is in the table below.
 
+## For gamers whose hands can't keep up
+
+One-handed play, tremor, RSI, fatigue: you play, and when a part is too hard you say what you want ("grab the coins on the left", "get me
+past this jump", "take me to the door", in English or Arabic). The buddy does that part with the same keys you would press, only in the
+window you chose, and **gives the controls back by itself**. Keep any keys you want for yourself ("you block, I heal"): it never presses or
+releases them. F12 or the mouse in the top-left corner stops everything.
+
+```
+python -m playfellow_coop --assist --typed            # you start with the controls; type what you want done
+python -m playfellow_coop --assist --keep j,k --typed # split controls: j and k stay yours
+```
+
+![What each part adds, on the same 5 games](docs/img/ladder.svg)
+
+**What each part adds** (same 5 games, drawn from `results/fifteen/*.json` by `tools/make_charts.py`): a Meta model alone wins 0 of 10
+games; with SAM 3.1 marks it makes more progress; with the local skills it picks, the same models win **15 of 15** (Muse Spark Open) and
+**13 of 15** (Muse Spark; the other 2 ended on a service error), for about **4 cents** a run. Every number is labelled *model alone* or
+*assisted*.
+
+**The co-op itself, measured:** the assist did 65 of 66 asked-for parts on 5 games and 20 of 20 on the open-source 2048 (MIT, played from
+pixels); with split controls 0 kept-key presses ever reached a game. With a model choosing every key, live, the application's own requests
+were done 4 times in 10, and every "done" it said was true (3 of 3). SAM 3.1 kept the same number on the same thing in 129 of 129 frame
+pairs. Muse Wonder learned the controls of games it had never seen (genre 3/3, keys found 0.68) and wrote 10 of 10 debriefs with no
+invented number. Each promise of our application, with its code, tests and file: **[docs/accessibility-proof.md](docs/accessibility-proof.md)**.
+No disabled player has used this build yet; that is the next step, not a result.
+
 ## What is new in this repo
 
 | Piece | What it does | Status and honest limits |
