@@ -52,6 +52,10 @@ def part(game_key: str, request: str, truth, seed: int, brain, engine_dir: Path,
     card = controls.load_card(engine_dir / "controls" / f"arena_{game_key}.yaml")
     cfg = engine_settings.Settings(look_every_seconds=0.0, max_actions_per_step=4, image_width=480, goal=getattr(game, "goal", "") or engine_settings.Settings().goal)
     parts = type("Parts", (), {})()
+    if hasattr(brain, "set_actions"):  # exactly as the command line does with --assist: the card's actions and room for "done"
+        brain.set_actions(card.actions)
+    if hasattr(brain, "set_done_flag"):
+        brain.set_done_flag(True)
     parts.brain = DoneSpotter(brain)
     parts.card, parts.screen, parts.hands = card, ar.VirtualScreen(game), ar.VirtualHands(game, card)
     parts.safety, parts.memory = Safety(60, part_turns + 5), Memory(cfg.memory_steps)

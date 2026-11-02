@@ -1,0 +1,62 @@
+{
+ "schema": "pf-sam-live/1",
+ "written": "2026-11-02T05:13:38+02:00",
+ "commit": "1cf69a2",
+ "model": "sam-3.1",
+ "game": "Practice Arena (our own game)",
+ "accuracy": {
+  "source": "SAM 3.1",
+  "frames": 20,
+  "kinds": {
+   "me": {
+    "tp": 20,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "reward": {
+    "tp": 90,
+    "fp": 0,
+    "fn": 20,
+    "precision": 1.0,
+    "recall": 0.8181818181818182
+   },
+   "hazard": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": null,
+    "recall": null
+   },
+   "door": {
+    "tp": 20,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   }
+  },
+  "requests": 76,
+  "latency_p50_s": 0.8628721000004589,
+  "note": "measured against the arena's own truth"
+ },
+ "id_stability": {
+  "source": "SAM 3.1",
+  "frames": 21,
+  "pairs": 129,
+  "stable": 129,
+  "stable_rate": 1.0,
+  "sam_requests": 24,
+  "tracked_pictures": 14,
+  "note": "measured against the arena's own truth"
+ },
+ "marked_frame": {
+  "file": "docs/img/sam-marked-frame.png",
+  "marks": 7,
+  "labels": "Labels drawn on the picture:\n[ME] = you\n[R1] = something good to get (down, a bit away)\n[R2] = something good to get (down-right, a bit away)\n[R3] = something good to get (down, far)\n[R4] = something good to get (right, far)\n[R5] = something good to get (down-right, far)\n[D1] = a way through (down-right, far)"
+ },
+ "requests_upper_bound": 101,
+ "cost_usd_upper_bound": 0.2525,
+ "honesty": "Our own simple 2D game; the truth comes from the game itself. Not evidence of accuracy on other games."
+}

@@ -288,6 +288,8 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                 if wait(settings.look_every_seconds):
                     break
                 continue
+            if assist is not None and assist.active and commands is not None and not handover.human_has_controls:
+                commands.put(f"(still asked) {assist.request}")  # the planner keeps hearing the part it was asked for, so it can tell when it is done
             timer.begin_turn()
             try:
                 said = commands.drain() if commands is not None else []

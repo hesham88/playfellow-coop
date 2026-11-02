@@ -269,3 +269,51 @@ def test_the_command_line_assist_tells_the_planner_the_done_rule_and_wraps_the_b
     parts, _ = entry.build(["--assist"], build_parts=lambda cfg: Parts(), key_loader=lambda: None)
     assert isinstance(parts.brain, DoneSpotter) and parts.assist._done is model_said_done
     assert entry.assist_system("base") == "base\n\n" + DONE_RULE and "done" in DONE_RULE
+
+
+# ---- live "done": the model must be able to say it, and must still know what was asked -----------------------------------------------
+def test_with_the_assist_on_the_strict_answer_schema_carries_a_done_flag():
+    from playfellow_coop.muse_brain import MuseBrain
+    brain = MuseBrain("muse-spark-1.3", "k")
+    brain.set_actions(["UP", "DOWN"])
+    assert "done" not in brain._schema()["json_schema"]["schema"]["properties"]  # off unless the assist asks for it
+    brain.set_done_flag(True)
+    schema = brain._schema()["json_schema"]["schema"]
+    assert schema["properties"]["done"] == {"type": "boolean"} and "done" in schema["required"]
+
+
+def test_the_planner_hears_the_request_on_every_turn_of_the_part_not_only_the_first():
+    seen = []
+    parts, cfg = make()
+    parts.brain.ask = lambda system, text, images: seen.append(text) or json.dumps({"thought": "", "say": "", "actions": [MOVE]})
+    handover = HandOver(parts.hands, parts.safety)
+    parts.assist = Assist(max_turns=3)
+    queue, ticks = CommandQueue(), {"n": 0}
+
+    def wait(seconds):
+        ticks["n"] += 1
+        if ticks["n"] == 1:
+            queue.put("take me to the door")
+        return ticks["n"] >= 8
+
+    session.play_session(parts, cfg, "system", StageTimer(), handover, wait=wait, commands=queue)
+    assert len(seen) == 3 and all("take me to the door" in text for text in seen)
+
+
+def test_the_command_line_assist_asks_the_brain_for_the_done_flag():
+    from playfellow_coop import __main__ as entry
+    from tests.test_main import Parts
+
+    class Brain:
+        flag = None
+
+        def set_done_flag(self, on):
+            self.flag = on
+
+    def builder(cfg):
+        p = Parts()
+        p.brain = Brain()
+        return p
+
+    parts, _ = entry.build(["--assist"], build_parts=builder, key_loader=lambda: None)
+    assert parts.brain.flag is True

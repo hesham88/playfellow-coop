@@ -77,7 +77,7 @@ def wonder_brain(api_key: str):
     """The real Muse Wonder client: the same pinned address and rules as the Muse brain, no planner schema, no prompt cache key."""
     from playfellow_coop.muse_brain import MuseBrain
     brain = MuseBrain(MODEL, api_key, effort="low", cache_key=None)
-    brain.max_tokens = 400
+    brain.max_tokens = 4000  # Muse Wonder reasons before it answers: a small limit is spent on thinking and the answer comes back empty
     return brain
 
 

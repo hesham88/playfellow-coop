@@ -98,6 +98,10 @@ class MuseBrain:
         clean = tuple(dict.fromkeys(str(n) for n in names if isinstance(n, str) and 0 < len(n) <= 24 and "<" not in n))
         self.actions = clean or None
 
+    def set_done_flag(self, on: bool) -> None:
+        """With the assist on, every answer also carries "done" (true only when the asked-for part is finished on screen)."""
+        self.done_flag = bool(on)
+
     def set_skills(self, names) -> None:
         """Tell the brain which skill names exist for this game; its answers may then carry one (strict schema)."""
         self.skills = tuple(names)
@@ -109,6 +113,8 @@ class MuseBrain:
                       "actions": {"type": "array", "items": {"type": "string", "enum": list(self.actions)}, "maxItems": 8}}
         if self.skills:
             properties["skill"] = {"type": "string", "enum": list(self.skills)}
+        if getattr(self, "done_flag", False):
+            properties["done"] = {"type": "boolean"}
         return {"type": "json_schema", "json_schema": {"name": "plan", "strict": True, "schema": {
             "type": "object", "additionalProperties": False, "required": list(properties), "properties": properties}}}
 

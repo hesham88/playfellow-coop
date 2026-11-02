@@ -138,6 +138,8 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parts.typed = args.typed
     if args.assist is not None:
         from playfellow_coop.assist import Assist, DoneSpotter, model_said_done
+        if hasattr(parts.brain, "set_done_flag"):
+            parts.brain.set_done_flag(True)  # a strict answer schema must have room for "done", or the model can never say it
         parts.brain = DoneSpotter(parts.brain)  # the live "is the part done" check: the planner says so, as the JSON value true
         parts.assist = Assist(max_turns=args.assist, done=model_said_done)
         parts.debrief_mode = args.debrief
