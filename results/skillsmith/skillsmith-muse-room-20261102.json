@@ -1,0 +1,780 @@
+{
+ "schema": "pf-arena-run/1",
+ "written": "2026-11-02T16:32:14+02:00",
+ "condition": "skillsmith-muse",
+ "brain": "muse",
+ "model": "muse-spark-1.3",
+ "rung": {
+  "key": "model_skills",
+  "number": 3,
+  "title": "System with model-written skills"
+ },
+ "label": "[Assisted: Model-Written Skill]",
+ "note": "Writing cost is the model's; play after promotion is local (0 calls, $0). A refused candidate plays no held-out seed. Fake-brain files are wiring checks, not model results.",
+ "games": {
+  "maze_chase": {
+   "game": "maze_chase",
+   "supported": true,
+   "goal": "collect the coins, take the key and reach the door",
+   "step_limit": 800,
+   "validation_seeds": [
+    0,
+    1
+   ],
+   "test_seeds": [
+    100,
+    101
+   ],
+   "current": "idle",
+   "promoted": "cand2_0233",
+   "selector_reason": "no candidate strictly beats the current skill on validation",
+   "gate_verdicts": {
+    "cand2_0233": {
+     "mean_progress": 0.58,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 94
+    },
+    "cand1_0710": {
+     "mean_progress": 0.28,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 38
+    },
+    "cand2_1136": {
+     "mean_progress": 0.58,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 94
+    }
+   },
+   "curve": [
+    {
+     "round": 0,
+     "validation_seeds": [
+      0,
+      1
+     ],
+     "current": "idle",
+     "current_progress": 0.0,
+     "best_candidate": "cand2_0233",
+     "best_progress": 0.58,
+     "promoted": "cand2_0233",
+     "reason": "cand2_0233 scored 0.580 against 0.000",
+     "trace_shown": 23,
+     "lessons_shown": 0,
+     "lessons": [],
+     "proposals": 3
+    },
+    {
+     "round": 1,
+     "validation_seeds": [
+      1000,
+      1001
+     ],
+     "current": "cand2_0233",
+     "current_progress": 0.58,
+     "best_candidate": "cand1_5637",
+     "best_progress": 0.58,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 47,
+     "lessons_shown": 1,
+     "lessons": [
+      "- [maze_chase] promoted cand2_0233 over idle (evidence: validation progress 0.580 vs 0.000; sha 3b56beafe7ac)"
+     ],
+     "proposals": 4
+    },
+    {
+     "round": 2,
+     "validation_seeds": [
+      2000,
+      2001
+     ],
+     "current": "cand2_0233",
+     "current_progress": 0.58,
+     "best_candidate": "cand2_1136",
+     "best_progress": 0.58,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 47,
+     "lessons_shown": 2,
+     "lessons": [
+      "- [maze_chase] promoted cand2_0233 over idle (evidence: validation progress 0.580 vs 0.000; sha 3b56beafe7ac)",
+      "- [maze_chase] kept cand2_0233 (evidence: no candidate strictly beats the current skill on validation; scores cand2_0233 0.580, cand1_5637 0.580, cand2_8271 0.580)"
+     ],
+     "proposals": 3
+    }
+   ],
+   "proposals": [
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 2466,
+     "trace_shown": 23,
+     "lessons_shown": 0
+    },
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 2979,
+     "trace_shown": 23,
+     "lessons_shown": 0
+    },
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1065,
+     "trace_shown": 23,
+     "lessons_shown": 0
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 2735,
+     "trace_shown": 47,
+     "lessons_shown": 1
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1105,
+     "trace_shown": 47,
+     "lessons_shown": 1
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 3676,
+     "trace_shown": 47,
+     "lessons_shown": 1
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1045,
+     "trace_shown": 47,
+     "lessons_shown": 1
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 2743,
+     "trace_shown": 47,
+     "lessons_shown": 2
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 2943,
+     "trace_shown": 47,
+     "lessons_shown": 2
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1028,
+     "trace_shown": 47,
+     "lessons_shown": 2
+    }
+   ],
+   "skill_source": "import math\n\nclass GeneratedArenaSkill:\n    def __init__(self):\n        self.t = 0\n\n    def compute_action(self, obs):\n        self.t += 1\n        d = obs.get(\"danger\", 0)\n        e = obs.get(\"escape\")\n        if d >= 0.5 and e:\n            return {\"move\": [float(e[0]), float(e[1])], \"buttons\": [], \"hold_ms\": 0}\n        sx, sy = obs[\"self\"]\n        items = obs.get(\"items\") or []\n        best = None\n        bd = 999.0\n        for i in range(6):\n            if i < len(items):\n                it = items[i]\n                dx = it[0] - sx\n                dy = it[1] - sy\n                q = dx * dx + dy * dy\n                if q < bd:\n                    bd = q\n                    best = it\n        if best:\n            dx = best[0] - sx\n            dy = best[1] - sy\n            if abs(dx) >= abs(dy):\n                m = [1.0 if dx > 0 else -1.0, 0.0]\n            else:\n                m = [0.0, 1.0 if dy > 0 else -1.0]\n            return {\"move\": m, \"buttons\": [], \"hold_ms\": 0}\n        return {\"move\": [0.0, 0.0], \"buttons\": [], \"hold_ms\": 0}\n",
+   "skill_sha256": "3b56beafe7ace68dbe100f9ff90a8694965182c7b042743631c23b0655156f60",
+   "current_sha256": "29db3b23a9f19731041c59efc701cf1c19278abfe0a4462d53c51cbda6cf145b",
+   "keys": [
+    "up",
+    "down",
+    "left",
+    "right"
+   ],
+   "example_game": "box_push",
+   "example_sha256": "476b8e987c00166ce20ae943a1206737099e3537b680a8be09ee562591ba4b4e",
+   "held_out_steps": 800,
+   "safety_checks": {
+    "static_gate": {
+     "passed": true,
+     "detail": "ok"
+    },
+    "sandbox": {
+     "passed": true,
+     "detail": "answered one step inside the sandbox",
+     "containment": "low-integrity+job"
+    },
+    "held_out_promote": {
+     "promoted": "cand2_0233",
+     "detail": "no candidate strictly beats the current skill on validation"
+    }
+   },
+   "writing": {
+    "calls": 10,
+    "cost_usd": 0.14646,
+    "tokens_in": 86963,
+    "tokens_out": 8885
+   },
+   "held_out": {
+    "played": true,
+    "episodes": [
+     {
+      "seed": 100,
+      "won": false,
+      "progress": 0.58,
+      "steps": 47,
+      "faulted": false
+     },
+     {
+      "seed": 101,
+      "won": false,
+      "progress": 0.58,
+      "steps": 47,
+      "faulted": false
+     }
+    ],
+    "wins": 0,
+    "win_rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.658
+    ],
+    "progress_iqm": 0.58,
+    "progress_iqm_95": [
+     0.58,
+     0.58
+    ],
+    "local_step_ms": {
+     "n": 94,
+     "p50_ms": 0.414,
+     "mean_ms": 0.546
+    },
+    "play_calls": 0,
+    "play_cost_usd": 0.0
+   },
+   "sandbox": "skillsmith SandboxedSkill: static gate, separate worker on the real python.exe, osjail containment on Windows"
+  },
+  "key_caves": {
+   "game": "key_caves",
+   "supported": true,
+   "goal": "cross the rooms, take the key and open the door",
+   "step_limit": 1500,
+   "validation_seeds": [
+    0,
+    1
+   ],
+   "test_seeds": [
+    100,
+    101
+   ],
+   "current": "idle",
+   "promoted": "cand2_3111",
+   "selector_reason": "no candidate strictly beats the current skill on validation",
+   "gate_verdicts": {
+    "cand2_3111": {
+     "mean_progress": 0.3333,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 36
+    },
+    "cand1_5308": {
+     "mean_progress": 0.3333,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 34
+    },
+    "cand2_6170": {
+     "mean_progress": 0.3333,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 34
+    }
+   },
+   "curve": [
+    {
+     "round": 0,
+     "validation_seeds": [
+      0,
+      1
+     ],
+     "current": "idle",
+     "current_progress": 0.0,
+     "best_candidate": "cand2_3111",
+     "best_progress": 0.3333,
+     "promoted": "cand2_3111",
+     "reason": "cand2_3111 scored 0.333 against 0.000",
+     "trace_shown": 60,
+     "lessons_shown": 0,
+     "lessons": [],
+     "proposals": 2
+    },
+    {
+     "round": 1,
+     "validation_seeds": [
+      1000,
+      1001
+     ],
+     "current": "cand2_3111",
+     "current_progress": 0.3333,
+     "best_candidate": "cand1_8372",
+     "best_progress": 0.3333,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 18,
+     "lessons_shown": 1,
+     "lessons": [
+      "- [key_caves] promoted cand2_3111 over idle (evidence: validation progress 0.333 vs 0.000; sha 7cd37bbb5bf5)"
+     ],
+     "proposals": 2
+    },
+    {
+     "round": 2,
+     "validation_seeds": [
+      2000,
+      2001
+     ],
+     "current": "cand2_3111",
+     "current_progress": 0.3333,
+     "best_candidate": "cand1_5308",
+     "best_progress": 0.3333,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 18,
+     "lessons_shown": 2,
+     "lessons": [
+      "- [key_caves] promoted cand2_3111 over idle (evidence: validation progress 0.333 vs 0.000; sha 7cd37bbb5bf5)",
+      "- [key_caves] kept cand2_3111 (evidence: no candidate strictly beats the current skill on validation; scores cand2_3111 0.333, cand1_8372 0.333, cand2_3833 0.000)"
+     ],
+     "proposals": 2
+    }
+   ],
+   "proposals": [
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1452,
+     "trace_shown": 60,
+     "lessons_shown": 0
+    },
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1998,
+     "trace_shown": 60,
+     "lessons_shown": 0
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1633,
+     "trace_shown": 18,
+     "lessons_shown": 1
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1824,
+     "trace_shown": 18,
+     "lessons_shown": 1
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 2324,
+     "trace_shown": 18,
+     "lessons_shown": 2
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1712,
+     "trace_shown": 18,
+     "lessons_shown": 2
+    }
+   ],
+   "skill_source": "import math\n\nclass GeneratedArenaSkill:\n    def __init__(self):\n        self.t = 0\n        self.dir = 1.0\n        self.px = 0.0\n        self.py = 0.0\n        self.stuck = 0\n\n    def compute_action(self, obs):\n        self.t += 1\n        s = obs.get(\"self\") or [0.5, 0.5]\n        sx = float(s[0])\n        sy = float(s[1])\n        danger = float(obs.get(\"danger\") or 0.0)\n        esc = obs.get(\"escape\")\n        if danger >= 0.5 and esc:\n            ex = float(esc[0])\n            mvx = 1.0 if ex > 0.0 else -1.0\n            if abs(ex) < 0.2:\n                mvx = self.dir\n            return {\"move\": [mvx, 0.0], \"buttons\": [\"jump\"], \"hold_ms\": 0}\n        dx = sx - self.px\n        dy = sy - self.py\n        moved = math.sqrt(dx * dx + dy * dy)\n        if moved < 0.0004:\n            self.stuck += 1\n        else:\n            self.stuck = 0\n        if self.stuck > 40:\n            self.stuck = 0\n            self.dir = -1.0 * self.dir\n        self.px = sx\n        self.py = sy\n        if self.t % 240 < 120:\n            self.dir = 1.0\n        else:\n            if sx > 0.85:\n                self.dir = 1.0\n            elif sx < 0.15:\n                self.dir = 1.0\n        mv = 1.0 if self.dir > 0.0 else -1.0\n        buttons = []\n        cyc = self.t % 30\n        if cyc == 0 or cyc == 10:\n            buttons = [\"jump\"]\n        elif cyc == 20:\n            buttons = [\"attack\"]\n        items = obs.get(\"items\") or []\n        if items:\n            best = 999.0\n            bx = 0.0\n            by = 0.0\n            for i in range(len(items)):\n                it = items[i]\n                ix = float(it[0]) - sx\n                iy = float(it[1]) - sy\n                d = abs(ix) + abs(iy)\n                if d < best:\n                    best = d\n                    bx = ix\n                    by = iy\n            if best < 0.25:\n                if abs(bx) > 0.01:\n                    mv = 1.0 if bx > 0.0 else -1.0\n        return {\"move\": [mv, 0.0], \"buttons\": buttons, \"hold_ms\": 0}\n",
+   "skill_sha256": "7cd37bbb5bf546d229d4fe01bd5ae38d57c6b0eb39fb054f82e0d1ae5196967e",
+   "current_sha256": "29db3b23a9f19731041c59efc701cf1c19278abfe0a4462d53c51cbda6cf145b",
+   "keys": [
+    "left",
+    "right",
+    "space",
+    "z"
+   ],
+   "example_game": "box_push",
+   "example_sha256": "476b8e987c00166ce20ae943a1206737099e3537b680a8be09ee562591ba4b4e",
+   "held_out_steps": 1500,
+   "safety_checks": {
+    "static_gate": {
+     "passed": true,
+     "detail": "ok"
+    },
+    "sandbox": {
+     "passed": true,
+     "detail": "answered one step inside the sandbox",
+     "containment": "low-integrity+job"
+    },
+    "held_out_promote": {
+     "promoted": "cand2_3111",
+     "detail": "no candidate strictly beats the current skill on validation"
+    }
+   },
+   "writing": {
+    "calls": 6,
+    "cost_usd": 0.18878,
+    "tokens_in": 100357,
+    "tokens_out": 14901
+   },
+   "held_out": {
+    "played": true,
+    "episodes": [
+     {
+      "seed": 100,
+      "won": false,
+      "progress": 0.3333,
+      "steps": 18,
+      "faulted": false
+     },
+     {
+      "seed": 101,
+      "won": false,
+      "progress": 0.3333,
+      "steps": 18,
+      "faulted": false
+     }
+    ],
+    "wins": 0,
+    "win_rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.658
+    ],
+    "progress_iqm": 0.3333,
+    "progress_iqm_95": [
+     0.3333,
+     0.3333
+    ],
+    "local_step_ms": {
+     "n": 36,
+     "p50_ms": 0.32,
+     "mean_ms": 0.358
+    },
+    "play_calls": 0,
+    "play_cost_usd": 0.0
+   },
+   "sandbox": "skillsmith SandboxedSkill: static gate, separate worker on the real python.exe, osjail containment on Windows"
+  },
+  "action_quest": {
+   "game": "action_quest",
+   "supported": true,
+   "goal": "defeat the boss",
+   "step_limit": 1500,
+   "validation_seeds": [
+    0,
+    1
+   ],
+   "test_seeds": [
+    100,
+    101
+   ],
+   "current": "idle",
+   "promoted": null,
+   "selector_reason": "no candidate strictly beats the current skill on validation",
+   "gate_verdicts": {
+    "idle": {
+     "mean_progress": 0.0,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 48
+    },
+    "cand1_3313": {
+     "mean_progress": 0.0,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 48
+    },
+    "cand2_6039": {
+     "mean_progress": 0.0,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 2,
+     "steps": 48
+    }
+   },
+   "curve": [
+    {
+     "round": 0,
+     "validation_seeds": [
+      0,
+      1
+     ],
+     "current": "idle",
+     "current_progress": 0.0,
+     "best_candidate": "cand1_2986",
+     "best_progress": 0.0,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 26,
+     "lessons_shown": 0,
+     "lessons": [],
+     "proposals": 4
+    },
+    {
+     "round": 1,
+     "validation_seeds": [
+      1000,
+      1001
+     ],
+     "current": "idle",
+     "current_progress": 0.0,
+     "best_candidate": "cand1_7010",
+     "best_progress": 0.0,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 26,
+     "lessons_shown": 1,
+     "lessons": [
+      "- [action_quest] kept idle (evidence: no candidate strictly beats the current skill on validation; scores idle 0.000, cand1_2986 0.000, cand2_1745 0.000)"
+     ],
+     "proposals": 3
+    },
+    {
+     "round": 2,
+     "validation_seeds": [
+      2000,
+      2001
+     ],
+     "current": "idle",
+     "current_progress": 0.0,
+     "best_candidate": "cand1_3313",
+     "best_progress": 0.0,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 24,
+     "lessons_shown": 2,
+     "lessons": [
+      "- [action_quest] kept idle (evidence: no candidate strictly beats the current skill on validation; scores idle 0.000, cand1_2986 0.000, cand2_1745 0.000)",
+      "- [action_quest] kept idle (evidence: no candidate strictly beats the current skill on validation; scores idle 0.000, cand1_7010 0.000, cand2_6651 0.000)"
+     ],
+     "proposals": 4
+    }
+   ],
+   "proposals": [
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 2763,
+     "trace_shown": 26,
+     "lessons_shown": 0
+    },
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1417,
+     "trace_shown": 26,
+     "lessons_shown": 0
+    },
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 3484,
+     "trace_shown": 26,
+     "lessons_shown": 0
+    },
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1518,
+     "trace_shown": 26,
+     "lessons_shown": 0
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 2000,
+     "trace_shown": 26,
+     "lessons_shown": 1
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 3434,
+     "trace_shown": 26,
+     "lessons_shown": 1
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 763,
+     "trace_shown": 26,
+     "lessons_shown": 1
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 3214,
+     "trace_shown": 24,
+     "lessons_shown": 2
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1104,
+     "trace_shown": 24,
+     "lessons_shown": 2
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": false,
+     "detail": "the skill is too large (more than 800 syntax nodes): make it smaller",
+     "answer_chars": 3803,
+     "trace_shown": 24,
+     "lessons_shown": 2
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1231,
+     "trace_shown": 24,
+     "lessons_shown": 2
+    }
+   ],
+   "skill_source": null,
+   "skill_sha256": null,
+   "current_sha256": "29db3b23a9f19731041c59efc701cf1c19278abfe0a4462d53c51cbda6cf145b",
+   "keys": [
+    "w",
+    "a",
+    "s",
+    "d",
+    "j",
+    "k",
+    "l",
+    "e"
+   ],
+   "example_game": "box_push",
+   "example_sha256": "476b8e987c00166ce20ae943a1206737099e3537b680a8be09ee562591ba4b4e",
+   "held_out_steps": 1500,
+   "safety_checks": {
+    "static_gate": {
+     "passed": null,
+     "detail": "no model-written skill was promoted, so no skill reached this check"
+    },
+    "sandbox": {
+     "passed": null,
+     "detail": "no model-written skill was promoted, so no skill reached this check"
+    },
+    "held_out_promote": {
+     "promoted": null,
+     "detail": "no candidate strictly beats the current skill on validation"
+    }
+   },
+   "writing": {
+    "calls": 11,
+    "cost_usd": 0.26259,
+    "tokens_in": 119858,
+    "tokens_out": 26533
+   },
+   "held_out": {
+    "played": false,
+    "reason": "no candidate strictly beats the current skill on validation",
+    "wins": "not measured",
+    "local_step_ms": "not measured",
+    "play_calls": 0,
+    "play_cost_usd": 0.0
+   },
+   "sandbox": "skillsmith SandboxedSkill: static gate, separate worker on the real python.exe, osjail containment on Windows"
+  }
+ },
+ "held_out_overall": {
+  "episodes": 4,
+  "wins": 0
+ },
+ "run_id": "skillsmith-muse-room-20261102",
+ "cap_usd": 1.0,
+ "spend_ledger": "f1-muse-room-ledger.jsonl"
+}
