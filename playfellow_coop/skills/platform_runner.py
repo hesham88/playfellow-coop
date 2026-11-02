@@ -7,8 +7,12 @@ player is blocked (a wall, a step, an enemy in the way): it jumps; still blocked
 second press); still blocked after that, it backs off a step and tries again. It attacks every few steps, which in many platformers
 breaks cages and clears enemies on the way. The model chooses the skill and its direction; the skill plays at local speed.
 
-Not handled: a gap or a hazard the player can walk into keeps the picture moving, so "blocked" never fires there; looking ahead for
-gaps is the next step, and the model should stop the skill before one."""
+Gaps: a pit keeps the picture moving, so "blocked" never fires there. The skill therefore also looks ahead, in pixels only. In the
+bottom band of the picture, solid ground shows a strong top edge or texture in every column, and a pit shows the same colour down to
+the bottom. When the columns under the player (a little left of centre, where side-scrollers keep the player) have ground and the
+columns just ahead do not, it jumps once, then keeps running through the jump. Limits: this assumes the camera keeps the player near
+the centre and that a pit shows a plain background; a pit over a busy background, or a hazard that looks like ground, is not seen,
+and the model should still stop the skill before those."""
 from __future__ import annotations
 
 import numpy as np
@@ -29,6 +33,24 @@ def keys_from_card(card, direction: str = "right") -> dict | None:
     jump = next((k for k in JUMP_KEYS if k in keys and k != direction), None)
     attack = next((k for k in ATTACK_KEYS if k in keys and k not in (jump, direction)), None)
     return {"run": direction, "jump": jump, "attack": attack, "back": "left" if direction == "right" else "right"}
+
+
+UNDER, AHEAD = (0.30, 0.48), (0.52, 0.75)  # shares of the width: under the player, and the stretch it reaches in the next moments
+
+
+def _ground_columns(frame: np.ndarray) -> np.ndarray:
+    """True for each column whose bottom band has structure (a ground edge or texture); False where it is one plain colour (a pit)."""
+    band = frame[int(frame.shape[0] * 0.6):].astype(np.int16).mean(axis=-1)
+    return np.abs(np.diff(band, axis=0)).max(axis=0) > 12 if band.shape[0] > 1 else np.ones(frame.shape[1], dtype=bool)
+
+
+def gap_ahead(frame: np.ndarray) -> bool:
+    """Ground under the player and a pit just ahead (see the module note for the limits)."""
+    if frame.ndim != 3 or frame.shape[0] < 8 or frame.shape[1] < 16:
+        return False
+    ground, w = _ground_columns(frame), frame.shape[1]
+    under, ahead = ground[int(w * UNDER[0]):int(w * UNDER[1])], ground[int(w * AHEAD[0]):int(w * AHEAD[1])]
+    return bool(under.mean() > 0.8 and (~ahead).mean() > 0.25)
 
 
 def _changed(a: np.ndarray, b: np.ndarray) -> float:
@@ -53,6 +75,7 @@ class RunAndJump:
         self.step = 0
         self.stuck = 0
         self.plan: list[str | None] = []  # keys already decided (a double jump, a back-off), played one per step
+        self.gap_cooldown = 0  # steps left before another jump for a gap: one jump per pit, then run through it
 
     def next_key(self, frame: Frame) -> str | None:
         self.step += 1
@@ -60,6 +83,11 @@ class RunAndJump:
         self.last = frame
         if self.plan:
             return self.plan.pop(0)
+        if self.gap_cooldown:
+            self.gap_cooldown -= 1
+        elif moving and self.keys.get("jump") and gap_ahead(frame):
+            self.gap_cooldown = 4
+            return self.keys["jump"]
         if not moving and self.keys.get("jump"):
             self.stuck += 1
             if self.stuck == 1:

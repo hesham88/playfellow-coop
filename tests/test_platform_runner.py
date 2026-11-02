@@ -93,3 +93,33 @@ def test_a_platformer_card_without_its_own_skill_gets_the_genre_skill_offered_to
     entry.attach_skills(parts, cfg, "on")
     assert parts.brain.skills == ("run_and_jump", "none") and parts.skills.readable(np.zeros((20, 20, 3), dtype=np.uint8))
     assert "run_and_jump" in parts.skills.system_text()
+
+
+def _level(gap_from: float | None, shift: int, h: int = 90, w: int = 160) -> np.ndarray:
+    """Sky above, textured ground in the bottom third; a pit from gap_from (a share of the width) shows sky down to the bottom edge.
+    shift scrolls the ground texture so the picture keeps moving, as a side-scroller does while the player runs."""
+    frame = np.full((h, w, 3), (90, 150, 220), dtype=np.uint8)
+    top = int(h * 0.7)
+    frame[top:, :] = np.random.default_rng(shift).integers(40, 130, (h - top, w, 3), dtype=np.uint8)  # new texture every frame
+    frame[top, :] = (230, 230, 230)  # the ground's top edge
+    if gap_from is not None:
+        frame[top:, int(w * gap_from):int(w * (gap_from + 0.12))] = (90, 150, 220)
+    return frame
+
+
+def test_it_jumps_before_a_pit_ahead_while_the_picture_still_moves():
+    skill = RunAndJump({"run": "right", "jump": "space", "attack": None}, attack_every=0)
+    skill.reset()
+    keys = [skill.next_key(_level(None, s)) for s in range(4)]
+    assert keys == ["right"] * 4  # flat ground: it only runs
+    keys = [skill.next_key(_level(0.6, 4 + s)) for s in range(3)]
+    assert keys[0] == "space"  # a pit ahead: jump before reaching it, though the picture never stopped moving
+    assert keys[1:] == ["right", "right"]  # holds run through the jump, and does not jump again at once
+
+
+def test_a_pit_far_off_or_under_the_player_does_not_make_it_jump():
+    skill = RunAndJump({"run": "right", "jump": "space", "attack": None}, attack_every=0)
+    skill.reset()
+    assert [skill.next_key(_level(0.9, s)) for s in range(3)] == ["right"] * 3  # too far ahead yet
+    skill.reset()
+    assert [skill.next_key(_level(0.38, s)) for s in range(3)] == ["right"] * 3  # under the player: no ground to judge by
