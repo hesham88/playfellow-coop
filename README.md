@@ -62,6 +62,12 @@ One file is not a result and says so inside itself: `results/k-lane/muse-skills-
 
 Each game group shows the same rungs. A row is filled only from a committed result file named in it; a rung with no file says so. Assisted rows are never read as model-alone rows.
 
+![Every rung, game by game](docs/img/charts/ladder-per-game.png)
+
+The $0 harness check (a scripted chooser, no model) wins 36 of 42 episodes (12 of 14 games) with the 14 pixel skills. The two mouse games, Mini Chess and Tiny Kingdom, score 0 of 3: their skills win in the gym, but the runner has no mouse path yet (`results/rung4/scripted-20261102.json`). The model-written skills reach progress 0.58 on maze_chase and 0.33 on key_caves, with 0 wins so far.
+
+![Model-written skill, round by round](docs/img/charts/learning-curve.png)
+
 The five games with human-written skills (snake, box_push, slide_2048, lane_dash, brick_breaker), 3 seeds each unless said:
 
 | Rung | Wins | Mean progress | File |
