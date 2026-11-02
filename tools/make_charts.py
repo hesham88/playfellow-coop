@@ -15,7 +15,7 @@ GAMES = ("snake", "box_push", "slide_2048", "lane_dash", "brick_breaker")
 RUNGS = [  # (label, file, kind)
     ("Random keys", "results/fifteen/random-20261102.json", "baseline"),
     ("Muse Spark alone", "results/fifteen/muse-raw-20261102.json", "model alone"),
-    ("Muse Spark Open alone (Baseten)", "results/fifteen/open-raw-20261102.json", "model alone"),
+    ("Muse Spark Open alone (open weights)", "results/fifteen/open-raw-20261102.json", "model alone"),
     ("Muse Spark + SAM 3.1 marks", "results/fifteen/muse-sam-20261102.json", "model alone"),
     ("Muse Spark + local skills", "results/fifteen/muse-skills-20261102.json", "assisted"),
     ("Muse Spark Open + local skills", "results/fifteen/open-skills-20261102.json", "assisted"),

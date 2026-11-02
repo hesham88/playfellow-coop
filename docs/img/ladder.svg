@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="880" height="382" viewBox="0 0 880 382" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
 <title id="t">The ladder: what each part of PlayFellow adds, on the same 5 games</title>
-<desc id="d">Random keys: mean progress 0.08, 0 of 10 won; Muse Spark alone: mean progress 0.14, 0 of 10 won; Muse Spark Open alone (Baseten): mean progress 0.04, 0 of 10 won; Muse Spark + SAM 3.1 marks: mean progress 0.18, 0 of 10 won; Muse Spark + local skills: mean progress 0.87, 13 of 15 won; Muse Spark Open + local skills: mean progress 1.00, 15 of 15 won</desc>
+<desc id="d">Random keys: mean progress 0.08, 0 of 10 won; Muse Spark alone: mean progress 0.14, 0 of 10 won; Muse Spark Open alone (open weights): mean progress 0.04, 0 of 10 won; Muse Spark + SAM 3.1 marks: mean progress 0.18, 0 of 10 won; Muse Spark + local skills: mean progress 0.87, 13 of 15 won; Muse Spark Open + local skills: mean progress 1.00, 15 of 15 won</desc>
 <rect width="880" height="382" rx="12" fill="#1a1a19"/>
 <text x="24" y="34" fill="#f0efec" font-size="19" font-weight="600">What each part adds, on the same 5 games</text>
 <text x="24" y="56" fill="#c3c2b7" font-size="13">Mean progress (0 to 1; 1.0 only with the game's own win) · label: wins / episodes, cost of the run</text>
@@ -22,7 +22,7 @@
 <text x="276" y="145" fill="#898781" font-size="11.5" text-anchor="end">model alone</text>
 <path d="M290,118 h52.6 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-52.6 z" fill="#3987e5"/>
 <text x="356.6" y="136" fill="#f0efec" font-size="13">0/10 won · $0.76</text>
-<text x="276" y="172" fill="#f0efec" font-size="14" text-anchor="end">Muse Spark Open alone (Baseten)</text>
+<text x="276" y="172" fill="#f0efec" font-size="14" text-anchor="end">Muse Spark Open alone (open weights)</text>
 <text x="276" y="187" fill="#898781" font-size="11.5" text-anchor="end">model alone</text>
 <path d="M290,160 h11.8 a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h-11.8 z" fill="#3987e5"/>
 <text x="315.8" y="178" fill="#f0efec" font-size="13">0/10 won · $0.20</text>
