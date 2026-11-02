@@ -38,6 +38,167 @@ def test_a_full_offline_round_refuses_a_candidate_that_does_not_beat_the_current
     assert document["label"] == "[Assisted: Model-Written Skill]"
 
 
+def _fake_chat_brain(kind="muse", completion_tokens=50, prompt_tokens=100):
+    """A fake chat server behind the real client classes: no network, the transport answers in this process."""
+    import httpx
+
+    seen = {"requests": 0}
+
+    def handler(request):
+        seen["requests"] += 1
+        body = {"choices": [{"finish_reason": "stop", "message": {"content": "```python\n" + FAKE_CODE + "```"}}],
+                "usage": {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}}
+        return httpx.Response(200, json=body)
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    if kind == "open":
+        from bench.open_weights_brain import OpenWeightsBrain
+
+        return OpenWeightsBrain("test-key", client=client), seen
+    from playfellow_coop.muse_brain import MuseBrain
+
+    return MuseBrain("muse-spark-1.3", "test-key", client=client), seen
+
+
+def test_the_hard_cap_stops_before_the_call_that_would_pass_it():
+    from bench.skillsmith_run import CappedBrain
+    from playfellow_coop.skillsmith.promote import BudgetExceeded
+
+    brain, seen = _fake_chat_brain(completion_tokens=100000)  # one call costs about $0.43 in reported tokens
+    capped = CappedBrain(brain, cap_usd=0.01, provider="muse", run_id="cap-test")
+    capped.ask("write a skill")
+    assert seen["requests"] == 1 and capped.spent_usd > 0.01  # the first call was allowed and reported over the cap
+    with pytest.raises(BudgetExceeded):
+        capped.ask("write another skill")
+    assert seen["requests"] == 1  # the call that would pass the cap was never sent
+
+
+def test_the_open_brain_is_capped_the_same_way_before_anything_is_sent():
+    from bench.skillsmith_run import CappedBrain
+    from playfellow_coop.skillsmith.promote import BudgetExceeded
+
+    brain, seen = _fake_chat_brain(kind="open")
+    capped = CappedBrain(brain, cap_usd=0.001, provider="open", run_id="cap-open")
+    with pytest.raises(BudgetExceeded):
+        capped.ask("write a skill")
+    assert seen["requests"] == 0 and capped.calls == 0
+
+
+def test_every_paid_call_appends_one_line_to_the_spend_ledger(tmp_path):
+    from bench.skillsmith_run import CappedBrain
+
+    brain, _seen = _fake_chat_brain()
+    ledger = tmp_path / "ledger.md"
+    capped = CappedBrain(brain, cap_usd=2.0, provider="muse", run_id="run-42", ledger_path=ledger)
+    capped.ask("one")
+    capped.ask("two")
+    lines = [line for line in ledger.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(lines) == 2
+    for line in lines:
+        assert "run-42" in line and "muse" in line and "muse-spark-1.3" in line and "100/50" in line and "$" in line and "left" in line
+    assert capped.usage()["calls"] == 2 and capped.usage()["tokens_in"] == 200 and capped.usage()["cost_usd"] > 0
+
+
+def test_a_dry_run_plans_calls_and_a_dollar_estimate_and_sends_nothing(capsys):
+    from bench.skillsmith_run import main, plan_run
+
+    plan = plan_run(["maze_chase", "key_caves"], brain="muse", candidates=1)
+    assert plan["brain"] == "muse" and plan["planned_calls"] == 4 and plan["estimated_usd"] > 0
+    assert all(row["planned_calls"] == 2 for row in plan["games"].values())
+    assert main(["--dry-run", "--brain", "open", "--games", "maze_chase"]) == 0
+    out = capsys.readouterr().out
+    assert "maze_chase" in out and "$" in out and "nothing was sent" in out
+
+
+def test_a_fake_run_refuses_to_write_under_results(tmp_path):
+    from pathlib import Path
+
+    from bench.skillsmith_run import ROOT, main
+
+    with pytest.raises(SystemExit):
+        main(["--fake", "--games", "maze_chase", "--library", str(tmp_path / "lib"),
+              "--out", str(Path(ROOT) / "results" / "skillsmith" / "planted.json")])
+
+
+def test_a_live_result_carries_the_full_source_its_fingerprint_and_each_safety_verdict(tmp_path):
+    import hashlib
+
+    from bench.skillsmith_run import CappedBrain, run_game
+
+    brain, _seen = _fake_chat_brain()
+    capped = CappedBrain(brain, cap_usd=2.0, provider="muse", run_id="live-test", ledger_path=tmp_path / "ledger.md")
+    result = run_game("key_caves", capped, tmp_path / "lib", [0], [100], candidates=1,
+                      validation_steps=120, held_out_steps=60)
+    assert result["promoted"] is not None
+    assert result["skill_source"] and hashlib.sha256(result["skill_source"].encode("utf-8")).hexdigest() == result["skill_sha256"]
+    checks = result["safety_checks"]
+    assert checks["static_gate"]["passed"] is True and checks["sandbox"]["passed"] is True
+    assert checks["held_out_promote"]["promoted"] == result["promoted"]
+    assert result["example_game"] not in (None, "key_caves")
+    assert result["writing"]["cost_usd"] > 0 and result["held_out"]["play_cost_usd"] == 0.0
+
+
+def _promoted_document(tmp_path):
+    import json
+
+    from bench.skillsmith_run import build_document, run_game
+
+    result = run_game("key_caves", FakeModel(), tmp_path / "lib", [0], [100], candidates=1,
+                      validation_steps=120, held_out_steps=60)
+    assert result["promoted"] is not None
+    path = tmp_path / "skillsmith-fake.json"
+    path.write_text(json.dumps(build_document([result], "fake", "fake-stand-in (not a model result)")), encoding="utf-8")
+    return path
+
+
+def test_a_judge_replay_watches_the_saved_skill_and_matches_the_saved_numbers(tmp_path, capsys):
+    from bench.skillsmith_run import main, replay_file
+
+    path = _promoted_document(tmp_path)
+    report = replay_file(path)
+    assert report["refused"] is None and report["ok"] is True
+    assert main(["--replay", str(path)]) == 0
+    assert "key_caves" in capsys.readouterr().out
+
+
+def test_a_tampered_source_is_refused_and_a_gate_failure_is_refused_even_with_a_matching_hash(tmp_path):
+    import hashlib
+    import json
+
+    from bench.skillsmith_run import ReplayRefused, main, replay_file
+
+    path = _promoted_document(tmp_path)
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    doc["games"]["key_caves"]["skill_source"] += "\n# edited after the run\n"
+    tampered = tmp_path / "tampered.json"
+    tampered.write_text(json.dumps(doc), encoding="utf-8")
+    with pytest.raises(ReplayRefused):
+        replay_file(tampered)
+    assert main(["--replay", str(tampered)]) != 0
+    bad = "import os\nclass GeneratedArenaSkill:\n    def compute_action(self, obs):\n        return {'move': [0.0, 0.0], 'buttons': [], 'hold_ms': 0}\n"
+    doc["games"]["key_caves"]["skill_source"] = bad
+    doc["games"]["key_caves"]["skill_sha256"] = hashlib.sha256(bad.encode("utf-8")).hexdigest()
+    gated = tmp_path / "gated.json"
+    gated.write_text(json.dumps(doc), encoding="utf-8")
+    with pytest.raises(ReplayRefused):
+        replay_file(gated)
+
+
+def test_a_replay_that_does_not_match_the_saved_numbers_exits_1(tmp_path):
+    import json
+
+    from bench.skillsmith_run import main, replay_file
+
+    path = _promoted_document(tmp_path)
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    doc["games"]["key_caves"]["held_out"]["wins"] = 99
+    wrong = tmp_path / "wrong.json"
+    wrong.write_text(json.dumps(doc), encoding="utf-8")
+    report = replay_file(wrong)
+    assert report["ok"] is False and report["refused"] is None
+    assert main(["--replay", str(wrong)]) == 1
+
+
 def test_a_promoted_skill_plays_only_the_held_out_seeds_and_play_is_free(tmp_path):
     result = run_game("key_caves", FakeModel(), tmp_path / "lib", [0], [100], candidates=1,
                       validation_steps=120, held_out_steps=60)

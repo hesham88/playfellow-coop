@@ -2,7 +2,7 @@
 
   python -m bench.skillsmith_run --fake --games maze_chase --out tmp/skillsmith-fake.json --library tmp/skillsmith-lib
 
-Offline with `--fake` no paid call is made: a stand-in model answers with one fixed skill, so a full round (propose, probe on validation seeds, promote or refuse, held-out play when promoted) can be checked for free. The live ask is wired by the run that owns the key; this file never reads a key. Read-only inputs: `skillsmith/**`, `gym/**`, `bench/arena_run.py`.
+Offline with `--fake` no paid call is made: a stand-in model answers with one fixed skill, so a full round (propose, probe on validation seeds, promote or refuse, held-out play when promoted) can be checked for free. Live with `--brain muse|open` the existing clients are capped per run (`--budget-usd`, the call that would pass it is never sent), every paid call lands in the spend ledger, and `--dry-run` prints the planned calls and their dollar estimate while sending nothing. A judge replays a saved run with `--replay <file>` ($0, no key). The key itself is read only by the existing key loader and is never printed. Read-only inputs: `skillsmith/**`, `gym/**`, `bench/arena_run.py`.
 """
 from __future__ import annotations
 
@@ -82,6 +82,142 @@ class FakeModel:
 
     def usage(self) -> dict:
         return {"calls": self.calls, "tokens_in": NOT_MEASURED, "tokens_out": NOT_MEASURED, "cost_usd": 0.0}
+
+
+class ReplayRefused(Exception):
+    """A replay was refused: the saved skill is not the skill that was checked, or it no longer passes the checks."""
+
+
+class CappedBrain:
+    """A live brain behind the skillsmith ask(prompt) shape, with a hard per-run dollar cap and a spend ledger.
+
+    Before every call the next call is priced at its worst case (the whole prompt in, a full answer out); when what has
+    already been spent plus that price would pass the cap, the call is refused and nothing is sent. After a call the
+    provider's own reported tokens and cost are what count, and one line is appended to the ledger. The key never
+    passes through here: it stays inside the brain."""
+
+    def __init__(self, brain, cap_usd: float, provider: str, run_id: str = "run", ledger_path: Path | None = None):
+        self.brain, self.cap_usd, self.provider, self.run_id = brain, float(cap_usd), provider, run_id
+        self.model = str(getattr(brain, "model", provider))
+        self.ledger_path = Path(ledger_path) if ledger_path is not None else None
+        self.calls = 0
+        self.tokens_in = 0
+        self.tokens_out = 0
+        self.spent_usd = 0.0
+
+    def estimate_next_usd(self, prompt: str) -> float:
+        from playfellow_coop.budget import INPUT_USD_PER_TOKEN, OUTPUT_USD_PER_TOKEN
+        from playfellow_coop.skillsmith.synth import estimate_tokens
+
+        return estimate_tokens(prompt) * INPUT_USD_PER_TOKEN + int(getattr(self.brain, "max_tokens", 1000)) * OUTPUT_USD_PER_TOKEN
+
+    def ask(self, prompt: str) -> str:
+        from playfellow_coop.skillsmith.promote import BudgetExceeded
+
+        estimate = self.estimate_next_usd(prompt)
+        if self.spent_usd + estimate > self.cap_usd + 1e-12:
+            raise BudgetExceeded(f"the per-run cap (${self.cap_usd:.2f}) would be passed by the next call "
+                                 f"(spent ${self.spent_usd:.5f}, next call priced at up to ${estimate:.5f}); nothing was sent")
+        answer = self.brain.ask("", prompt, [])
+        request = getattr(self.brain, "last_request", None) or {}
+        tokens_in, tokens_out = int(request.get("tokens_in") or 0), int(request.get("tokens_out") or 0)
+        cost = request.get("cost_usd")
+        if cost is None:
+            from playfellow_coop.budget import INPUT_USD_PER_TOKEN, OUTPUT_USD_PER_TOKEN
+
+            cost = tokens_in * INPUT_USD_PER_TOKEN + tokens_out * OUTPUT_USD_PER_TOKEN if (tokens_in or tokens_out) else estimate
+        self.calls += 1
+        self.tokens_in += tokens_in
+        self.tokens_out += tokens_out
+        self.spent_usd += float(cost)
+        if self.ledger_path is not None:
+            self.ledger_path.parent.mkdir(parents=True, exist_ok=True)
+            left = self.cap_usd - self.spent_usd
+            line = (f"| {datetime.now().astimezone().isoformat(timespec='seconds')} | {self.run_id} | {self.provider} | {self.model} "
+                    f"| {tokens_in}/{tokens_out} | ${float(cost):.5f} | ${left:.5f} left of ${self.cap_usd:.2f} |\n")
+            with open(self.ledger_path, "a", encoding="utf-8", newline="\n") as handle:
+                handle.write(line)
+        return answer
+
+    def usage(self) -> dict:
+        return {"calls": self.calls, "tokens_in": self.tokens_in, "tokens_out": self.tokens_out, "cost_usd": round(self.spent_usd, 5)}
+
+
+def safety_checks(code: str | None, promoted: str | None, reason: str) -> dict:
+    """The verdict of each safety layer for one promoted skill: the static gate, one sandboxed step, the held-out promotion."""
+    from playfellow_coop.skillsmith import ast_gate
+
+    checks: dict = {"static_gate": {"passed": None, "detail": "no model-written skill was promoted, so no skill reached this check"},
+                    "sandbox": {"passed": None, "detail": "no model-written skill was promoted, so no skill reached this check"},
+                    "held_out_promote": {"promoted": promoted, "detail": reason}}
+    if code is None:
+        return checks
+    ok, why = ast_gate.check(code)
+    checks["static_gate"] = {"passed": bool(ok), "detail": why}
+    if not ok:
+        return checks
+    from playfellow_coop.skillsmith.sandbox import SandboxedSkill
+
+    with SandboxedSkill(code, step_timeout_ms=2000.0) as skill:
+        skill.step({"self": [0.5, 0.5], "items": [], "enemies": [], "hud": {}, "t": 0, "danger": 0.0, "escape": None})
+        checks["sandbox"] = {"passed": not skill.faulted, "detail": skill.fault or "answered one step inside the sandbox",
+                             "containment": skill.containment}
+    return checks
+
+
+def plan_run(games: list[str], brain: str = "muse", candidates: int = 1) -> dict:
+    """The dry run: the planned calls per game and their dollar estimate, priced before anything is sent (a full answer out)."""
+    from playfellow_coop.budget import INPUT_USD_PER_TOKEN, OUTPUT_USD_PER_TOKEN
+    from playfellow_coop.skillsmith.synth import build_prompt, estimate_tokens, example_for, progress_text
+
+    if brain == "open":
+        from bench.open_weights_brain import OPEN_MAX_TOKENS
+
+        max_out = OPEN_MAX_TOKENS
+    else:
+        from playfellow_coop.muse_brain import MAX_TOKENS
+
+        max_out = MAX_TOKENS
+    rows, total_calls, total_usd = {}, 0, 0.0
+    for game in games:
+        prompt = build_prompt(game, GOALS.get(game, "win the game"), [], [], keys=("up", "down", "left", "right"),
+                              progress=progress_text(game), example=example_for(game))
+        tokens_in = estimate_tokens(prompt)
+        planned = int(candidates) * 2  # one proposal plus its one retry, per candidate
+        usd = planned * (tokens_in * INPUT_USD_PER_TOKEN + max_out * OUTPUT_USD_PER_TOKEN)
+        rows[game] = {"planned_calls": planned, "tokens_in_est_per_call": tokens_in, "tokens_out_est_per_call": max_out,
+                      "estimated_usd": round(usd, 5)}
+        total_calls += planned
+        total_usd += usd
+    return {"brain": brain, "games": rows, "planned_calls": total_calls, "estimated_usd": round(total_usd, 5),
+            "note": "planned only: a full answer is priced for every call, so a real run should cost less; nothing was sent"}
+
+
+def make_live_brain(brain_name: str, cap_usd: float, ledger_path: Path | None, run_id: str):
+    """One live brain (the existing clients, nothing re-implemented), capped per run and backstopped by the daily cap."""
+    ensure_engine()
+    from playfellow_coop.budget import DailyBudget
+
+    budget_file = (Path(ledger_path).parent / "daily-budget.json") if ledger_path is not None else ROOT / "results" / "skillsmith" / "daily-budget.json"
+    daily = DailyBudget(budget_file, cap_usd=cap_usd, max_calls=10000)
+    if brain_name == "muse":
+        from playfellow_coop.__main__ import load_muse_key
+        from playfellow_coop.muse_brain import DEFAULT_MODEL, MuseBrain
+
+        key = load_muse_key()
+        if not key:
+            raise SystemExit("MODEL_API_KEY is not set (environment or credential manager): no live call can be made")
+        brain = MuseBrain(DEFAULT_MODEL, key, budget=daily)
+    else:
+        import os
+
+        from bench.open_weights_brain import OpenWeightsBrain
+
+        key = (os.environ.get("OPEN_BRAIN_API_KEY") or "").strip()
+        if not key:
+            raise SystemExit("OPEN_BRAIN_API_KEY is not set: no live call can be made")
+        brain = OpenWeightsBrain(key, budget=daily)
+    return CappedBrain(brain, cap_usd=cap_usd, provider=brain_name, run_id=run_id, ledger_path=ledger_path)
 
 
 def game_support(game: str) -> tuple[bool, str]:
@@ -193,10 +329,15 @@ def run_game(game: str, ask, library_root: Path, validation_seeds, test_seeds, c
     ask_fn = ask.ask if hasattr(ask, "ask") else ask
     probe = ar.load_game(game, validation_seeds[0])
     step_limit = int(probe.max_ticks)
-    observer, mapper = _observer_mapper(game, tuple(probe.keys))
+    game_keys = tuple(probe.keys)
+    observer, mapper = _observer_mapper(game, game_keys)
     library = SkillLibrary(Path(library_root))
     budget = Budget(max_usd=budget_usd, max_calls=budget_calls)
-    synth = Synthesizer(ask_fn, library, budget, cost_per_call_usd=cost_per_call_usd)
+    from playfellow_coop.skillsmith.synth import example_for, progress_text
+
+    example = example_for(game)
+    synth = Synthesizer(ask_fn, library, budget, cost_per_call_usd=cost_per_call_usd,
+                        keys=game_keys, progress=progress_text(game), example=example)
     result = improve(game, GOALS.get(game, "win the game"), library, synth, CURRENT_NAME, IDLE_CODE,
                      _make_env_factory(game), observer, mapper, validation_seeds, test_seeds,
                      selector=Selector(), candidates=candidates, max_steps=validation_steps or min(step_limit, 600))
@@ -204,7 +345,8 @@ def run_game(game: str, ask, library_root: Path, validation_seeds, test_seeds, c
                        "faults": s.faults, "steps": s.steps} for name, s in result.scores.items()}
     usage = ask.usage() if hasattr(ask, "usage") else {"calls": budget.calls, "tokens_in": NOT_MEASURED,
                                                        "tokens_out": NOT_MEASURED, "cost_usd": round(budget.spent_usd, 5)}
-    writing = {"calls": int(budget.calls), "cost_usd": round(float(budget.spent_usd), 5),
+    reported = usage.get("cost_usd")
+    writing = {"calls": int(budget.calls), "cost_usd": round(float(reported), 5) if isinstance(reported, (int, float)) and not isinstance(reported, bool) else round(float(budget.spent_usd), 5),
                "tokens_in": usage.get("tokens_in", NOT_MEASURED), "tokens_out": usage.get("tokens_out", NOT_MEASURED)}
     promoted_code = library.get(game, result.promoted) if result.promoted else None
     held_out: dict = {"played": False, "reason": result.reason, "wins": NOT_MEASURED, "local_step_ms": NOT_MEASURED,
@@ -215,10 +357,53 @@ def run_game(game: str, ask, library_root: Path, validation_seeds, test_seeds, c
     return {"game": game, "supported": True, "goal": GOALS.get(game, "win the game"), "step_limit": step_limit,
             "validation_seeds": validation_seeds, "test_seeds": test_seeds, "current": CURRENT_NAME,
             "promoted": result.promoted, "selector_reason": result.reason, "gate_verdicts": verdicts,
-            "skill_sha256": hashlib.sha256(promoted_code.encode("utf-8")).hexdigest() if promoted_code else None,
+            "skill_source": promoted_code, "skill_sha256": hashlib.sha256(promoted_code.encode("utf-8")).hexdigest() if promoted_code else None,
             "current_sha256": hashlib.sha256(IDLE_CODE.encode("utf-8")).hexdigest(),
+            "keys": list(game_keys), "example_game": example[0],
+            "example_sha256": hashlib.sha256(example[1].encode("utf-8")).hexdigest(),
+            "held_out_steps": int(held_out_steps or step_limit),
+            "safety_checks": safety_checks(promoted_code, result.promoted, result.reason),
             "writing": writing, "held_out": held_out,
             "sandbox": "skillsmith SandboxedSkill: static gate, separate worker on the real python.exe, osjail containment on Windows"}
+
+
+def replay_file(path: Path) -> dict:
+    """Replay one saved run for a judge: $0, no key. The saved source must hash to the saved fingerprint, pass the same
+    static gate and sandbox, and reproduce the saved held-out numbers on the saved seeds, or the replay fails."""
+    ensure_engine()
+    document = json.loads(Path(path).read_text(encoding="utf-8"))
+    games: dict = {}
+    ok = True
+    for game, row in (document.get("games") or {}).items():
+        if not row.get("supported") or not row.get("promoted"):
+            games[game] = {"promoted": None, "matches": not (row.get("held_out") or {}).get("played", False)}
+            ok = ok and games[game]["matches"]
+            continue
+        source = row.get("skill_source")
+        if not source:
+            raise ReplayRefused(f"{game}: the file carries no skill source, so there is nothing to replay")
+        if hashlib.sha256(source.encode("utf-8")).hexdigest() != row.get("skill_sha256"):
+            raise ReplayRefused(f"{game}: the saved source does not match its saved fingerprint; the file was changed after the run")
+        checks = safety_checks(source, row["promoted"], row.get("selector_reason", ""))
+        if checks["static_gate"]["passed"] is not True:
+            raise ReplayRefused(f"{game}: the saved source fails the static gate: {checks['static_gate']['detail']}")
+        if checks["sandbox"]["passed"] is not True:
+            raise ReplayRefused(f"{game}: the saved source fails in the sandbox: {checks['sandbox']['detail']}")
+        from bench import arena_run as ar
+
+        probe = ar.load_game(game, row["test_seeds"][0])
+        observer, mapper = _observer_mapper(game, tuple(probe.keys))
+        replayed = play_held_out(source, _make_env_factory(game), observer, mapper, list(row["test_seeds"]),
+                                 int(row.get("held_out_steps") or row["step_limit"]))
+        saved = row["held_out"]
+        matches = (replayed["wins"] == saved["wins"] and len(replayed["episodes"]) == len(saved["episodes"])
+                   and all(a["won"] == b["won"] and abs(a["progress"] - b["progress"]) < 0.001
+                           for a, b in zip(replayed["episodes"], saved["episodes"])))
+        games[game] = {"promoted": row["promoted"], "saved_wins": saved["wins"], "replayed_wins": replayed["wins"],
+                       "saved_progress_iqm": saved.get("progress_iqm"), "replayed_progress_iqm": replayed["progress_iqm"],
+                       "matches": bool(matches)}
+        ok = ok and bool(matches)
+    return {"ok": ok, "refused": None, "games": games}
 
 
 def build_document(game_results: list[dict], brain: str, model: str) -> dict:
@@ -241,29 +426,78 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--games", default=",".join(DEFAULT_GAMES))
     parser.add_argument("--fake", action="store_true", help="offline stand-in model (no key, no network, no paid call)")
+    parser.add_argument("--brain", choices=("muse", "open"), default=None, help="a live brain through the existing clients (the run that owns the key)")
+    parser.add_argument("--dry-run", action="store_true", help="print the planned calls and their dollar estimate, and send nothing")
+    parser.add_argument("--replay", type=Path, default=None, help="replay one saved result file for a judge ($0, no key)")
     parser.add_argument("--validation-seeds", default="0,1")
     parser.add_argument("--test-seeds", default="100,101")
     parser.add_argument("--candidates", type=int, default=1)
     parser.add_argument("--validation-steps", type=int, default=None)
     parser.add_argument("--held-out-steps", type=int, default=None)
-    parser.add_argument("--budget-usd", type=float, default=1.0)
+    parser.add_argument("--budget-usd", type=float, default=1.0, help="the hard per-run cap: the call that would pass it is never sent")
     parser.add_argument("--budget-calls", type=int, default=10)
-    parser.add_argument("--library", type=Path, required=True, help="the skill library folder (use a blank folder for a from-blank run)")
-    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--ledger", type=Path, default=None, help="the spend ledger file: one line per paid call (live brains only)")
+    parser.add_argument("--run-id", default=None)
+    parser.add_argument("--library", type=Path, default=None, help="the skill library folder (use a blank folder for a from-blank run)")
+    parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args(argv)
-    if not args.fake:
-        raise SystemExit("only --fake runs here: the live ask is wired by the run that owns the key, and no paid call is made from this harness")
-    seeds = lambda text: [int(s) for s in text.split(",") if s.strip()]  # noqa: E731
     games = [g.strip() for g in args.games.split(",") if g.strip()]
-    results = []
-    for game in games:
-        fake = FakeModel()
-        results.append(run_game(game, fake, args.library, seeds(args.validation_seeds), seeds(args.test_seeds),
-                                candidates=args.candidates, validation_steps=args.validation_steps,
-                                held_out_steps=args.held_out_steps, budget_usd=args.budget_usd, budget_calls=args.budget_calls))
-    document = build_document(results, "fake", "fake-stand-in (not a model result)")
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with open(args.out, "x", encoding="utf-8", newline="\n") as handle:
+    if args.replay is not None:
+        try:
+            report = replay_file(args.replay)
+        except ReplayRefused as refused:
+            print(f"replay refused: {refused}")
+            return 2
+        for game, row in report["games"].items():
+            if row.get("promoted"):
+                print(f"{game:12} saved wins {row['saved_wins']} IQM {row['saved_progress_iqm']} | replayed wins {row['replayed_wins']} "
+                      f"IQM {row['replayed_progress_iqm']} | {'matches' if row['matches'] else 'DOES NOT MATCH'}")
+            else:
+                print(f"{game:12} nothing was promoted in the saved run")
+        return 0 if report["ok"] else 1
+    if args.dry_run:
+        if not args.brain:
+            raise SystemExit("--dry-run needs --brain muse or --brain open, so the estimate prices the right model")
+        plan = plan_run(games, brain=args.brain, candidates=args.candidates)
+        for game, row in plan["games"].items():
+            print(f"{game:12} planned calls {row['planned_calls']} (about {row['tokens_in_est_per_call']} tokens in, "
+                  f"up to {row['tokens_out_est_per_call']} out each) ${row['estimated_usd']:.5f}")
+        print(f"total: {plan['planned_calls']} planned calls, ${plan['estimated_usd']:.5f} estimated; nothing was sent")
+        return 0
+    if bool(args.fake) == bool(args.brain):
+        raise SystemExit("choose exactly one of --fake (offline, no call) or --brain muse|open (live, capped)")
+    if args.library is None:
+        raise SystemExit("--library is required for a run (use a blank folder for a from-blank run)")
+    seeds = lambda text: [int(s) for s in text.split(",") if s.strip()]  # noqa: E731
+    if args.fake:
+        out = args.out
+        if out is not None and (ROOT / "results") in Path(out).resolve().parents:
+            raise SystemExit("a --fake run is a wiring check, not a model result: it never writes under results/")
+        if out is None:
+            raise SystemExit("--out is required for a --fake run (outside results/)")
+        results = []
+        for game in games:
+            results.append(run_game(game, FakeModel(), args.library, seeds(args.validation_seeds), seeds(args.test_seeds),
+                                    candidates=args.candidates, validation_steps=args.validation_steps,
+                                    held_out_steps=args.held_out_steps, budget_usd=args.budget_usd, budget_calls=args.budget_calls))
+        document = build_document(results, "fake", "fake-stand-in (not a model result)")
+    else:
+        date = datetime.now().strftime("%Y%m%d")
+        run_id = args.run_id or f"skillsmith-{args.brain}-{date}"
+        ledger = args.ledger if args.ledger is not None else ROOT / "results" / "skillsmith" / "spend-ledger.md"
+        out = args.out if args.out is not None else ROOT / "results" / "skillsmith" / f"skillsmith-{args.brain}-{date}.json"
+        capped = make_live_brain(args.brain, cap_usd=args.budget_usd, ledger_path=ledger, run_id=run_id)
+        results = []
+        for game in games:
+            results.append(run_game(game, capped, args.library, seeds(args.validation_seeds), seeds(args.test_seeds),
+                                    candidates=args.candidates, validation_steps=args.validation_steps,
+                                    held_out_steps=args.held_out_steps, budget_usd=args.budget_usd, budget_calls=args.budget_calls))
+        document = build_document(results, args.brain, capped.model)
+        document["run_id"] = run_id
+        document["cap_usd"] = args.budget_usd
+        document["spend_ledger"] = ledger.name
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "x", encoding="utf-8", newline="\n") as handle:
         json.dump(document, handle, indent=1)
     for game in games:
         result = document["games"][game]
