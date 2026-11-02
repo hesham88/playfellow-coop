@@ -3,15 +3,19 @@
 Two checks need a person at the keyboard because they press real keys or look at a real screen. Nothing in this repository counts as
 "working" for these two things until you have done them and the files they write say so.
 
-## Before you start
+## Before you start (every command below assumes exactly this)
 
+1. Do the README's **Install and run** steps once. They make one folder that holds the engine (`playfellow`) and this repository side by side, with one virtual environment (`.venv`).
+2. Open **two** PowerShell windows in that folder and, in each one, turn the environment on: `.venv\Scripts\activate`. The prompt then starts with `(.venv)`. A plain `python` without it gives "No module named playfellow_coop" or "No module named practice_arena".
+3. In each window, `cd` into this repository's folder. `python -m playfellow_coop --help` must print the options; if it does not, step 1 or 2 is missing.
+4. For the Muse brain, set the key in that window only: `$env:MODEL_API_KEY = "<your key>"`. Never paste it into a file in the repository.
 - Close other heavy programs. This PC has little free memory.
-- Start the Practice Arena from the engine folder: `python -m practice_arena.arena`. If it can be set to borderless or windowed, use that.
+- Start the Practice Arena in the first window: `python -m practice_arena.arena`. If it can be set to borderless or windowed, use that.
 - Do not use a game that is online or has anti-cheat. Use the Practice Arena first; SuperTux (borderless) second.
 
 ## Check 1: you take over, I take over (about 5 minutes)
 
-1. In this repository's folder run: `python -m playfellow_coop --typed`
+1. In the second window (environment on, in this repository's folder) run: `python -m playfellow_coop --typed`
 2. Click the arena window so it is in front. The buddy starts playing.
 3. Press **F9**. The buddy must stop at once and say "It's yours." Play a few moves yourself.
 4. Press **F9** again. The buddy must say how long you played and how many turns it waited, then play again.
@@ -20,7 +24,7 @@ Two checks need a person at the keyboard because they press real keys or look at
 
 ## Check 2: the floating panel does not disturb the game (about 5 minutes)
 
-0. You are asked to do this only after the builder has rehearsed it: `python demo/overlay_live_check.py --dry-run` runs the same steps over a plain window of its own, with no game. If you were not told that rehearsal passed, wait.
+0. You are asked to do this only after the builder has rehearsed it: `python demo/overlay_live_check.py --dry-run` (second window, this repository's folder) runs the same steps over a plain window of its own, with no game. If you were not told that rehearsal passed, wait.
 1. With the arena open and in front, run in another terminal: `python demo/overlay_live_check.py`
 2. When it asks, click the arena window, then do **not** touch the keyboard or mouse for about 20 seconds.
 3. It opens and closes the panel 50 times, looks at only the panel's own rectangle in two screenshots (kept in memory, never saved), and prints two numbers and a saved file name.
@@ -32,14 +36,21 @@ Check 2 drives the older Tk panel. The widget that `--overlay` now opens is the 
 
 ## Check 2b: the in-game widget over a full-screen game (about 5 minutes)
 
-1. Start the game full screen, then run `python -m playfellow_coop --window "<its window title>" --card any_game --overlay --input scancode`.
+1. Start the game full screen. Then, in the second window (environment on, in this repository's folder, key set as in step 4 above), run:
+   `python -m playfellow_coop --window "<its window title>" --card any_game --brain muse --overlay --talk-key f8 --assist 4 --brief --input scancode`
+   Use the game's own card instead of `any_game` when there is one (`--card rayman_legends`). The title is the one shown in the taskbar.
 2. A slim bar must appear at the top centre, over the game, and see-through. The game must keep the focus, so its keys still work.
-3. Click the arrow. The panel must slide down smoothly, and the arrow again must slide it back up.
-4. Drag the opacity slider fully left. The widget must still be visible.
-5. Hold the mic on the bar, say a short request, and release. The request must show in the panel, and the buddy must act on it.
+3. Press **Ctrl+Alt+P** (or click the arrow if the game shows a mouse). The panel must slide down smoothly; the same key slides it back up. The bar writes every key on itself.
+4. Press **Ctrl+Alt+O** a few times (or drag the slider). The widget steps through four levels of see-through and is still visible at the lowest.
+5. Hold **F8** (or the mic on the bar), say a short request, and release after the last word. A tap too short to carry words says "I didn't hear anything". The request must show in the panel, and the buddy must act on it.
 6. Write down: did it ever disappear behind the game? did the game lose a key or the focus?
 
-The no-focus, always-on-top method was checked over a full-screen commercial game on 2 November 2026 (a plain test bar). Steps 2 to 6 for the widget itself are still open.
+Results so far, 2 November 2026, over a full-screen commercial game:
+- Step 2 passed: the bar showed at the top centre, see-through, and the game kept the focus and its keys.
+- F8 and F9 worked.
+- The widget's mouse buttons did nothing, because the game had taken the mouse. That is why every control now has a key written on the bar.
+- The panel grew past its height. Fixed: the chat now shows its last 4 lines in a fixed window.
+- Steps 3 to 6 are to repeat with the keys above.
 
 ## Check 3 (only if checks 1 and 2 went well): a calm open-source game
 
