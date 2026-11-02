@@ -52,6 +52,7 @@ GOALS = {
     "maze_chase": "collect the coins, take the key and reach the door",
     "key_caves": "cross the rooms, take the key and open the door",
     "action_quest": "defeat the boss",
+    "osg_2048": "slide the tiles, join equals, and reach the 2048 tile",
 }
 DEFAULT_GAMES = ("maze_chase", "key_caves", "action_quest")
 
@@ -82,6 +83,86 @@ class FakeModel:
 
     def usage(self) -> dict:
         return {"calls": self.calls, "tokens_in": NOT_MEASURED, "tokens_out": NOT_MEASURED, "cost_usd": 0.0}
+
+
+class ImprovingFakeModel:
+    """The offline stand-in that gets better on purpose, for the learning curve: its first answer does nothing, every later answer is the fixed chasing skill. No key, no network, no cost."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def ask(self, prompt: str) -> str:
+        self.calls += 1
+        code = IDLE_CODE if self.calls == 1 else FAKE_CODE
+        return "```python\n" + code + "```"
+
+    def usage(self) -> dict:
+        return {"calls": self.calls, "tokens_in": NOT_MEASURED, "tokens_out": NOT_MEASURED, "cost_usd": 0.0}
+
+
+def _prompt_shown(prompt: str) -> dict:
+    """What one skill-writing prompt showed the model: how many recorded observations and how many lessons. Parsed from the prompt itself, so the curve records what was sent, not what was meant to be sent."""
+    import re
+
+    trace_shown: object = NOT_MEASURED
+    match = re.search(r"Recorded observations \(raw, in order\):\n(\[.*?\])\n\n", prompt or "", re.S)
+    if match:
+        try:
+            trace_shown = len(json.loads(match.group(1)))
+        except ValueError:
+            trace_shown = NOT_MEASURED
+    lessons_shown: object = NOT_MEASURED
+    lessons_match = re.search(r"Lessons already learned about this game:\n(.*?)\n\nRecorded observations", prompt or "", re.S)
+    if lessons_match:
+        text = lessons_match.group(1).strip()
+        lessons_shown = 0 if text in ("", "(none yet)") else len([line for line in text.splitlines() if line.strip()])
+    return {"trace_shown": trace_shown, "lessons_shown": lessons_shown}
+
+
+class _RecordingAsk:
+    """Wraps the model's ask(prompt) and records every proposal's fate, so a candidate that is never scored still says why in the result file.
+
+    An answered proposal records whether code was extracted and what the static gate said. A proposal whose call itself failed records the error
+    (type and message, never a key) and returns a no-code answer, so the round still reports instead of vanishing or masquerading as an idle score.
+    The per-run budget refusal is not a provider failure: it still raises, so the cap stops the search."""
+
+    def __init__(self, ask):
+        self._ask = ask
+        self._fn = ask.ask if hasattr(ask, "ask") else ask
+        self.records: list[dict] = []
+        self.round = 0
+
+    def __call__(self, prompt: str) -> str:
+        from playfellow_coop.skillsmith import ast_gate
+        from playfellow_coop.skillsmith.promote import BudgetExceeded
+        from playfellow_coop.skillsmith.synth import extract_code
+
+        shown = _prompt_shown(prompt)
+        try:
+            answer = self._fn(prompt)
+        except BudgetExceeded:
+            raise
+        except Exception as error:  # noqa: BLE001 (recorded, then reported as a failed proposal; the key never appears here)
+            detail = f"{type(error).__name__}: {str(error)[:200]}"
+            self.records.append({"round": self.round, "outcome": "error", "extracted": False, "gate_passed": None,
+                                 "detail": detail, "answer_chars": 0, **shown})
+            return f"<{type(error).__name__}>"
+        code = extract_code(answer) if isinstance(answer, str) else None
+        if code is None:
+            detail = "the answer contained no code block"
+            gate_passed = None
+        else:
+            gate_ok, gate_why = ast_gate.check(code)
+            detail, gate_passed = gate_why, bool(gate_ok)
+        self.records.append({"round": self.round, "outcome": "answered", "extracted": code is not None,
+                             "gate_passed": gate_passed, "detail": detail,
+                             "answer_chars": len(answer) if isinstance(answer, str) else 0, **shown})
+        return answer
+
+    def usage(self) -> dict:
+        if hasattr(self._ask, "usage"):
+            return self._ask.usage()
+        raise AttributeError("usage")
 
 
 class ReplayRefused(Exception):
@@ -181,7 +262,7 @@ def plan_run(games: list[str], brain: str = "muse", candidates: int = 1) -> dict
     rows, total_calls, total_usd = {}, 0, 0.0
     for game in games:
         prompt = build_prompt(game, GOALS.get(game, "win the game"), [], [], keys=("up", "down", "left", "right"),
-                              progress=progress_text(game), example=example_for(game))
+                              progress=_osg_progress_text() if game == "osg_2048" else progress_text(game), example=example_for(game))
         tokens_in = estimate_tokens(prompt)
         planned = int(candidates) * 2  # one proposal plus its one retry, per candidate
         usd = planned * (tokens_in * INPUT_USD_PER_TOKEN + max_out * OUTPUT_USD_PER_TOKEN)
@@ -221,17 +302,39 @@ def make_live_brain(brain_name: str, cap_usd: float, ledger_path: Path | None, r
 
 
 def game_support(game: str) -> tuple[bool, str]:
-    """Whether the gym can score this game today. An unsupported game is reported, never crashed on."""
+    """Whether this game can be scored today. An unsupported game is reported, never crashed on."""
     from playfellow_coop.gym.progress import PROGRESS
 
     if game == "osg_2048":
-        if not (ROOT / "bench" / "osg_2048.py").is_file():
-            return False, "bench/osg_2048.py is not in this repo yet, so the web path cannot be driven"
-        if game not in PROGRESS:
-            return False, "the gym has no progress score for osg_2048"
+        try:
+            import bench.osg_progress  # noqa: F401 (the score this file brings; gym/progress.py still needs the architect's one-line hook)
+        except ImportError as error:
+            return False, f"bench/osg_progress.py cannot be loaded ({error}), so the web 2048 cannot be scored"
+        return True, ""
     if game not in PROGRESS:
         return False, f"the gym has no progress score for {game}, so no episode can be scored or promoted"
     return True, ""
+
+
+def _osg_progress_text() -> str:
+    return ("progress is how far the best tile has climbed toward the 2048 tile on a doubling (log2) scale, relative to the "
+            "first board; the score number alone earns nothing, and only the 2048 tile itself reaches 1.0")
+
+
+def _osg_observer_mapper():
+    from playfellow_coop.gym.obs import ActionMapper, ObsSpec, PixelObserver
+    from playfellow_coop.skills.looks import Look
+
+    return PixelObserver(Look("osg_2048-unfitted", {}), ObsSpec(self_role="player")), ActionMapper(keys=("left", "right", "up", "down"))
+
+
+def _make_osg_env_factory():
+    from bench.osg_progress import make_env
+
+    def factory(seed: int):
+        return make_env(seed)
+
+    return factory
 
 
 def _observer_mapper(game: str, keys: tuple[str, ...]):
@@ -313,9 +416,15 @@ def play_held_out(code: str, make_env, observer, mapper, seeds, max_steps: int) 
 def run_game(game: str, ask, library_root: Path, validation_seeds, test_seeds, candidates: int = 1,
              validation_steps: int | None = None, held_out_steps: int | None = None,
              budget_usd: float = 1.0, budget_calls: int = 10, cost_per_call_usd: float = 0.0,
-             example: tuple[str, str] | None = None) -> dict:
-    """One full SkillSmith round on one game, from the library folder as it stands (pass a blank folder for a from-blank run)."""
+             example: tuple[str, str] | None = None, rounds: int = 1) -> dict:
+    """SkillSmith rounds on one game, from the library folder as it stands (pass a blank folder for a from-blank run).
+
+    With `rounds` above 1 this is the learning curve: each round gets fresh validation seeds (a spent set is never reused to
+    choose), the promoted skill becomes the next round's current skill, and `curve` gains exactly one point per round holding the
+    current and best validation progress, what the first prompt of the round showed (trace and lessons), and the verdict."""
     ensure_engine()
+    if int(rounds) < 1:
+        raise ValueError("rounds must be at least 1")
     supported, reason = game_support(game)
     if not supported:
         return {"game": game, "supported": False, "reason": reason, "promoted": None}
@@ -327,45 +436,113 @@ def run_game(game: str, ask, library_root: Path, validation_seeds, test_seeds, c
 
     validation_seeds, test_seeds = list(validation_seeds), list(test_seeds)
     assert_disjoint(validation_seeds, test_seeds)  # the held-out split is checked before anything plays
-    ask_fn = ask.ask if hasattr(ask, "ask") else ask
-    probe = ar.load_game(game, validation_seeds[0])
-    step_limit = int(probe.max_ticks)
-    game_keys = tuple(probe.keys)
-    observer, mapper = _observer_mapper(game, game_keys)
+    if game == "osg_2048":
+        probe_keys, step_limit = ("left", "right", "up", "down"), 2000
+        observer, mapper = _osg_observer_mapper()
+        make_env = _make_osg_env_factory()
+        probe = None
+    else:
+        probe = ar.load_game(game, validation_seeds[0])
+        step_limit = int(probe.max_ticks)
+        game_keys_probe = tuple(probe.keys)
+        observer, mapper = _observer_mapper(game, game_keys_probe)
+        make_env = _make_env_factory(game)
+        game_keys = game_keys_probe
+    if game == "osg_2048":
+        game_keys = probe_keys
     library = SkillLibrary(Path(library_root))
     budget = Budget(max_usd=budget_usd, max_calls=budget_calls)
     from playfellow_coop.skillsmith.synth import example_for, progress_text
 
     example = example if example is not None else example_for(game)
-    synth = Synthesizer(ask_fn, library, budget, cost_per_call_usd=cost_per_call_usd,
-                        keys=game_keys, progress=progress_text(game), example=example)
-    result = improve(game, GOALS.get(game, "win the game"), library, synth, CURRENT_NAME, IDLE_CODE,
-                     _make_env_factory(game), observer, mapper, validation_seeds, test_seeds,
-                     selector=Selector(), candidates=candidates, max_steps=validation_steps or min(step_limit, 600))
-    verdicts = {name: {"mean_progress": round(s.mean_progress, 4), "wins": s.wins, "episodes": s.episodes,
-                       "faults": s.faults, "steps": s.steps} for name, s in result.scores.items()}
+    recorder = _RecordingAsk(ask)
+    synth = Synthesizer(recorder, library, budget, cost_per_call_usd=cost_per_call_usd,
+                        keys=game_keys, progress=progress_text(game) if game != "osg_2048" else _osg_progress_text(), example=example)
+    selector = Selector()
+    current_name, current_code = CURRENT_NAME, IDLE_CODE
+    curve: list[dict] = []
+    verdicts: dict = {}
+    last_reason = ""
+    max_steps = validation_steps or min(step_limit, 600)
+    for round_index in range(int(rounds)):
+        round_validation = list(validation_seeds) if round_index == 0 else [int(s) + round_index * 1000 for s in validation_seeds]
+        assert_disjoint(round_validation, test_seeds)
+        recorder.round = round_index
+        slice_start = len(recorder.records)
+        lessons_before = library.experience(game)
+        result = improve(game, GOALS.get(game, "win the game"), library, synth, current_name, current_code,
+                         make_env, observer, mapper, round_validation, test_seeds,
+                         selector=selector, candidates=candidates, max_steps=max_steps)
+        verdicts = {name: {"mean_progress": round(s.mean_progress, 4), "wins": s.wins, "episodes": s.episodes,
+                           "faults": s.faults, "steps": s.steps} for name, s in result.scores.items()}
+        last_reason = result.reason
+        current_progress = round(float(result.scores[current_name].mean_progress), 4) if current_name in result.scores else NOT_MEASURED
+        others = {n: s for n, s in result.scores.items() if n != current_name}
+        best_name = max(others, key=lambda n: others[n].mean_progress) if others else None
+        best_progress = round(float(others[best_name].mean_progress), 4) if best_name is not None else current_progress
+        shown_records = recorder.records[slice_start:]
+        first_shown = shown_records[0] if shown_records else {"trace_shown": NOT_MEASURED, "lessons_shown": len(lessons_before)}
+        curve.append({"round": round_index, "validation_seeds": round_validation, "current": current_name,
+                      "current_progress": current_progress, "best_candidate": best_name, "best_progress": best_progress,
+                      "promoted": result.promoted, "reason": result.reason,
+                      "trace_shown": first_shown.get("trace_shown", NOT_MEASURED),
+                      "lessons_shown": first_shown.get("lessons_shown", len(lessons_before)),
+                      "lessons": list(lessons_before), "proposals": len(shown_records)})
+        if result.promoted:
+            promoted_code_next = library.get(game, result.promoted)
+            if promoted_code_next is not None:
+                current_name, current_code = result.promoted, promoted_code_next
     usage = ask.usage() if hasattr(ask, "usage") else {"calls": budget.calls, "tokens_in": NOT_MEASURED,
                                                        "tokens_out": NOT_MEASURED, "cost_usd": round(budget.spent_usd, 5)}
     reported = usage.get("cost_usd")
     writing = {"calls": int(budget.calls), "cost_usd": round(float(reported), 5) if isinstance(reported, (int, float)) and not isinstance(reported, bool) else round(float(budget.spent_usd), 5),
                "tokens_in": usage.get("tokens_in", NOT_MEASURED), "tokens_out": usage.get("tokens_out", NOT_MEASURED)}
-    promoted_code = library.get(game, result.promoted) if result.promoted else None
-    held_out: dict = {"played": False, "reason": result.reason, "wins": NOT_MEASURED, "local_step_ms": NOT_MEASURED,
+    promoted_final = current_name if current_name != CURRENT_NAME else None
+    promoted_code = library.get(game, current_name) if promoted_final else None
+    held_out: dict = {"played": False, "reason": last_reason, "wins": NOT_MEASURED, "local_step_ms": NOT_MEASURED,
                       "play_calls": 0, "play_cost_usd": 0.0}
-    if result.promoted and promoted_code is not None:
-        held_out = play_held_out(promoted_code, _make_env_factory(game), observer, mapper, test_seeds,
+    if promoted_final and promoted_code is not None:
+        held_out = play_held_out(promoted_code, make_env, observer, mapper, test_seeds,
                                  held_out_steps or step_limit)
     return {"game": game, "supported": True, "goal": GOALS.get(game, "win the game"), "step_limit": step_limit,
             "validation_seeds": validation_seeds, "test_seeds": test_seeds, "current": CURRENT_NAME,
-            "promoted": result.promoted, "selector_reason": result.reason, "gate_verdicts": verdicts,
+            "promoted": promoted_final, "selector_reason": last_reason, "gate_verdicts": verdicts,
+            "curve": curve, "proposals": list(recorder.records),
             "skill_source": promoted_code, "skill_sha256": hashlib.sha256(promoted_code.encode("utf-8")).hexdigest() if promoted_code else None,
             "current_sha256": hashlib.sha256(IDLE_CODE.encode("utf-8")).hexdigest(),
             "keys": list(game_keys), "example_game": example[0],
             "example_sha256": hashlib.sha256(example[1].encode("utf-8")).hexdigest(),
             "held_out_steps": int(held_out_steps or step_limit),
-            "safety_checks": safety_checks(promoted_code, result.promoted, result.reason),
+            "safety_checks": safety_checks(promoted_code, promoted_final, last_reason),
             "writing": writing, "held_out": held_out,
             "sandbox": "skillsmith SandboxedSkill: static gate, separate worker on the real python.exe, osjail containment on Windows"}
+
+
+def find_latest_live(root: Path | None = None) -> Path | None:
+    """The newest live SkillSmith file under results/skillsmith (skillsmith-<brain>-<date>.json, never a fake wiring check), or None when no live file is there yet."""
+    folder = Path(root) / "results" / "skillsmith" if root is not None else ROOT / "results" / "skillsmith"
+    if not folder.is_dir():
+        return None
+    candidates = []
+    for path in folder.glob("skillsmith-*.json"):
+        if path.name.startswith("skillsmith-fake"):
+            continue
+        try:
+            document = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if document.get("brain") == "fake":
+            continue
+        candidates.append(path)
+    return sorted(candidates)[-1] if candidates else None
+
+
+def latest_sandbox_proof(root: Path | None = None) -> Path | None:
+    folder = Path(root) / "results" / "skillsmith" if root is not None else ROOT / "results" / "skillsmith"
+    if not folder.is_dir():
+        return None
+    files = sorted(folder.glob("sandbox-proof-*.json"))
+    return files[-1] if files else None
 
 
 def replay_file(path: Path) -> dict:
@@ -390,12 +567,17 @@ def replay_file(path: Path) -> dict:
             raise ReplayRefused(f"{game}: the saved source fails the static gate: {checks['static_gate']['detail']}")
         if checks["sandbox"]["passed"] is not True:
             raise ReplayRefused(f"{game}: the saved source fails in the sandbox: {checks['sandbox']['detail']}")
-        from bench import arena_run as ar
+        if game == "osg_2048":
+            observer, mapper = _osg_observer_mapper()
+            replayed = play_held_out(source, _make_osg_env_factory(), observer, mapper, list(row["test_seeds"]),
+                                     int(row.get("held_out_steps") or row["step_limit"]))
+        else:
+            from bench import arena_run as ar
 
-        probe = ar.load_game(game, row["test_seeds"][0])
-        observer, mapper = _observer_mapper(game, tuple(probe.keys))
-        replayed = play_held_out(source, _make_env_factory(game), observer, mapper, list(row["test_seeds"]),
-                                 int(row.get("held_out_steps") or row["step_limit"]))
+            probe = ar.load_game(game, row["test_seeds"][0])
+            observer, mapper = _observer_mapper(game, tuple(probe.keys))
+            replayed = play_held_out(source, _make_env_factory(game), observer, mapper, list(row["test_seeds"]),
+                                     int(row.get("held_out_steps") or row["step_limit"]))
         saved = row["held_out"]
         matches = (replayed["wins"] == saved["wins"] and len(replayed["episodes"]) == len(saved["episodes"])
                    and all(a["won"] == b["won"] and abs(a["progress"] - b["progress"]) < 0.001
@@ -429,10 +611,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--fake", action="store_true", help="offline stand-in model (no key, no network, no paid call)")
     parser.add_argument("--brain", choices=("muse", "open"), default=None, help="a live brain through the existing clients (the run that owns the key)")
     parser.add_argument("--dry-run", action="store_true", help="print the planned calls and their dollar estimate, and send nothing")
-    parser.add_argument("--replay", type=Path, default=None, help="replay one saved result file for a judge ($0, no key)")
+    parser.add_argument("--replay", default=None, help="replay one saved result file for a judge ($0, no key), or 'latest' for the newest live file")
     parser.add_argument("--validation-seeds", default="0,1")
     parser.add_argument("--test-seeds", default="100,101")
     parser.add_argument("--candidates", type=int, default=1)
+    parser.add_argument("--rounds", type=int, default=1, help="SkillSmith rounds per game (the learning curve has one point per round)")
     parser.add_argument("--validation-steps", type=int, default=None)
     parser.add_argument("--held-out-steps", type=int, default=None)
     parser.add_argument("--budget-usd", type=float, default=1.0, help="the hard per-run cap: the call that would pass it is never sent")
@@ -444,8 +627,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     games = [g.strip() for g in args.games.split(",") if g.strip()]
     if args.replay is not None:
+        replay_path = find_latest_live() if str(args.replay) == "latest" else Path(args.replay)
+        if replay_path is None:
+            print("no live file yet: no committed live SkillSmith file under results/skillsmith/ to replay")
+            return 0
         try:
-            report = replay_file(args.replay)
+            report = replay_file(replay_path)
         except ReplayRefused as refused:
             print(f"replay refused: {refused}")
             return 2
@@ -455,6 +642,15 @@ def main(argv: list[str] | None = None) -> int:
                       f"IQM {row['replayed_progress_iqm']} | {'matches' if row['matches'] else 'DOES NOT MATCH'}")
             else:
                 print(f"{game:12} nothing was promoted in the saved run")
+        proof_path = latest_sandbox_proof()
+        if proof_path is not None and proof_path.is_file():
+            proof = json.loads(proof_path.read_text(encoding="utf-8"))
+            print(f"sandbox proof ({proof_path.name}):")
+            for proof_row in proof.get("rows", []):
+                state = f"stopped by {proof_row.get('layer')}" if proof_row.get("stopped") else "NOT STOPPED"
+                print(f"  {proof_row.get('name'):34} {state}")
+            for proof_row in proof.get("harmless", []):
+                print(f"  {proof_row.get('name'):34} {'passed' if proof_row.get('passed') else 'FAILED (harmless)'}")
         return 0 if report["ok"] else 1
     if args.dry_run:
         if not args.brain:
@@ -476,11 +672,13 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit("a --fake run is a wiring check, not a model result: it never writes under results/")
         if out is None:
             raise SystemExit("--out is required for a --fake run (outside results/)")
+        fake_model = ImprovingFakeModel() if int(args.rounds) > 1 else FakeModel()
         results = []
         for game in games:
-            results.append(run_game(game, FakeModel(), args.library, seeds(args.validation_seeds), seeds(args.test_seeds),
+            results.append(run_game(game, fake_model, args.library, seeds(args.validation_seeds), seeds(args.test_seeds),
                                     candidates=args.candidates, validation_steps=args.validation_steps,
-                                    held_out_steps=args.held_out_steps, budget_usd=args.budget_usd, budget_calls=args.budget_calls))
+                                    held_out_steps=args.held_out_steps, budget_usd=args.budget_usd, budget_calls=args.budget_calls,
+                                    rounds=int(args.rounds)))
         document = build_document(results, "fake", "fake-stand-in (not a model result)")
     else:
         date = datetime.now().strftime("%Y%m%d")
@@ -492,7 +690,8 @@ def main(argv: list[str] | None = None) -> int:
         for game in games:
             results.append(run_game(game, capped, args.library, seeds(args.validation_seeds), seeds(args.test_seeds),
                                     candidates=args.candidates, validation_steps=args.validation_steps,
-                                    held_out_steps=args.held_out_steps, budget_usd=args.budget_usd, budget_calls=args.budget_calls))
+                                    held_out_steps=args.held_out_steps, budget_usd=args.budget_usd, budget_calls=args.budget_calls,
+                                    rounds=int(args.rounds)))
         document = build_document(results, args.brain, capped.model)
         document["run_id"] = run_id
         document["cap_usd"] = args.budget_usd
@@ -509,7 +708,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{game:12} promoted {result['promoted']}: held-out wins {held['wins']}/{len(held['episodes'])} IQM {held['progress_iqm']} step {held['local_step_ms']}")
         else:
             print(f"{game:12} refused: {result['selector_reason']}")
-    print(f"wrote {args.out}")
+    print(f"wrote {out}")
     return 0
 
 
