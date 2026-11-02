@@ -19,9 +19,10 @@ def test_validation_and_held_out_seeds_must_be_disjoint_before_anything_plays(tm
 
 
 def test_a_game_the_gym_cannot_score_is_reported_not_crashed(tmp_path):
-    supported, reason = game_support("action_quest")
+    assert game_support("action_quest")[0] is True  # the merged progress table scores it now
+    supported, reason = game_support("no_such_game")
     assert not supported and "progress" in reason
-    result = run_game("action_quest", FakeModel(), tmp_path / "lib", [0], [100])
+    result = run_game("no_such_game", FakeModel(), tmp_path / "lib", [0], [100])
     assert result["supported"] is False and result["promoted"] is None and result["reason"]
 
 
