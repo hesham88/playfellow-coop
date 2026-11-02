@@ -224,3 +224,95 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# ---- a model alone (R7): the same requests, the model sees the board picture and names one arrow per move ------------------------------
+MODEL_SYSTEM = ("You are playing the game 2048 for a player who asked you for one goal. Each turn you see the board. Answer with ONLY one "
+                "word, the arrow to press: left, right, up or down.")
+
+
+def model_episode(browser, base: str, seed: int, brain, targets=(64, 128), part_turns: int = 60) -> dict:
+    import io
+
+    from PIL import Image
+
+    game = Page(browser, base, seed)
+    target = {"tile": 0}
+    state = {"m": game.measured()}
+    assist = Assist(max_turns=part_turns, done=lambda r, _p: "game_progress" if state["m"]["best"] >= target["tile"] else False)
+    parts, unreadable, cost = [], 0, 0.0
+    for tile in targets:
+        if state["m"]["over"]:
+            break
+        target["tile"] = tile
+        assist.begin(f"get me to a {tile} tile", 0)
+        line = None
+        while line is None:
+            shot = Image.open(io.BytesIO(game.page.screenshot(clip=game.clip))).convert("RGB")
+            try:
+                answer = brain.ask(MODEL_SYSTEM, f"The player asked: get me to a {tile} tile. Which arrow now?", [shot])
+            except Exception as error:  # an empty or failed answer is an unreadable move, recorded, not the end of the run
+                answer = f"<{type(error).__name__}>"
+            cost += float((getattr(brain, "last_request", None) or {}).get("cost_usd") or 0.0)
+            words = answer.lower()
+            key = next((k for k in KEYS if k in words), None)
+            if key is None:
+                unreadable += 1
+            else:
+                game.keyDown(key)
+            state["m"] = game.measured()
+            line = assist.after_turn(None, 1 if key else 0, 0)
+            if line is None and state["m"]["over"]:
+                assist.end("game_over", 0)
+                line = "over"
+        record = dict(assist.log[-1])
+        record["done"] = bool(record["done"]) and state["m"]["best"] >= tile
+        record.pop("seconds", None)
+        record.pop("ai_calls", None)
+        parts.append(record)
+    final = game.measured()
+    game.close()
+    return {"game": "2048-web", "seed": seed, "condition": f"model-alone:{getattr(brain, 'model', '?')}", "parts": parts,
+            "unreadable_answers": unreadable, "best_tile": final["best"], "cost_usd": round(cost, 5)}
+
+
+def main_model(argv=None) -> int:
+    ap = argparse.ArgumentParser(description="R7: a model alone on the original 2048")
+    ap.add_argument("--brain", choices=["muse", "open"], required=True)
+    ap.add_argument("--seeds", type=int, default=2)
+    ap.add_argument("--max-usd", type=float, default=0.75)
+    ap.add_argument("--game-dir", default=str(GAME_DIR))
+    args = ap.parse_args(argv)
+    import os
+
+    from playwright.sync_api import sync_playwright
+    if args.brain == "muse":
+        from playfellow_coop.muse_brain import DEFAULT_MODEL, MuseBrain
+        brain = MuseBrain(DEFAULT_MODEL, os.environ["MODEL_API_KEY"], cache_key=None)
+    else:
+        from bench.open_weights_brain import OpenWeightsBrain
+        brain = OpenWeightsBrain(os.environ.get("OPEN_BRAIN_API_KEY") or os.environ["BASETEN_API_KEY"])
+    server, base = serve(Path(args.game_dir))
+    episodes, spent = [], 0.0
+    with sync_playwright() as p:
+        browser = launch(p)
+        for seed in range(args.seeds):
+            if spent >= args.max_usd:
+                break
+            e = model_episode(browser, base, seed, brain)
+            spent += e["cost_usd"]
+            episodes.append(e)
+            print(f"seed {seed}: {[(x['request'], x['done'], x['turns']) for x in e['parts']]} best {e['best_tile']} ${e['cost_usd']:.4f}", flush=True)
+        browser.close()
+    server.shutdown()
+    parts = [x for e in episodes for x in e["parts"]]
+    done = sum(1 for x in parts if x["done"])
+    result = {"schema": "pf-access-osg/1", "written": datetime.datetime.now().astimezone().isoformat(timespec="seconds"), "commit": _commit(),
+              "game": {"name": "2048", "author": "Gabriele Cirulli", "licence": "MIT", "pinned": PINNED}, "brain": f"{args.brain} alone, one arrow per picture",
+              "summary": {"requests": len(parts), "done": done, "done_rate_95": wilson(done, len(parts)), "cost_usd": round(spent, 4),
+                          "unreadable_answers": sum(e["unreadable_answers"] for e in episodes)}, "episodes": episodes,
+              "honesty": "The model alone: no skill, no look-ahead. Compare with osg-2048-<date>.json (the assisted skill)."}
+    out = OUT / f"osg-2048-model-{args.brain}-{datetime.date.today():%Y%m%d}.json"
+    out.write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps(result["summary"]), "\nwrote", out)
+    return 0
