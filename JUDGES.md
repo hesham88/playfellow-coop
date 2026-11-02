@@ -26,12 +26,12 @@ python demo/record_replay.py session-logs/run1.jsonl
 
 It refuses any log that does not prove a real brain with real marks, so a scripted run can never be passed off as a live one.
 
-## 2. Offline play with no key
+## 2. Offline play with no key: the assist
 
-After the architect's assist change is merged, the offline run is:
+You start with the controls. A typed request hands one part to the buddy; the controls come back by themselves.
 
 ```
-python -m playfellow_coop --assist --typed
+python -m playfellow_coop --assist 6 --typed
 ```
 
 then type:
@@ -40,25 +40,33 @@ then type:
 grab the coins on the left
 ```
 
-Run on this branch (the assist flag is not in this branch yet; it lands with the architect's merge):
+What you will see offline is exactly this: the built-in brain never says a part is done, so the part ends at its turn limit (6 turns here, so it ends quickly) with "I couldn't finish …" and hands the controls back. That is the offline behaviour — do not read it as the buddy detecting a finished part. **F9** takes the controls back at any moment; **F12** stops everything.
 
-```
-__main__.py: error: unrecognized arguments: --assist
-```
-
-The same run without that flag works on this branch today. It needs no key and no network (built-in brain, typed line in, dry run so nothing is pressed):
-
-```
-python -m playfellow_coop --typed --dry-run --max-seconds 20
-```
-
-Output on this machine (its engine dependencies are not installed here, so it stops at that step; the offline test suite below covers the typed-command path end to end):
+Run on the machine that wrote this file (2026-11-02, on the branch where `--assist` lands; its engine input dependency is not installed here, so the live run stops at that step, and the offline bench and tests below are the proof that runs here):
 
 ```
 ModuleNotFoundError: No module named 'pydirectinput'
 ```
 
-Offline proof that does run here today, typed command included:
+"Done" hand-backs that are measured, at $0, come from the games themselves:
+
+```
+python -m bench.access_bench --seeds 5
+```
+
+Result (committed as `results/access/access-20261102.json`, `done_by: game_progress`): **65 of 66 parts done, 0 breaches, 21,066 presses spared**; split controls refused 83,696 presses of kept keys with **0 breaches**; the random control finished 11 of 36 parts. No disabled player was simulated or involved: the player rests between requests. The assist tests agree:
+
+```
+python -m pytest tests/test_assist.py tests/test_access_bench.py -q -W error
+```
+
+```
+37 passed, 2 skipped
+```
+
+Live, with your own key (`--brain muse --assist`, part 3): "done" is the model's word (`done_by: model_said`), with the screen-goal check beside it when it fires (`done_by: screen_goal`). The record always says which.
+
+Offline proof of the typed-command path on this branch today:
 
 ```
 python -m pytest tests/test_record_replay.py tests/test_arena_run.py -q -W error
