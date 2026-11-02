@@ -1,0 +1,120 @@
+{
+ "schema": "pf-sandbox-proof/1",
+ "written": "2026-11-02T11:54:24+02:00",
+ "platform": "win32",
+ "layers": [
+  "static gate",
+  "worker namespace",
+  "OS job object"
+ ],
+ "rows": [
+  {
+   "name": "open a socket",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "import of 'socket' is not allowed; only ['dataclasses', 'math', 'numpy', 'typing'] may be imported",
+   "ms": 0.1
+  },
+  {
+   "name": "write a file outside the folder",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "the name 'open' is not allowed",
+   "ms": 0.1
+  },
+  {
+   "name": "start a child process",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "import of 'subprocess' is not allowed; only ['dataclasses', 'math', 'numpy', 'typing'] may be imported",
+   "ms": 0.1
+  },
+  {
+   "name": "import os",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "import of 'os' is not allowed; only ['dataclasses', 'math', 'numpy', 'typing'] may be imported",
+   "ms": 0.1
+  },
+  {
+   "name": "import subprocess",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "import of 'subprocess' is not allowed; only ['dataclasses', 'math', 'numpy', 'typing'] may be imported",
+   "ms": 0.0
+  },
+  {
+   "name": "import ctypes",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "import of 'ctypes' is not allowed; only ['dataclasses', 'math', 'numpy', 'typing'] may be imported",
+   "ms": 0.0
+  },
+  {
+   "name": "read an environment variable",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "attribute 'environ' is not allowed",
+   "ms": 0.1
+  },
+  {
+   "name": "loop forever",
+   "stopped": true,
+   "layer": "worker namespace",
+   "detail": "no answer within 1500 ms",
+   "ms": 1611.0
+  },
+  {
+   "name": "allocate past the memory cap",
+   "stopped": true,
+   "layer": "OS job object",
+   "detail": "the worker died or was refused at start (MemoryError: ); containment low-integrity+job",
+   "ms": 89.2
+  },
+  {
+   "name": "call eval",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "the name 'eval' is not allowed",
+   "ms": 0.2
+  },
+  {
+   "name": "call exec",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "the name 'exec' is not allowed",
+   "ms": 0.2
+  },
+  {
+   "name": "walk frames to escape",
+   "stopped": true,
+   "layer": "static gate",
+   "detail": "attribute 'f_globals' is not allowed",
+   "ms": 0.2
+  }
+ ],
+ "harmless": [
+  {
+   "name": "chase the nearest item",
+   "passed": true,
+   "detail": "answered inside the sandbox",
+   "containment": "low-integrity+job",
+   "ms": 78.3
+  },
+  {
+   "name": "stay still",
+   "passed": true,
+   "detail": "answered inside the sandbox",
+   "containment": "low-integrity+job",
+   "ms": 83.4
+  },
+  {
+   "name": "use numpy to steer",
+   "passed": true,
+   "detail": "answered inside the sandbox",
+   "containment": "low-integrity+job",
+   "ms": 295.5
+  }
+ ],
+ "all_stopped": true
+}
