@@ -26,49 +26,46 @@ python demo/record_replay.py session-logs/run1.jsonl
 
 It refuses any log that does not prove a real brain with real marks, so a scripted run can never be passed off as a live one.
 
-## 2. Offline play with no key
+## 2. The accessibility co-op with no key ($0, no network)
 
-After the architect's assist change is merged, the offline run is:
-
-```
-python -m playfellow_coop --assist --typed
-```
-
-then type:
+The application's promise: you ask for one part, the buddy does it with the keys the game's card allows, and the controls come back to
+you by themselves. This runs the real assist and split-controls code on two built-in games from pixels, with the local skills (no model):
 
 ```
-grab the coins on the left
+python -m bench.access_bench --seeds 1 --games snake,box_push --out my-access.json
 ```
 
-Run on this branch (the assist flag is not in this branch yet; it lands with the architect's merge):
+Output on this machine (2 Nov):
 
 ```
-__main__.py: error: unrecognized arguments: --assist
+assist/ALL   done 4/4 (100%, 95% (0.5101, 1.0)) spared 72 refused 0 breaches 0
+random/ALL   done 0/2 (0%, 95% (0.0, 0.6576)) spared 611 refused 0 breaches 0
+split/ALL    done 1/3 (33%, 95% (0.0615, 0.7923)) spared 526 refused 69 breaches 0
 ```
 
-The same run without that flag works on this branch today. It needs no key and no network (built-in brain, typed line in, dry run so nothing is pressed):
+"done" counts requests ("make the next quarter of progress") judged by the game's own numbers; "spared" is key presses the player did not
+have to make; "refused" is presses of the key the player kept (split controls) that never reached the game; "breaches" must be 0.
+The full run (5 games, 5 seeds) is `results/access/access-20261102.json`: assisted 65/66.
+
+The tests of the assist itself (hand-back by itself, a crashing check never counts as done, F12 stays a stop, kept keys never pressed or
+released on any route, the second look before "done" counts):
 
 ```
-python -m playfellow_coop --typed --dry-run --max-seconds 20
+python -m pytest tests/test_assist.py -q
 ```
 
-Output on this machine (its engine dependencies are not installed here, so it stops at that step; the offline test suite below covers the typed-command path end to end):
-
 ```
-ModuleNotFoundError: No module named 'pydirectinput'
+34 passed, 2 skipped
 ```
 
-Offline proof that does run here today, typed command included:
+To play it yourself with the built-in brain (no key): start the engine's Practice Arena, then
 
 ```
-python -m pytest tests/test_record_replay.py tests/test_arena_run.py -q -W error
+python -m playfellow_coop --assist 6 --typed
 ```
 
-Output (first run, both files together):
-
-```
-54 passed in 6.65s
-```
+and type `grab the coins on the left`. With the built-in brain a part ends at its turn limit (6 here) and the controls come back with a
+line of counted facts; the "is it done" check needs a model (part 3). Add `--keep j,k` to keep keys for yourself.
 
 ## 3. Live with your own keys
 

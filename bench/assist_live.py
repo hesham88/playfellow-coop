@@ -24,14 +24,68 @@ from bench.access_bench import _commit, wilson
 
 OUT = Path(__file__).resolve().parents[1] / "results" / "access"
 PART_TURNS = 12
-# (game, the request as the player says it, the game's own truth that the part is done, from the progress at the request and now)
+def snapshot(game) -> dict:
+    """What the rules need from the moment the player asked."""
+    out = {"progress": dict(game.progress())}
+    for name in ("coins", "x", "y", "player", "room"):
+        if hasattr(game, name):
+            value = getattr(game, name)
+            out[name] = set(value) if isinstance(value, set) else value
+    return out
+
+
+def half(game) -> int:
+    """The middle column of the maze: coins left of it are 'on the left'."""
+    import importlib
+    maze = importlib.import_module(type(game).__module__).MAZE
+    return len(maze[0]) // 2
+
+
+def _caves():
+    import importlib
+    return importlib.import_module("arena_pack.key_caves")
+
+
+def next_spike_x(x: int, y: int) -> int | None:
+    """The first spike to the right of the player in the caves (the jump to get past)."""
+    world = _caves().WORLD
+    return next((cx for cx in range(x + 1, len(world[0])) if any(world[row][cx] == "^" for row in range(len(world)))), None)
+
+
+def door_x() -> int:
+    return _caves()._find("D")[0]
+
+
+def _coins_on_the_left(start, game) -> bool:
+    left = {c for c in start["coins"] if c[0] < half(game)}
+    taken = left - set(game.coins)
+    return len(taken) >= min(2, len(left)) and bool(left)
+
+
+def _past_the_jump(start, game) -> bool:
+    spike = next_spike_x(start["x"], start["y"])
+    return spike is not None and game.x > spike and not game.dead
+
+
+def _at_the_door(start, game) -> bool:
+    return game.x >= door_x() - 1 and not game.dead
+
+
+# (game, the request as the player says it, the rule judged on the game itself: the state when asked and the state now)
 TASKS = [
-    ("lane_dash", "grab the coins", lambda a, b: b["coins"] - a["coins"] >= 3),
-    ("maze_chase", "grab the coins on the left", lambda a, b: a["coins_left"] - b["coins_left"] >= 2),
-    ("key_caves", "get me past this jump", lambda a, b: b["room"] > a["room"] or (b["has_boots"] and not a["has_boots"])),
-    ("key_caves", "take me to the door", lambda a, b: b["room"] > a["room"] or (b["door_open"] and not a["door_open"])),
-    ("ray_maze", "take me to the door", lambda a, b: bool(b.get("exit_open")) and b["hits"] > a["hits"] or bool(b.get("escaped"))),
+    ("lane_dash", "grab the coins", lambda start, game: game.coins - start["progress"]["coins"] >= 3),
+    ("maze_chase", "grab the coins on the left", _coins_on_the_left),
+    ("key_caves", "get me past this jump", _past_the_jump),
+    ("key_caves", "take me to the door", _at_the_door),
+    ("ray_maze", "take me to the door", lambda start, game: bool(game.escaped)),
 ]
+RULES = {
+    ("lane_dash", "grab the coins"): "at least 3 more coins collected",
+    ("maze_chase", "grab the coins on the left"): "of the coins in the left half of the maze when asked, at least 2 collected (all, if fewer remain)",
+    ("key_caves", "get me past this jump"): "the player is past the first spike gap to the right of where they stood when asked, and alive",
+    ("key_caves", "take me to the door"): "the player is on the tile before the door or beyond it, and alive",
+    ("ray_maze", "take me to the door"): "the player reached the exit (the game's own 'escaped')",
+}
 
 
 def part(game_key: str, request: str, truth, seed: int, brain, engine_dir: Path, part_turns: int = PART_TURNS) -> dict:
@@ -67,7 +121,7 @@ def part(game_key: str, request: str, truth, seed: int, brain, engine_dir: Path,
     def wait(_seconds):
         state["tick"] += 1
         if state["tick"] == 1:
-            state["p0"] = dict(game.progress())
+            state["p0"] = snapshot(game)
             queue.put(request)
             return False
         return bool(parts.assist.log) or game.done or state["tick"] > part_turns + 5
@@ -75,10 +129,10 @@ def part(game_key: str, request: str, truth, seed: int, brain, engine_dir: Path,
     usage_before = 0.0
     session.play_session(parts, cfg, assist_system(system_prompt(cfg, card)), StageTimer(), handover, wait=wait, commands=queue)
     record = dict(parts.assist.log[-1]) if parts.assist.log else {"request": request, "done": False, "ended": "never_started", "turns": 0}
-    real = bool(state["p0"] is not None and truth(state["p0"], game.progress()))
+    real = bool(state["p0"] is not None and truth(state["p0"], game))
     keys = {k for a in card.actions.values() for k in a.keys}
     return {"game": game_key, "seed": seed, "request": request, "model_said_done": record.get("done_by") in ("model_said", "model_verified"),
-            "claims_not_confirmed": check.refused,
+            "claims_not_confirmed": check.refused, "game_over": bool(game.done), "won": bool(game.is_won()),
             "really_done": real, "turns": record.get("turns", 0), "ended": record.get("ended"),
             "breaches": sum(1 for k in parts.hands.pressed if k not in keys), "cost_usd": round(float(getattr(parts, "_spent", 0.0) or 0.0) - usage_before, 6),
             "back_with_player": handover.human_has_controls}
@@ -124,7 +178,7 @@ def main(argv=None) -> int:
             print(f"{game_key:11} seed {seed} '{request}': model said done={row['model_said_done']} really done={row['really_done']} "
                   f"turns={row['turns']} ended={row['ended']} ${row['cost_usd']:.4f}", flush=True)
     result = {"schema": "pf-assist-live/1", "written": datetime.datetime.now().astimezone().isoformat(timespec="seconds"), "commit": _commit(),
-              "brain": args.brain, "model": model, "part_turns": PART_TURNS, "summary": summarise(rows), "parts": rows,
+              "brain": args.brain, "model": model, "part_turns": PART_TURNS, "rules": {f"{g} / {r}": text for (g, r), text in RULES.items()}, "summary": summarise(rows), "parts": rows,
               "honesty": "A game in memory (virtual screen), not a window. 'Really done' is judged by the game's own progress numbers; "
                          "'model said done' is the model's word. No disabled player was involved."}
     out = Path(args.out) if args.out else OUT / f"assist-live-{args.brain}-{datetime.date.today():%Y%m%d}.json"
