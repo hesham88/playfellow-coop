@@ -47,13 +47,12 @@ def test_the_window_never_takes_focus_and_stays_on_top_as_a_tool(app):
     assert view.window.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
 
-def test_click_through_follows_the_model_and_the_caption_says_so(app):
+def test_the_widget_takes_clicks_on_its_own_bar_but_never_the_keyboard(app):
+    """Owner, 2 Nov: the bar carries the mic and the open arrow, so it takes clicks on its own small area; it never takes focus."""
     view, model, _ = build()
-    assert model.click_through is True
-    assert view.caption_label.text() == "Click-through active"
+    assert model.click_through is False
     model.show()
     assert model.click_through is False
-    assert view.caption_label.text() == ""
 
 
 def test_english_and_arabic_are_separate_versions(app):

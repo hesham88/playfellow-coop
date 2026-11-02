@@ -22,13 +22,11 @@ def test_the_summon_key_opens_and_closes_with_the_same_press_and_views_are_told(
     assert seen == [True, False]
 
 
-def test_click_through_is_on_only_for_the_pinned_pill():
-    panel, _ = model()
-    assert panel.click_through is True  # hidden: only the small pill is there, and it never steals a click
-    panel.show()
-    assert panel.click_through is False  # open: its buttons must be usable
-    panel.hide()
-    assert panel.click_through is True
+def test_the_bar_takes_clicks_open_or_closed_because_it_carries_the_mic():
+    panel = PanelModel(CommandQueue())
+    assert panel.click_through is False
+    panel.toggle()
+    assert panel.click_through is False
 
 
 def test_show_and_hide_do_nothing_twice():

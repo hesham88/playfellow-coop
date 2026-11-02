@@ -76,3 +76,13 @@ def full_screen_state(shell32=None) -> str:
     if api.SHQueryUserNotificationState(ctypes.byref(state)) != 0:  # S_OK is 0
         return "unknown"
     return {QUNS_RUNNING_D3D_FULL_SCREEN: "exclusive", QUNS_BUSY: "borderless", QUNS_PRESENTATION_MODE: "presentation"}.get(state.value, "none")
+
+
+def keep_on_top(hwnd: int, user32=None) -> bool:
+    """Put the widget back on top without activating it, moving or resizing it (full-screen games keep pushing to the front).
+    Verified on 2 Nov: re-asserted every 300 ms, a no-activate topmost window shows over a full-screen game on Windows 11."""
+    if user32 is None:
+        import ctypes
+        user32 = ctypes.windll.user32
+    HWND_TOPMOST, SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE = -1, 0x0001, 0x0002, 0x0010
+    return bool(user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE))

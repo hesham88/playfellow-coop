@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import Callable
 
 from playfellow_coop.overlay import winstyle
-from playfellow_coop.overlay.panel import PanelModel
+from playfellow_coop.overlay.panel import BAR_HEIGHT, BAR_WIDTH, OPACITY_RANGE, PANEL_HEIGHT, PanelModel, dock_rect, slide_heights
 
 # Design tokens (contract 13, fixed names and values).
 TOKENS = {
@@ -103,9 +103,9 @@ class QtOverlay:
     def __init__(self, model: PanelModel, on_talk_down: Callable[[], None] = lambda: None,
                  on_talk_up: Callable[[], None] = lambda: None,
                  on_stop: Callable[[], None] = lambda: None, on_hand_over: Callable[[], None] = lambda: None,
-                 show_in_recordings: bool = False, app=None):
+                 show_in_recordings: bool = False, app=None, animate: bool = True):
         from PySide6.QtCore import Qt, QTimer
-        from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+        from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSlider, QVBoxLayout, QWidget
 
         self._qt, self._widgets = Qt, (QLabel, QLineEdit, QPushButton)
         self.model = model
@@ -139,8 +139,37 @@ class QtOverlay:
         layout.setContentsMargins(18, 16, 18, 14)
         layout.setSpacing(9)
 
+        # the slim bar, always there: who and what state, the mic (hold to talk) and the arrow that opens or closes the panel
+        self.bar = QWidget(self.window)
+        bar = QHBoxLayout(self.bar)
+        bar.setContentsMargins(0, 0, 0, 0)
+        bar.setSpacing(8)
         self.pill_label = QLabel("", self.window)
         self.pill_label.setObjectName("pill")
+        self.bar_talk = QPushButton("🎙", self.window)
+        self.bar_talk.setObjectName("talk")
+        self.bar_talk.setToolTip("Hold to talk")
+        self.bar_talk.pressed.connect(lambda: self._talk_down())
+        self.bar_talk.released.connect(lambda: self._talk_up())
+        self.toggle_button = QPushButton("▾", self.window)
+        self.toggle_button.clicked.connect(self._toggle)
+        bar.addWidget(self.pill_label, 1)
+        bar.addWidget(self.bar_talk)
+        bar.addWidget(self.toggle_button)
+
+        self.opacity_slider = QSlider(Qt.Orientation.Horizontal, self.window)
+        self.opacity_slider.setRange(round(OPACITY_RANGE[0] * 100), round(OPACITY_RANGE[1] * 100))  # the lowest point is still visible
+        self.opacity_slider.setValue(round(model.opacity * 100))
+        self.opacity_slider.valueChanged.connect(lambda v: model.set_opacity(v / 100))
+        self._animate = animate
+        self.slide_plan: list[int] = []
+        self.slide_timer = QTimer()
+        self.slide_timer.setInterval(16)
+        self.slide_timer.timeout.connect(self._slide_step)
+        self.top_timer = QTimer()  # full-screen games: stay on top, re-asserted often, never activating
+        self.top_timer.setInterval(300)
+        self.top_timer.timeout.connect(self._reassert)
+        self._height = BAR_HEIGHT
 
         self.title_label = QLabel("", self.window)
         self.title_label.setObjectName("title")
@@ -182,7 +211,7 @@ class QtOverlay:
         self.caption_label.setObjectName("caption")
         self.caption_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        layout.addWidget(self.pill_label)
+        layout.addWidget(self.bar)
         layout.addWidget(self.title_label)
         layout.addWidget(self.chat_box)
         layout.addWidget(self.partial_label)
@@ -190,6 +219,7 @@ class QtOverlay:
         layout.addWidget(self.chip_box)
         layout.addWidget(self.entry)
         layout.addLayout(actions)
+        layout.addWidget(self.opacity_slider)
         layout.addWidget(self.caption_label)
 
         self.hwnd = 0
@@ -251,21 +281,50 @@ class QtOverlay:
             self.chip_buttons.append(button)
 
         for widget in (self.title_label, self.chat_box, self.partial_label, self.talk_button,
-                       self.chip_box, self.entry, self.hand_button, self.stop_button):
+                       self.chip_box, self.entry, self.hand_button, self.stop_button, self.opacity_slider):
             widget.setVisible(model.visible)
-        self.pill_label.setVisible(not model.visible)
-        width, height = PANEL_SIZE if model.visible else PILL_SIZE
-        self.window.resize(width, height)
-        screen = self.window.screen()
-        if screen is not None:
-            geo = screen.availableGeometry()
-            left = geo.left() + MARGIN if rtl else geo.right() - width - MARGIN
-            self.window.move(left, geo.top() + MARGIN)
+        self.toggle_button.setText("▴" if model.visible else "▾")
+        target = PANEL_HEIGHT if model.visible else BAR_HEIGHT
+        if target != self._height and not self.slide_plan:
+            self.slide_plan = slide_heights(self._height, target)
+            if self._animate:
+                self.slide_timer.start()
+        self._place(self._height)
         if self.hwnd:
             self.applied = winstyle.apply_overlay_style(
                 self.hwnd, click_through=model.click_through,
                 show_in_recordings=self._show_in_recordings,
             )
+
+    # ---- the widget's motion: docked at the top centre, sliding open and closed --------------------------------
+    def _place(self, height: int) -> None:
+        self.window.resize(BAR_WIDTH, height)
+        screen = self.window.screen()
+        if screen is not None:
+            geo = screen.availableGeometry()
+            x, y, _, _ = dock_rect(geo.left(), geo.top(), geo.width(), BAR_WIDTH, height)
+            self.window.move(x, y)
+
+    def _toggle(self) -> None:
+        self.model.toggle_collapsed()
+
+    def _slide_step(self) -> None:
+        if not self.slide_plan:
+            self.slide_timer.stop()
+            return
+        self._height = self.slide_plan.pop(0)
+        self._place(self._height)
+        if not self.slide_plan:
+            self.slide_timer.stop()
+
+    def finish_slide(self) -> None:
+        """Play the rest of the slide at once (tests, and a closing window)."""
+        while self.slide_plan:
+            self._slide_step()
+
+    def _reassert(self) -> None:
+        if self.hwnd:
+            winstyle.keep_on_top(self.hwnd)
 
     def start(self) -> None:
         """Show the pill and apply the Windows overlay style. Never activates."""
@@ -273,6 +332,7 @@ class QtOverlay:
         self.window.show()
         self.hwnd = int(self.window.winId())
         self._redraw()  # now with a window handle, so the style is applied
+        self.top_timer.start()
 
     def mainloop(self) -> None:
         self.app.exec()

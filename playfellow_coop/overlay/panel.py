@@ -22,6 +22,7 @@ MAX_LINES = 6
 OPACITY_RANGE = (0.3, 1.0)  # the lowest point of the slider is still visible: the widget is never invisible
 DEFAULT_OPACITY = 0.55  # see-through by default, over the game
 DOCK_TOP = 6  # pixels from the top edge of the screen
+BAR_WIDTH, BAR_HEIGHT, PANEL_HEIGHT = 560, 52, 420  # the slim bar, and the panel it slides open into
 
 
 def dock_rect(screen_left: int, screen_top: int, screen_width: int, width: int, height: int) -> tuple[int, int, int, int]:
@@ -57,7 +58,6 @@ class PanelModel:
         self.state = "ready"
         self.lines: deque[Line] = deque(maxlen=MAX_LINES)
         self.opacity = DEFAULT_OPACITY
-        self.collapsed = True  # a slim bar at the top centre until the player opens it
         self.heard_partial = ""
 
     # ---- what a view needs -------------------------------------------------------------------------------------
@@ -70,9 +70,14 @@ class PanelModel:
         return self.arabic  # the Arabic panel mirrors
 
     @property
-    def click_through(self) -> bool:
-        """ON only for the pinned pill (the panel is hidden), OFF while the panel is open so its buttons can be pressed."""
+    def collapsed(self) -> bool:
+        """The slim bar at the top centre; open, it slides down into the full panel."""
         return not self.visible
+
+    @property
+    def click_through(self) -> bool:
+        """The bar carries the mic and the open arrow, so it takes clicks on its own small area, open or closed (it never takes focus)."""
+        return False
 
     @property
     def pill_text(self) -> str:
@@ -111,9 +116,8 @@ class PanelModel:
             self._changed()
 
     def toggle_collapsed(self) -> bool:
-        """Open or close the widget (the bar's own button, or the summon key). Returns the new collapsed state."""
-        self.collapsed = not self.collapsed
-        self._changed()
+        """Open or close the widget (the bar's own arrow, or the summon key). Returns the new collapsed state."""
+        self.toggle()
         return self.collapsed
 
     def set_opacity(self, value: float) -> float:
