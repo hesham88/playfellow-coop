@@ -246,19 +246,17 @@ def safety_checks(code: str | None, promoted: str | None, reason: str) -> dict:
     return checks
 
 
-def plan_run(games: list[str], brain: str = "muse", candidates: int = 1) -> dict:
+# F1 (2 Nov 2026): at the planner's 1000-token answer cap, 25 of 34 skill-writing answers stopped at exactly 1000 tokens and 21 had
+# no code block. A skill is a whole class, so the writing brain gets its own room; the hard cap prices every call at this full room.
+WRITING_MAX_TOKENS = 4000
+
+
+def plan_run(games: list[str], brain: str = "muse", candidates: int = 1, max_tokens: int = WRITING_MAX_TOKENS) -> dict:
     """The dry run: the planned calls per game and their dollar estimate, priced before anything is sent (a full answer out)."""
     from playfellow_coop.budget import INPUT_USD_PER_TOKEN, OUTPUT_USD_PER_TOKEN
     from playfellow_coop.skillsmith.synth import build_prompt, estimate_tokens, example_for, progress_text
 
-    if brain == "open":
-        from bench.open_weights_brain import OPEN_MAX_TOKENS
-
-        max_out = OPEN_MAX_TOKENS
-    else:
-        from playfellow_coop.muse_brain import MAX_TOKENS
-
-        max_out = MAX_TOKENS
+    max_out = int(max_tokens)
     rows, total_calls, total_usd = {}, 0, 0.0
     for game in games:
         prompt = build_prompt(game, GOALS.get(game, "win the game"), [], [], keys=("up", "down", "left", "right"),
@@ -274,7 +272,7 @@ def plan_run(games: list[str], brain: str = "muse", candidates: int = 1) -> dict
             "note": "planned only: a full answer is priced for every call, so a real run should cost less; nothing was sent"}
 
 
-def make_live_brain(brain_name: str, cap_usd: float, ledger_path: Path | None, run_id: str):
+def make_live_brain(brain_name: str, cap_usd: float, ledger_path: Path | None, run_id: str, max_tokens: int = WRITING_MAX_TOKENS):
     """One live brain (the existing clients, nothing re-implemented), capped per run and backstopped by the daily cap."""
     ensure_engine()
     from playfellow_coop.budget import DailyBudget
@@ -298,6 +296,7 @@ def make_live_brain(brain_name: str, cap_usd: float, ledger_path: Path | None, r
         if not key:
             raise SystemExit("OPEN_BRAIN_API_KEY is not set: no live call can be made")
         brain = OpenWeightsBrain(key, budget=daily)
+    brain.max_tokens = int(max_tokens)  # the answer room for a whole skill (the planner's own cap stays as it is)
     return CappedBrain(brain, cap_usd=cap_usd, provider=brain_name, run_id=run_id, ledger_path=ledger_path)
 
 
@@ -620,6 +619,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--held-out-steps", type=int, default=None)
     parser.add_argument("--budget-usd", type=float, default=1.0, help="the hard per-run cap: the call that would pass it is never sent")
     parser.add_argument("--budget-calls", type=int, default=10)
+    parser.add_argument("--max-tokens", type=int, default=WRITING_MAX_TOKENS, help="the answer room for one written skill (priced in full by the cap)")
     parser.add_argument("--ledger", type=Path, default=None, help="the spend ledger file: one line per paid call (live brains only)")
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--library", type=Path, default=None, help="the skill library folder (use a blank folder for a from-blank run)")
@@ -655,7 +655,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.dry_run:
         if not args.brain:
             raise SystemExit("--dry-run needs --brain muse or --brain open, so the estimate prices the right model")
-        plan = plan_run(games, brain=args.brain, candidates=args.candidates)
+        plan = plan_run(games, brain=args.brain, candidates=args.candidates, max_tokens=args.max_tokens)
         for game, row in plan["games"].items():
             print(f"{game:12} planned calls {row['planned_calls']} (about {row['tokens_in_est_per_call']} tokens in, "
                   f"up to {row['tokens_out_est_per_call']} out each) ${row['estimated_usd']:.5f}")
@@ -685,7 +685,7 @@ def main(argv: list[str] | None = None) -> int:
         run_id = args.run_id or f"skillsmith-{args.brain}-{date}"
         ledger = args.ledger if args.ledger is not None else ROOT / "results" / "skillsmith" / "spend-ledger.md"
         out = args.out if args.out is not None else ROOT / "results" / "skillsmith" / f"skillsmith-{args.brain}-{date}.json"
-        capped = make_live_brain(args.brain, cap_usd=args.budget_usd, ledger_path=ledger, run_id=run_id)
+        capped = make_live_brain(args.brain, cap_usd=args.budget_usd, ledger_path=ledger, run_id=run_id, max_tokens=args.max_tokens)
         results = []
         for game in games:
             results.append(run_game(game, capped, args.library, seeds(args.validation_seeds), seeds(args.test_seeds),

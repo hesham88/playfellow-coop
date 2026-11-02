@@ -333,3 +333,18 @@ def test_a_flat_fake_gives_a_flat_curve(tmp_path):
     assert len(curve) == 3
     assert all(abs(p["best_progress"] - p["current_progress"]) < 1e-9 for p in curve), curve
     assert result["promoted"] is None
+
+
+def test_a_skill_writing_answer_has_room_for_the_code_and_the_cap_prices_that_room(tmp_path, monkeypatch):
+    """F1 (2 Nov): 25 of 34 Muse answers stopped at exactly 1000 tokens and 21 had no code block. Writing a skill needs a longer
+    answer than a planner turn, so the harness gives the writing brain its own answer cap, and the hard cap prices the full room."""
+    from bench.skillsmith_run import WRITING_MAX_TOKENS, make_live_brain, plan_run
+
+    assert WRITING_MAX_TOKENS >= 4000
+    monkeypatch.setenv("OPEN_BRAIN_API_KEY", "not-a-real-key")
+    capped = make_live_brain("open", cap_usd=0.5, ledger_path=tmp_path / "ledger.md", run_id="room")
+    assert capped.brain.max_tokens == WRITING_MAX_TOKENS
+    smaller = make_live_brain("open", cap_usd=0.5, ledger_path=tmp_path / "ledger.md", run_id="room", max_tokens=1500)
+    assert smaller.brain.max_tokens == 1500 and capped.estimate_next_usd("x") > smaller.estimate_next_usd("x")
+    plan = plan_run(["maze_chase"], brain="muse", candidates=1)
+    assert plan["games"]["maze_chase"]["tokens_out_est_per_call"] == WRITING_MAX_TOKENS
