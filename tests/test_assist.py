@@ -384,3 +384,27 @@ def test_a_one_word_fragment_does_not_start_a_part_but_a_real_request_does():
     session.play_session(parts, cfg, "system", StageTimer(), handover, wait=wait, commands=queue, on_event=lambda k, d: said.append((k, d)))
     assert [r["request"] for r in parts.assist.log] == ["run right and jump"]
     assert any("click" in str(d) for k, d in said if k == "status")  # the player is told it was too short to act on
+
+
+def test_new_words_during_a_part_replace_it_at_once_and_wait_hands_back():
+    parts, cfg = make()
+    handover = HandOver(parts.hands, parts.safety)
+    parts.assist = Assist(max_turns=6)
+    queue, ticks = CommandQueue(), {"n": 0}
+
+    def wait(seconds):
+        ticks["n"] += 1
+        if ticks["n"] == 1:
+            queue.put("run to the level painting")
+        if ticks["n"] == 3:
+            queue.put("jump up to enter the level")  # said while the first part runs
+        if ticks["n"] == 5:
+            queue.put("wait")
+        return ticks["n"] >= 9
+
+    session.play_session(parts, cfg, "system", StageTimer(), handover, wait=wait, commands=queue)
+    log = parts.assist.log
+    assert [r["request"] for r in log] == ["run to the level painting", "jump up to enter the level"]
+    assert log[0]["ended"] == "replaced" and log[0]["turns"] < 6
+    assert log[1]["ended"] == "player_took"  # "wait" gave the controls straight back
+    assert handover.human_has_controls

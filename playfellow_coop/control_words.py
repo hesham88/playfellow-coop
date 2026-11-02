@@ -13,7 +13,8 @@ STOP, BUDDY_TAKES, PLAYER_TAKES, APPROVE, DECLINE = "stop", "buddy_takes", "play
 PHRASES = {
     STOP: {"stop", "stop now", "stop it", "halt", "وقف", "وقّف", "قف", "وقف دلوقتي", "اوقف", "أوقف"},
     BUDDY_TAKES: {"you take it", "you take over", "you go", "your turn", "خذها", "انت خدها", "إنت خدها", "دورك", "كمل انت", "كمّل انت"},
-    PLAYER_TAKES: {"i've got it", "i have got it", "i got it", "i'll take it", "my turn", "give it back", "أنا هكمل", "انا هكمل",
+    PLAYER_TAKES: {"i've got it", "i have got it", "i got it", "i'll take it", "my turn", "give it back", "wait", "wait wait", "wait wait wait",
+                   "hold on", "stop moving", "استنى", "استنى استنى", "أنا هكمل", "انا هكمل",
                    "أنا سأكمل", "دوري", "رجّعها", "رجعها"},
     # the player's answer to a safety check of the computer-use brain; whole phrases only, so a sentence that merely contains them is an ordinary command
     APPROVE: {"approve", "approve it", "approve the action", "yes do it", "yes go ahead", "نفذ", "نفّذ", "موافق"},

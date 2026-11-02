@@ -296,9 +296,7 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                 if words and len(" ".join(words).split()) < assist.min_words:  # a stray fragment: say so, do not take the controls
                     on_event("status", tr(f"Too short to act on: \"{' '.join(words)}\". Say the whole request.", f"قصير جدًا: «{' '.join(words)}». قل الطلب كاملًا."))
                     words = []
-                if words:  # a request: the buddy takes this one part, and the planner hears the words as the player's own
-                    for line in words:
-                        commands.put(line)
+                if words:  # a request: the buddy takes this one part; the planner hears it every turn through the "(still asked)" line
                     handover.give_back()
                     on_event("say", assist.begin(" ".join(words), safety.calls, parts=parts))
             if handover is not None and handover.human_has_controls:
@@ -307,6 +305,13 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                     break
                 continue
             if assist is not None and assist.active and commands is not None and not handover.human_has_controls:
+                fresh = [line for line in commands.drain() if not line.startswith("(still asked) ")]  # our own reminder is not new words
+                if fresh and len(" ".join(fresh).split()) >= assist.min_words:  # the player said something new: it replaces the running part at once
+                    assist.end("replaced", safety.calls)
+                    on_event("say", assist.begin(" ".join(fresh), safety.calls, parts=parts))
+                else:
+                    for line in fresh:
+                        commands.put(line)
                 commands.put(f"(still asked) {assist.request}")  # the planner keeps hearing the part it was asked for, so it can tell when it is done
             timer.begin_turn()
             try:
