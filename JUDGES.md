@@ -109,22 +109,23 @@ Output:
 14 passed in 5.09s
 ```
 
+Every win in this repo's result files is labelled **assisted** (a local skill helped) or **model alone**; nothing here claims a level above L0 on the Practice Arena.
+
+The ADK evaluator (`playfellow_coop/adk_app/arena_eval/run.py`, run in the pinned ADK environment from `tools/adk_env.py`) also needs the engine installed, exactly as in the README install step: clone the engine at the `pre-hackathon` tag beside this repo and `pip install -e playfellow`, or set `PLAYFELLOW_ENGINE` to its `software` folder. Without an engine it now stops as a setup failure; it never reports a lost game.
+
 ## 5. Watch a model-written skill play, no key
 
-One command replays the newest committed live SkillSmith file: it reloads the skill source saved inside that file, checks its fingerprint, puts it through the same static gate and sandbox, plays it again on the file's held-out seeds, and prints the saved wins and progress beside the replayed ones, plus the sandbox proof table. No key and no network are needed; play after writing is local.
+One command replays the newest committed live SkillSmith file: it reloads the skill source saved inside that file, checks its fingerprint, puts it through the same static gate and sandbox, and plays it again on the file's held-out seeds. No key and no network are needed; play after writing is local.
 
 ```
 python -m bench.skillsmith_run --replay latest
 ```
 
-Until a live file is committed, the command says so plainly and still succeeds. Run here on 2026-11-02 (no live SkillSmith file is committed yet; only the sandbox proof is):
-
-```
-no live file yet: no committed live SkillSmith file under results/skillsmith/ to replay
-```
-
-(exit 0). Once the architect's live F1 file lands under `results/skillsmith/`, the same command prints each game's saved and replayed wins and progress (a mismatch exits 1, a changed or gate-failing source is refused with exit 2), followed by the sandbox proof rows naming the layer that stopped each planted hostile skill. The offline rehearsal of exactly this path, with the stand-in model, is covered by `tests/test_skillsmith_run.py` (the judge-replay and replay-latest tests).
-
-Every win in this repo's result files is labelled **assisted** (a local skill helped) or **model alone**; nothing here claims a level above L0 on the Practice Arena.
-
-The ADK evaluator (`playfellow_coop/adk_app/arena_eval/run.py`, run in the pinned ADK environment from `tools/adk_env.py`) also needs the engine installed, exactly as in the README install step: clone the engine at the `pre-hackathon` tag beside this repo and `pip install -e playfellow`, or set `PLAYFELLOW_ENGINE` to its `software` folder. Without an engine it now stops as a setup failure; it never reports a lost game.
+| Game (brain) | Saved held-out result | File |
+|---|---|---|
+| maze_chase (muse) | 0 wins, IQM 0.58 | `results/skillsmith/skillsmith-muse-room-20261102.json` |
+| key_caves (muse) | 0 wins, IQM 0.3333 | `results/skillsmith/skillsmith-muse-room-20261102.json` |
+| action_quest (muse) | not played (nothing promoted) | `results/skillsmith/skillsmith-muse-room-20261102.json` |
+| maze_chase (open) | 0 wins, IQM 0.58 | `results/skillsmith/skillsmith-open-20261102.json` |
+| key_caves (open) | 0 wins, IQM 0.3333 | `results/skillsmith/skillsmith-open-20261102.json` |
+| action_quest (open) | not played (nothing promoted) | `results/skillsmith/skillsmith-open-20261102.json` |

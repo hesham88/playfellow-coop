@@ -16,15 +16,15 @@ python -m playfellow_coop --assist --keep j,k --typed # split controls: j and k 
 
 ![What each part adds, on the same 5 games](docs/img/ladder.svg)
 
-**What each part adds** (same 5 games, drawn from `results/fifteen/*.json` by `tools/make_charts.py`): a Meta model alone wins 0 of 10
-games; with SAM 3.1 marks it makes more progress; with the local skills it picks, the same models win **15 of 15** (Muse Spark Open) and
-**13 of 15** (Muse Spark; the other 2 ended on a service error), for about **4 cents** a run. Every number is labelled *model alone* or
-*assisted*.
+**What each part adds** (drawn from `results/fifteen/*.json` by `tools/make_charts.py`): a Meta model alone wins **0 of 28** across 14
+games; with SAM 3.1 marks it still wins 0 of 28 but makes more progress (0.217 against 0.185); with the local skills it picks, on the
+same 5 games the same models win **15 of 15** (Muse Spark Open) and **13 of 15** (Muse Spark; the other 2 ended on a service error),
+for about **4 cents** a run. Every number is labelled *model alone* or *assisted*, and every count below names its file.
 
 **The co-op itself, measured:** the assist did 65 of 66 asked-for parts on 5 games and 20 of 20 on the open-source 2048 (MIT, played from
 pixels); with split controls 0 kept-key presses ever reached a game. With a model choosing every key, live, the application's own requests
 were done 4 times in 10, and every "done" it said was true (3 of 3). SAM 3.1 kept the same number on the same thing in 129 of 129 frame
-pairs. Muse Wonder learned the controls of games it had never seen (genre 3/3, keys found 0.68) and wrote 10 of 10 debriefs with no
+pairs. Muse Wonder drafted the controls of games it had never seen: genre right in 3 of 3, 68% of the real keys found (`results/wonder/wonder-live-20261102.json`), and wrote 10 of 10 debriefs with no
 invented number. Each promise of our application, with its code, tests and file: **[docs/accessibility-proof.md](docs/accessibility-proof.md)**.
 No disabled player has used this build yet; that is the next step, not a result.
 
@@ -41,6 +41,9 @@ No disabled player has tested this build. We say that plainly instead of claimin
 
 | Row | Result | File |
 |---|---|---|
+| Assisted: Muse Spark Open picks a skill (2 Nov, 14-game set's 5 skill games) | **15 of 15**, $0.03772 | `results/fifteen/open-skills-20261102.json` |
+| Assisted: Muse Spark 1.3 picks a skill (2 Nov) | **13 of 15** (2 ended on a service error), $0.03564 | `results/fifteen/muse-skills-20261102.json` |
+| Model alone + SAM 3.1 marks: Muse Spark 1.3 (2 Nov, 14 games, 20-call cap) | **0 of 28 wins**, mean progress 0.217 (model alone without marks: 0.185) | `results/fifteen/muse-sam-20261102.json`; `results/fifteen/muse-raw-20261102.json` |
 | Assisted: Muse Spark 1.3 picks a skill | **15 of 15 = 5 games (snake, box_push, slide_2048, lane_dash, brick_breaker) x 3 seeds**, $0.04075, 21,579 tokens in (13,787 cached) | `results/k-lane/muse-skills-pt1.json` |
 | One-call probe | 1 of 1, $0.00282 | `results/k-lane/muse-probe.json` |
 | Assisted: Muse Spark Open on Baseten picks a skill | **14 of 15 assisted**, $0.03576 | `results/k-lane/baseten-skills.json` |
@@ -68,8 +71,9 @@ The five games with human-written skills (snake, box_push, slide_2048, lane_dash
 | 1–2 Model alone, Muse Spark 1.3 (20-call cap; a win needs 39–5,994 steps) | 0 of 15 | 0.151 | `results/unseen/muse-raw-20261027.json` |
 | 1–2 Model alone, Muse Spark Open (same cap) | 0 of 15 | 0.141 | `results/unseen/open-raw-20261027.json` |
 | 2+ Model alone, fair budget + action chunks (F2) | pending: run after the owner's yes | — | no file yet |
-| 2+ Model + SAM 3.1 marks at the same cap | not in this repo's arena files | — | no arena file here |
-| 3 Model-written skills (SkillSmith, F1) | pending: run after the owner's yes | — | harness `bench/skillsmith_run.py`; offline fake round only |
+| 2+ Model alone + SAM 3.1 marks (20-call cap; 14 games) | 0 of 28 | 0.217 | `results/fifteen/muse-sam-20261102.json` |
+| 3 Model-written skills (SkillSmith, F1), Muse Spark 1.3 writes | 0 of 4 | 0.457 | `results/skillsmith/skillsmith-muse-room-20261102.json` |
+| 3 Model-written skills (SkillSmith, F1), Muse Spark Open writes | 0 of 4 | 0.457 | `results/skillsmith/skillsmith-open-20261102.json` |
 | 4 Model picks + human skill, Muse Spark 1.3 | 15 of 15 | 1.0 | `results/k-lane/muse-skills-pt1.json` |
 | 4 Model picks + human skill, Muse Spark Open | 14 of 15 (snake 2 of 3) | 0.933 | `results/k-lane/baseten-skills.json` |
 
@@ -77,9 +81,9 @@ The SkillSmith games (no human skill exists for them):
 
 | Game | Rung 3 state | File |
 |---|---|---|
-| maze_chase | pending: run after the owner's yes | no file yet |
-| key_caves | pending: run after the owner's yes | no file yet |
-| action_quest | the gym has no progress score for it yet, so it cannot be scored | no file yet |
+| maze_chase | muse: promoted; held-out 0 of 2 wins, progress IQM 0.58, play $0; writing $0.146; open: promoted; held-out 0 of 2 wins, progress IQM 0.58, play $0; writing $0.136 | `results/skillsmith/skillsmith-muse-room-20261102.json`, `results/skillsmith/skillsmith-open-20261102.json` |
+| key_caves | muse: promoted; held-out 0 of 2 wins, progress IQM 0.3333, play $0; writing $0.189; open: promoted; held-out 0 of 2 wins, progress IQM 0.3333, play $0; writing $0.196 | `results/skillsmith/skillsmith-muse-room-20261102.json`, `results/skillsmith/skillsmith-open-20261102.json` |
+| action_quest | muse: no skill promoted (no candidate strictly beats the current skill on validation); writing $0.263; open: no skill promoted (no candidate strictly beats the current skill on validation); writing $0.280 | `results/skillsmith/skillsmith-muse-room-20261102.json`, `results/skillsmith/skillsmith-open-20261102.json` |
 
 Speed and cost per rung (stage times, dollars and tokens per win, cache share, local step against a model call) are in `results/speed/speed-cost-20261102.json`, built only from the files above by `bench/speed_cost_table.py`. The Rust fast path's public figure is 17–24x, the bracket of the measured medians in that table's source file.
 
@@ -111,7 +115,7 @@ Any agent can ask for one part under the same rules through the MCP server (`doc
 | `playfellow_coop/muse_brain.py`, `budget.py` | The Muse brain and its daily spending cap | built; live rows above |
 | `playfellow_coop/handover.py`, `session.py` | You take over, I take over (F9), with a hand-back line made only of counted facts; the turn loop around the engine's public building blocks | built; tested with pretend eyes, hands and brain |
 | `playfellow_coop/sam_marks.py`, `sam_eval.py`, `sam_protocol.py` | SAM 3.1 marks and their strict reading | built; fake-server and conformance-tested offline |
-| `playfellow_coop/voice.py`, `realtime_voice.py`, `push_to_talk.py`, `microphone.py` | Voice or typed commands, EN/AR | built; fake-socket tested; no real voice call yet |
+| `playfellow_coop/voice.py`, `realtime_voice.py`, `push_to_talk.py`, `microphone.py` | Voice or typed commands, EN/AR | built; fake-socket tested; capped real calls recorded in `tests/fixtures/real/` (one transcription, one realtime stream of at most 5 seconds); voice accuracy not yet measured |
 | `playfellow_coop/mcp_server.py` | The MCP server: any agent asks for one part under the player's rules | built; tested with a fake brain, no network (`docs/mcp.md`) |
 | `playfellow_coop/universal/` | The goal checker (strict number-noun pairing), the guardrails, the screen-state reader, the game clock and supervisor | built; synthetic-input tests |
 | `playfellow_coop/adk_app/` | Google ADK agents and ADK's own evaluator on our exported evalset, in ADK's own pinned environment | built; a missing engine is a setup failure there, never a lost game |
