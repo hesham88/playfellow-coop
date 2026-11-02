@@ -87,6 +87,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--assist", type=int, nargs="?", const=12, default=None, metavar="TURNS",
                         help="the accessibility co-op: you start with the controls; say or type what you want done and the buddy does that "
                              "part, then gives the controls back by itself (after TURNS turns at most, 12 if not given)")
+    parser.add_argument("--debrief", choices=("counted", "wonder"), default="counted",
+                        help="with --assist: the after-session debrief; 'counted' is the plain line of counted facts, 'wonder' asks Muse Wonder "
+                             "(your own key) to word those facts, and refuses any number it did not count")
     parser.add_argument("--keep", default="", metavar="KEYS",
                         help="split controls: the keys you keep, comma-separated (for example j,k); the buddy never presses or releases them")
     parser.add_argument("--talk-key", default="", help="hold this key (for example f8) to talk to the buddy; needs a Muse key and a microphone")
@@ -137,6 +140,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
         from playfellow_coop.assist import Assist, DoneSpotter, model_said_done
         parts.brain = DoneSpotter(parts.brain)  # the live "is the part done" check: the planner says so, as the JSON value true
         parts.assist = Assist(max_turns=args.assist, done=model_said_done)
+        parts.debrief_mode = args.debrief
     if args.dry_run:
         from playfellow_coop.dry_run import DryRunHands
         parts.hands = DryRunHands(parts.hands)
@@ -196,6 +200,22 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
             parts.brain.set_actions(parts.card.actions)
         attach_skills(parts, cfg, args.skills)
     return parts, cfg
+
+
+def session_debrief(parts, reason: str, cfg, key_loader: Callable | None = None) -> str:
+    """After an assisted session: the debrief of counted facts, worded by Muse Wonder only if asked for and a key is there."""
+    from playfellow_coop.debrief import Debrief, facts_from, plain_line, wonder_brain
+    guard = getattr(getattr(parts, "hands", None), "backend", None)
+    facts = facts_from(parts.assist.log, refused=int(getattr(guard, "refused", 0) or 0), f12=reason == "stopped_f12")
+    language = "arabic" if str(getattr(cfg, "language", "english")).lower().startswith("ar") else "english"
+    if getattr(parts, "debrief_mode", "counted") != "wonder":
+        return plain_line(facts, language)
+    key = (key_loader or load_muse_key)()
+    if not key:
+        return plain_line(facts, language)
+    out = Debrief(wonder_brain(key)).write(facts, language)
+    parts.debrief = out
+    return out["text"]
 
 
 def assist_system(system: str) -> str:
@@ -342,6 +362,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     fake = getattr(parts, "fake_sam", None)
     if fake is not None:
         fake.__exit__(None, None, None)
+    if getattr(parts, "assist", None) is not None and parts.assist.log:
+        say(session_debrief(parts, reason, cfg))
     if latency.samples:
         say(tr(f"Key release to the first game key, measured: {latency.summary()}", f"من ترك المفتاح إلى أول ضغطة في اللعبة (مقيس): {latency.summary()}"))
     return 0
