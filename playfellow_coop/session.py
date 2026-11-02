@@ -99,7 +99,13 @@ def take_turn(parts, settings, system: str, timer: StageTimer, on_event: Callabl
     parts.safety.count_ai_call()
     images = [moment.image for moment in parts.memory.recent()] + [image]
     asked = timer.now()
-    raw = parts.brain.ask(system, text, images)
+    clock_sync = getattr(parts, "clock_sync", None)  # S3: our own games pause while the model thinks; other games only measure the wait
+    if clock_sync is not None:
+        on_event("clock", "paused" if clock_sync.can_pause else "real-time")
+        with clock_sync.thinking():
+            raw = parts.brain.ask(system, text, images)
+    else:
+        raw = parts.brain.ask(system, text, images)
     whole = timer.now() - asked
     spent = (getattr(parts.brain, "last_request", None) or {}).get("cost_usd")
     if spent:
@@ -187,6 +193,15 @@ def _value(parts, name: str, default):
 
 
 def _press(parts, settings, box, reply, chat, latency, on_event) -> None:
+    # S2: every plain action passes the guardrails before the hands, with the keys a persistent hold already has down fed in (D7).
+    # A step the guardrails would trim is dropped whole (the hands press a card action as one piece); the reasons are reported, never silent.
+    from playfellow_coop.universal.actions import GuardRails, filter_steps
+    held = set((getattr(parts.hands, "_persistent_holds", None) or {}).keys())
+    kept, notes = filter_steps(reply.steps, parts.card, getattr(parts, "guardrails", None) or GuardRails(), held_keys=held)
+    if notes:
+        on_event("guard", notes)
+        reply.dropped = list(reply.dropped) + notes
+    reply.steps = kept
     for step in reply.steps:
         if parts.safety.stopped or not parts.screen.in_front(settings.game_window):
             break  # F12, the corner, a limit, or the player clicked away: nothing more is pressed

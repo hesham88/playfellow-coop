@@ -79,6 +79,34 @@ class ClockSync:
 
 
 @dataclass
+class StepClock:
+    """S3: a real GameClock for our own step-driven games (the arena pack, the gyms): the game moves only when a key steps it.
+
+    `step(key)` advances the game one tick. While paused, `advance` refuses and the game cannot move, however long the model thinks;
+    that is the honest pause a third-party game does not offer (there the delay is only measured, see ClockSync)."""
+    step: Callable[[Any], None]
+    paused: bool = False
+    ticks: int = 0
+
+    def pause(self) -> None:
+        self.paused = True
+
+    def resume(self) -> None:
+        self.paused = False
+
+    def advance(self, key=None) -> bool:
+        """One game tick with `key` (None = a wait). False when paused: nothing was pressed and the game did not move."""
+        if self.paused:
+            return False
+        self.step(key)
+        self.ticks += 1
+        return True
+
+
+_MISSING = object()
+
+
+@dataclass
 class Supervisor:
     """Starts, watches, restarts and resets a game process. `launch()` returns a handle, `alive(handle)` says it still runs, `stop(handle)` ends it."""
     launch: Callable[[], Any]
@@ -87,11 +115,16 @@ class Supervisor:
     max_restarts: int = 3
     window_s: float = 60.0  # more than `max_restarts` crashes inside this window = give up
     now: Callable[[], float] = time.monotonic
+    frame_probe: Callable[[Any], Any] | None = None  # S4: what the game window shows now (any hashable picture signature); None = no probe
+    hang_s: float = 10.0  # the same picture for this long, while the process lives, is a hang
     events: list[tuple[float, str]] = field(default_factory=list)
     handle: Any = None
     started_at: float = 0.0
     state: str = "stopped"  # "running", "stopped", "failed"
     _crashes: list[float] = field(default_factory=list)
+    _last_frame: Any = _MISSING
+    _frame_since: float = 0.0
+    _ready: bool = False
 
     def _log(self, text: str) -> None:
         self.events.append((self.now(), text))
@@ -100,7 +133,40 @@ class Supervisor:
         self.handle = self.launch()
         self.started_at = self.now()
         self.state = "running"
+        self._last_frame, self._ready = _MISSING, False
         self._log("started")
+
+    def poll(self) -> str:
+        """S4: one watch tick that also looks at the picture. Returns "ready" (first picture), "running", "starting" (no picture yet),
+        "restarted" (crash or hang, budget spent), "stopped" or "failed". Without a frame probe it only watches the process."""
+        if self.state in ("stopped", "failed"):
+            return self.state
+        if not self.alive(self.handle):
+            return self.check()
+        if self.frame_probe is None:
+            return "running"
+        frame = self.frame_probe(self.handle)
+        if frame is None:
+            return "starting"
+        moment = self.now()
+        if self._last_frame is _MISSING or frame != self._last_frame:
+            self._last_frame, self._frame_since = frame, moment
+            if not self._ready:
+                self._ready = True
+                self._log("ready: first picture")
+                return "ready"
+            return "running"
+        if moment - self._frame_since >= self.hang_s:
+            self._crashes = [t for t in self._crashes if moment - t <= self.window_s] + [moment]
+            self._log("hang: the picture is frozen while the process lives")
+            if len(self._crashes) > self.max_restarts:
+                self.state = "failed"
+                self._log("gave up: too many crashes")
+                return "failed"
+            self.start()
+            self._log("restarted after a hang")
+            return "restarted"
+        return "running"
 
     def check(self) -> str:
         """Call regularly. Returns "running", "restarted", "stopped" or "failed" (too many crashes: stay down and say so)."""

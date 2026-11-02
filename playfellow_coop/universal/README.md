@@ -1,6 +1,6 @@
 # universal
 
-The universal game interface: treat every game as a black box and use only the channels a human uses (pixels in, key and mouse out).
+The game-agnostic interface (internally named `universal`): treat every game as a black box and use only the channels a human uses (pixels in, key and mouse out). Game-agnostic describes the interface only — perception and skills remain per-game or 2D-only, and nothing here claims to play any game.
 
 ## Files
 

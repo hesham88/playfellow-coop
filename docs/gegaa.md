@@ -5,7 +5,7 @@ GEGAA is the name for what this project is growing into: an agent that plays **a
 | Part | What it is | Where it lives | Licence and terms |
 |---|---|---|---|
 | **Open Model** | The weights and training data recipe for a small model that turns "words plus a marked picture" into safe keys, and the benchmark that scores it | `train/`, `results/`, the dataset layout and the baseline (training itself is off until credits exist; no number is claimed until a results file written by the code exists) | The licence in [LICENSE](../LICENSE): open, with the non-violence terms. Training rows never come from another model's output |
-| **Open Framework** | The harness around any model: universal interface, end-of-game detection, skin grounding, model-written skills in a sandbox, cost levers, honest evaluation, real-window input | This repository, `playfellow_coop/` | Same licence. Everything here is plain Python with numpy; no game hook, no engine access |
+| **Open Framework** | The harness around any model: game-agnostic interface, end-of-game detection, skin grounding, model-written skills in a sandbox, cost levers, honest evaluation, real-window input | This repository, `playfellow_coop/` | Same licence. Everything here is plain Python with numpy; no game hook, no engine access |
 | **Private Platform** | Accounts, subscriptions, billing, the course, the hosted demo service, the desktop shell and its glass look | Not in this repository | Private. It uses the framework; the framework never depends on it |
 
 The rule that keeps the split honest: the Open Framework runs and tests with nothing from the Private Platform, and a result is only called a result when a file written by the code backs it.

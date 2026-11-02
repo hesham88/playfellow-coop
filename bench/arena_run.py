@@ -230,6 +230,8 @@ def run_episode(game_key: str, seed: int, brain, *, max_turns: int = 30, max_cal
     if skills:
         episode.extra["skill_steps"] = getattr(getattr(parts.skills, "last", None), "steps", 0)
         episode.extra["look"] = parts.skills.look_name
+    episode.extra["stages"] = timer.summary()  # S5: every stage that ran, measured; a stage that never ran says "not measured", never zero
+    episode.extra["clock"] = "paused"  # this bench steps the game one tick per action, so the game waits while the brain thinks
     episode.calls = getattr(parts.safety, "ai_calls", episode.turns)
     episode.seconds = round(time.perf_counter() - started, 2)
     episode.won, episode.lost, episode.ticks = bool(game.is_won()), bool(game.is_lost()), int(game.ticks)

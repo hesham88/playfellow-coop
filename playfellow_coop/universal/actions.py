@@ -37,8 +37,10 @@ class NativeInput:
     button: str = "left"
 
     def to_pixels(self, box: tuple[int, int, int, int]) -> "NativeInput":
-        """Map the 0-1000 grid to the window box (left, top, width, height); other kinds pass through."""
-        if self.kind not in ("mouse_click", "mouse_drag", "mouse_move"):
+        """Map the 0-1000 grid to the window box (left, top, width, height); other kinds pass through.
+
+        A `mouse_move` is a relative look (dx, dy), never a place on the grid: mapping it to the window would turn the camera the wrong way (D1)."""
+        if self.kind not in ("mouse_click", "mouse_drag"):
             return self
         left, top, width, height = box
         mapped = lambda value, size, base: base + round(min(max(value, 0), GRID) * (size - 1) / GRID)  # noqa: E731
@@ -148,18 +150,42 @@ class ActionBinder:
         return plan
 
 
+# Which way an input pushes, by axis: keyboard, stick and gamepad names for the same direction cancel each other (D6).
+KEY_AXES = {"a": ("x", -1), "left": ("x", -1), "stick_left": ("x", -1), "dpad_left": ("x", -1),
+            "d": ("x", 1), "right": ("x", 1), "stick_right": ("x", 1), "dpad_right": ("x", 1),
+            "w": ("y", -1), "up": ("y", -1), "stick_up": ("y", -1), "dpad_up": ("y", -1),
+            "s": ("y", 1), "down": ("y", 1), "stick_down": ("y", 1), "dpad_down": ("y", 1)}
+
+
+def _axes(item: NativeInput) -> dict[str, int]:
+    """The directions this input pushes, axis -> -1/1. A stick pushes where its x/y point; a key or button pushes where its name points."""
+    if item.kind == "stick":
+        axes: dict[str, int] = {}
+        if item.x:
+            axes["x"] = -1 if item.x < 0 else 1
+        if item.y:
+            axes["y"] = -1 if item.y < 0 else 1
+        return axes
+    if item.kind in ("key", "button") and item.key in KEY_AXES:
+        axis, sign = KEY_AXES[item.key]
+        return {axis: sign}
+    return {}
+
+
 class GuardRails:
     """The last check before the hands: no input a person could not make. Returns a new plan; the old one is not changed."""
 
     def __init__(self, max_hold_ms: int = MAX_HOLD_MS, max_inputs: int = MAX_INPUTS_PER_TURN, max_turn_ms: int = MAX_TURN_MS):
         self.max_hold_ms, self.max_inputs, self.max_turn_ms = max_hold_ms, max_inputs, max_turn_ms
 
-    def check(self, plan: Plan) -> Plan:
+    def check(self, plan: Plan, held_keys: set[str] | None = None) -> Plan:
+        """`held_keys`: keys already down from before this turn (a persistent hold spans turns, D7); an opposite in this plan is dropped against them."""
         out = Plan(notes=list(plan.notes))
         count, total = 0, 0
+        external = {KEY_AXES[k]: k for k in (held_keys or set()) if k in KEY_AXES}
         for step in plan.steps:
             kept: list[NativeInput] = []
-            held: dict[str, NativeInput] = {}
+            held: dict[tuple[str, int], NativeInput] = {}
             for item in step:
                 if count >= self.max_inputs:
                     out.notes.append(f"too many inputs in one turn (limit {self.max_inputs}); the rest were dropped")
@@ -167,18 +193,29 @@ class GuardRails:
                 if item.hold_ms > self.max_hold_ms:
                     out.notes.append(f"hold of {item.hold_ms} ms cut to {self.max_hold_ms} ms")
                     item = replace(item, hold_ms=self.max_hold_ms)
-                if item.kind in ("mouse_click", "mouse_drag", "mouse_move") and not all(0 <= v <= GRID for v in (item.x, item.y, item.x2, item.y2)):
+                if item.kind == "mouse_move":  # a relative look (D1): clamp the turn, never drop left/up for leaving the grid
+                    clamped = replace(item, x=min(max(item.x, -GRID), GRID), y=min(max(item.y, -GRID), GRID))
+                    if (clamped.x, clamped.y) != (item.x, item.y):
+                        out.notes.append("a relative look was clamped to the -1000..1000 range")
+                    item = clamped
+                elif item.kind in ("mouse_click", "mouse_drag") and not all(0 <= v <= GRID for v in (item.x, item.y, item.x2, item.y2)):
                     out.notes.append("a mouse position was outside the 0-1000 grid and was dropped")
                     continue
                 if item.kind == "stick" and not (-GRID <= item.x <= GRID and -GRID <= item.y <= GRID):
                     out.notes.append("a stick position was outside -1000..1000 and was dropped")
                     continue
-                if item.kind in ("key", "button"):
-                    clash = next((other for name, other in held.items() if any({item.key, name} == pair for pair in OPPOSITES)), None)
+                if item.kind in ("key", "button", "stick"):
+                    axes = _axes(item)
+                    clash = next((other for where, other in held.items() if any(axis in axes and axes[axis] == -sign for axis, sign in [where])), None)
                     if clash is not None:
                         out.notes.append(f"{item.key} and {clash.key} together would cancel out; {item.key} was dropped")
                         continue
-                    held[item.key] = item
+                    against_hold = next((name for where, name in external.items() if any(axis in axes and axes[axis] == -sign for axis, sign in [where])), None)
+                    if against_hold is not None:
+                        out.notes.append(f"{item.key} would cancel out a key already held from before this turn ({against_hold}); {item.key} was dropped")
+                        continue
+                    for axis, sign in axes.items():
+                        held[(axis, sign)] = item
                 kept.append(item)
                 count += 1
             if not kept:
@@ -190,3 +227,62 @@ class GuardRails:
             total += step_ms
             out.steps.append(kept)
         return out
+
+
+def native_inputs(step, action) -> list[NativeInput]:
+    """One controls-card step (the engine's Step + its card action, duck-typed) as native inputs, on the one 0-1000 grid.
+
+    Kinds with no press of their own (`hold_stop`, `release_all`) give no inputs: they act on the hands' own state and always run."""
+    kind = getattr(action, "kind", "keys")
+    if kind == "keys":
+        return [NativeInput("key", key, hold_ms=int(float(getattr(action, "hold", 0.15)) * 1000)) for key in getattr(action, "keys", ())]
+    if kind == "click":
+        return [NativeInput("mouse_click", x=int(step.x or 0), y=int(step.y or 0), button=getattr(action, "button", "left"))]
+    if kind == "swipe":
+        return [NativeInput("mouse_drag", x=int(action.x1), y=int(action.y1), x2=int(action.x2), y2=int(action.y2))]
+    if kind == "drag":
+        return [NativeInput("mouse_drag", x=int(step.x or 0), y=int(step.y or 0), x2=int(step.x2 or 0), y2=int(step.y2 or 0))]
+    if kind == "mouse_button":
+        return [NativeInput("mouse_click", button=getattr(action, "button", "left"))]
+    if kind == "mouse_move":
+        return [NativeInput("mouse_move", x=int(action.dx), y=int(action.dy))]
+    if kind == "wait":
+        return [NativeInput("wait", hold_ms=int(float(getattr(action, "hold", 0.15)) * 1000))]
+    if kind == "hold_start":
+        return [NativeInput("key", getattr(action, "hold_key", ""), hold_ms=0)]
+    return []
+
+
+def native_plan(steps, card) -> Plan:
+    """Card steps as one guarded-plan shape: one plan step per card step, in order. Unknown actions give an empty step and a note."""
+    plan = Plan()
+    for step in steps:
+        action = card.actions.get(step.action)
+        if action is None:
+            plan.notes.append(f"action {step.action!r} is not on the controls card")
+            plan.steps.append([])
+            continue
+        plan.steps.append(native_inputs(step, action))
+    return plan
+
+
+def filter_steps(steps, card, guard: GuardRails | None = None, held_keys: set[str] | None = None):
+    """S2: card steps that survive the guardrails, with the plain-words reasons for the rest.
+
+    A step survives whole or not at all: the hands press a card action as one piece, so a step the guardrails
+    would trim is dropped with its reason instead of being half-pressed. Steps with no press of their own always run."""
+    guard = guard or GuardRails()
+    plan = native_plan(steps, card)
+    checked = guard.check(plan, held_keys=held_keys)
+    notes = list(checked.notes)
+    kept, index = [], 0
+    surviving = [step for step in checked.steps]
+    for step, inputs in zip(steps, plan.steps):
+        if not inputs:
+            if card.actions.get(step.action) is not None:
+                kept.append(step)
+            continue
+        if index < len(surviving) and surviving[index] == inputs:
+            kept.append(step)
+            index += 1
+    return kept, notes

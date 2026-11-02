@@ -6,6 +6,7 @@ This project is research on game-playing AI that hears a request, sees a screen 
 - **Non-violence.** This technology must never be used for weapons, targeting, or violence against people. The binding wording is in the [LICENSE](LICENSE).
 - **No surveillance.** Not for watching, tracking or profiling people without their informed consent.
 - **Fair play.** Not for cheating against other players, and not for automating online or multiplayer games against their terms. We recommend offline, single-player games.
+- **No injection, ever.** We play only where synthetic input is allowed. Nothing is injected into a game process: no DLL injection, no speedhacks or game-clock hooks, no kernel HID drivers, and no workaround when anti-cheat or the game itself rejects synthetic input — if a game rejects it, we stop and tell the player.
 - **Adults only.** Use is for people aged 18 and over.
 - **Your own key, your own account.** You use your own API key and accept the provider's terms.
 

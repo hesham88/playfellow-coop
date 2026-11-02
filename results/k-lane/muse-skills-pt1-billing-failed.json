@@ -1,0 +1,655 @@
+{
+ "schema": "pf-arena-run/1",
+ "written": "2026-10-31T18:09:30+02:00",
+ "condition": "muse-none",
+ "brain": "muse",
+ "model": "muse-spark-1.3",
+ "note": "PT1 glass look, model picks skill (owner go 2026-10-31, cap 0.20) marks=none; skills=True; effort=minimal; turns<= 3; looks=playfellow_looks (re-skinned games read through calibrated looks).",
+ "overall": {
+  "episodes": 15,
+  "wins": 0,
+  "win_rate": 0.0,
+  "wilson95": [
+   0.0,
+   0.204
+  ],
+  "mean_progress": 0.0,
+  "mean_turns": 0.0,
+  "mean_seconds": 1.36,
+  "invalid_plan_rate": 0.0,
+  "tokens_in": 0,
+  "tokens_cached": 0,
+  "tokens_out": 0,
+  "cost_usd": 0.0,
+  "tokens_per_win": null,
+  "usd_per_win": null,
+  "local_help_episodes": 0,
+  "skill_steps_total": 0
+ },
+ "by_game": {
+  "snake": {
+   "episodes": 3,
+   "wins": 0,
+   "win_rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.562
+   ],
+   "mean_progress": 0.0,
+   "mean_turns": 0.0,
+   "mean_seconds": 1.65,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": null,
+   "usd_per_win": null,
+   "local_help_episodes": 0,
+   "skill_steps_total": 0
+  },
+  "box_push": {
+   "episodes": 3,
+   "wins": 0,
+   "win_rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.562
+   ],
+   "mean_progress": 0.0,
+   "mean_turns": 0.0,
+   "mean_seconds": 1.25,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": null,
+   "usd_per_win": null,
+   "local_help_episodes": 0,
+   "skill_steps_total": 0
+  },
+  "slide_2048": {
+   "episodes": 3,
+   "wins": 0,
+   "win_rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.562
+   ],
+   "mean_progress": 0.0,
+   "mean_turns": 0.0,
+   "mean_seconds": 1.5,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": null,
+   "usd_per_win": null,
+   "local_help_episodes": 0,
+   "skill_steps_total": 0
+  },
+  "lane_dash": {
+   "episodes": 3,
+   "wins": 0,
+   "win_rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.562
+   ],
+   "mean_progress": 0.0,
+   "mean_turns": 0.0,
+   "mean_seconds": 1.29,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": null,
+   "usd_per_win": null,
+   "local_help_episodes": 0,
+   "skill_steps_total": 0
+  },
+  "brick_breaker": {
+   "episodes": 3,
+   "wins": 0,
+   "win_rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.562
+   ],
+   "mean_progress": 0.0,
+   "mean_turns": 0.0,
+   "mean_seconds": 1.13,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": null,
+   "usd_per_win": null,
+   "local_help_episodes": 0,
+   "skill_steps_total": 0
+  }
+ },
+ "honesty": {
+  "rung": {
+   "key": "raw_paused",
+   "number": 2,
+   "title": "Raw model, paused clock",
+   "clock": "paused"
+  },
+  "label": "[Model Alone]",
+  "action_share": {
+   "human_skill": 0.0,
+   "model_skill": 0.0,
+   "model_chunk": 0.0,
+   "fallback": 0.0
+  },
+  "progress_iqm": {
+   "estimate": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "episodes": [
+  {
+   "game": "snake",
+   "seed": 0,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.3,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "snake",
+   "seed": 1,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.62,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "snake",
+   "seed": 2,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.03,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 0,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.1,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 1,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.82,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 2,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.82,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 0,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.62,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 1,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.73,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 2,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.16,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 0,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.08,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 1,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.79,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 2,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.0,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "glass",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 0,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.89,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 1,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.91,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 2,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 0,
+   "ticks": 0,
+   "calls": 0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.59,
+   "invalid_plans": 0,
+   "ended": "error:BrainError",
+   "extra": {
+    "error": "brain_trouble: the account has a billing problem: check the balance on the Model API account page",
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": "not measured",
+     "shrink": "not measured",
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": "not measured",
+     "parse_and_check": "not measured",
+     "key_down": "not measured",
+     "skill": "not measured"
+    },
+    "clock": "paused"
+   }
+  }
+ ]
+}
