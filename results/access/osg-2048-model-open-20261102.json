@@ -1,0 +1,77 @@
+{
+ "schema": "pf-access-osg/1",
+ "written": "2026-11-02T09:54:44+02:00",
+ "commit": "dc5f8da",
+ "game": {
+  "name": "2048",
+  "author": "Gabriele Cirulli",
+  "licence": "MIT",
+  "pinned": "478b6ec346e3787f589e4af751378d06ded4cbbc"
+ },
+ "brain": "open alone, one arrow per picture",
+ "summary": {
+  "requests": 4,
+  "done": 4,
+  "done_rate_95": [
+   0.5101,
+   1.0
+  ],
+  "cost_usd": 0.7643,
+  "unreadable_answers": 3
+ },
+ "episodes": [
+  {
+   "game": "2048-web",
+   "seed": 0,
+   "condition": "model-alone:meta-models/muse-spark-open-1026",
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 43,
+     "actions": 40,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 26,
+     "actions": 26,
+     "done_by": "game_progress"
+    }
+   ],
+   "unreadable_answers": 3,
+   "best_tile": 128,
+   "cost_usd": 0.37322
+  },
+  {
+   "game": "2048-web",
+   "seed": 1,
+   "condition": "model-alone:meta-models/muse-spark-open-1026",
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 34,
+     "actions": 34,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 39,
+     "actions": 39,
+     "done_by": "game_progress"
+    }
+   ],
+   "unreadable_answers": 0,
+   "best_tile": 128,
+   "cost_usd": 0.39106
+  }
+ ],
+ "honesty": "The model alone: no skill, no look-ahead. Compare with osg-2048-<date>.json (the assisted skill)."
+}

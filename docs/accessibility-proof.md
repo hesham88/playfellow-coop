@@ -22,7 +22,7 @@ F9 takes the controls at any time, "I've got it" too; F12 or the mouse in the to
 | You start with the controls; a request hands the buddy that one part | `playfellow_coop/assist.py`, `session.play_session` | `tests/test_assist.py` | all runs below |
 | It does that part | `bench/access_bench.py`, `bench/osg_2048.py` | `tests/test_access_bench.py` | 5 arena games, assisted: **65/66** requests done; 2048 (open source): **20/20**; tables below |
 | With the same keys you would press, only in your window | controls card + `in_front` checks (engine) | `tests/test_session_and_handover.py` | **0 breaches** in every run on this page |
-| Then hands control back, by itself | `Assist.after_turn` | `tests/test_assist.py` | live runs: the controls were back with the player at the end of **15 of 20** parts; in the other 5 the session ended first (the harness does not yet record why) |
+| Then hands control back, by itself | `Assist.after_turn` | `tests/test_assist.py` | live runs: the controls came back at the end of **13 of 20** parts; in the other 7 the game was lost first (recorded) |
 | ...and says what happened, from counted facts | `playfellow_coop/debrief.py` | `tests/test_debrief.py` | Muse Wonder debriefs: **10/10** passed the check that refuses any number the session did not count (EN and AR) |
 | Split controls ("you block, I heal") | `assist.buddy_card`, `assist.OwnedKeys` | `tests/test_assist.py` (every arena game) | 2048: **20/20** with the player keeping one arrow; **68** presses of the kept key refused, **0** reached the game |
 | In plain English or Arabic | `voice.py`, `realtime_voice.py` | `tests/test_voice*.py`, `tests/test_voice_accuracy.py` | waiting for the owner's 20 recordings (English, Arabic, mixed): `bench/voice_accuracy.py` |
@@ -51,21 +51,30 @@ is safety evidence; split-aware play is the 2048 table below. File: `results/acc
 
 ## The live assist: the application's own requests, with a real model
 
-`bench/assist_live.py` runs the real session loop on a game in memory with the requests the application named: "grab the coins",
-"grab the coins on the left", "get me past this jump", "take me to the door". The game's own numbers say whether the part was done.
+`bench/assist_live.py` runs the real session loop on a game in memory with the requests the application named. The player starts with the
+controls and says one request; the buddy takes that part; the controls come back when a "done" is confirmed by a second look (the picture
+from when the player asked next to the picture now) or when the part's 12 turns are up. Whether the part was **really** done is judged on
+the game itself, by one rule per request, written into every result file:
 
-| Brain | Parts | Really done | Model said "done" | ...and was right | Breaches | Cost |
-|---|---|---|---|---|---|---|
-| Muse Spark 1.3 | 10 | 4 | 3 | 1 | 0 | $0.34 |
-| Muse Spark Open (Baseten) | 10 | 4 | 2 | 1 | 0 | $0.38 |
+| Request | Game | Really done when |
+|---|---|---|
+| grab the coins | Lane dash | at least 3 more coins collected |
+| grab the coins on the left | Maze chase | of the coins in the left half of the maze when asked, at least 2 collected (all, if fewer remain) |
+| get me past this jump | Key caves | the player is past the first spike gap to the right of where they stood, and alive |
+| take me to the door | Key caves | the player is on the tile before the door or beyond it, and alive |
+| take me to the door | Ray maze | the player reached the exit |
 
-Files: `results/access/assist-live-muse-20261102.json`, `results/access/assist-live-open-20261102.json`.
+| Brain | Parts | Really done | "Done" said (confirmed) | ...and right | Game lost first | Breaches | Cost |
+|---|---|---|---|---|---|---|---|
+| Muse Spark 1.3 | 10 | 4 | 2 | **2** | 3 | 0 | $0.31 |
+| Muse Spark Open (Baseten) | 10 | 4 | 1 | **1** | 4 | 0 | $0.32 |
 
-**What this shows, honestly:** the buddy does the asked part about 4 times in 10 with the model choosing every key in 12 turns, never
-breaks a rule, and gave the controls back at the end of 15 of 20 parts (the other sessions ended first). The model's own "done" is not yet reliable (2 of 5 claims were right): a wrong "done"
-gives the controls back early, which is safe but not yet good. The first run found two bugs that made "done" impossible (the strict answer
-schema had no room for it, and the request was heard only once); both are fixed and tested, and the runs before the fix are kept
-(`*-before-fix.json`: 6/10 really done, 0 claims). The next step is a screen check of the goal next to the model's word.
+Files: `results/access/assist-live-muse-strict-20261102.json`, `results/access/assist-live-open-strict-20261102.json` (2 seeds each).
+
+**What this shows, honestly:** with the model choosing every key, the buddy did the asked part 4 times in 10, never broke a rule, and
+every "done" it gave was true (3 of 3, a small number). Where it failed: "get me past this jump" ended on the spikes every time (4 of 4),
+and "grab the coins" in lane dash and the ray maze exit were not reached in 12 turns. Earlier runs judged by looser rules are kept for the
+record (`assist-live-*-20261102.json`, `*-before-fix.json`): they found two bugs that made "done" impossible, both fixed and tested.
 
 ## The open-source game: 2048 (Gabriele Cirulli, MIT)
 
@@ -97,5 +106,5 @@ event's topic rules. Files: `results/fifteen/*.json`. With a local skill on the 
 
 - No disabled player has used this build; impact is argued from the design and the measures above, not from a study.
 - Voice accuracy waits for real recordings.
-- The model's "done" is not yet reliable (above).
+- The model's "done" was right 3 of 3 times in the strict live runs: too few claims to call it reliable.
 - One run with SAM marks on all 15 games was lost to a network outage on 2 Nov and is not reported.
