@@ -312,7 +312,8 @@ def play_held_out(code: str, make_env, observer, mapper, seeds, max_steps: int) 
 
 def run_game(game: str, ask, library_root: Path, validation_seeds, test_seeds, candidates: int = 1,
              validation_steps: int | None = None, held_out_steps: int | None = None,
-             budget_usd: float = 1.0, budget_calls: int = 10, cost_per_call_usd: float = 0.0) -> dict:
+             budget_usd: float = 1.0, budget_calls: int = 10, cost_per_call_usd: float = 0.0,
+             example: tuple[str, str] | None = None) -> dict:
     """One full SkillSmith round on one game, from the library folder as it stands (pass a blank folder for a from-blank run)."""
     ensure_engine()
     supported, reason = game_support(game)
@@ -335,7 +336,7 @@ def run_game(game: str, ask, library_root: Path, validation_seeds, test_seeds, c
     budget = Budget(max_usd=budget_usd, max_calls=budget_calls)
     from playfellow_coop.skillsmith.synth import example_for, progress_text
 
-    example = example_for(game)
+    example = example if example is not None else example_for(game)
     synth = Synthesizer(ask_fn, library, budget, cost_per_call_usd=cost_per_call_usd,
                         keys=game_keys, progress=progress_text(game), example=example)
     result = improve(game, GOALS.get(game, "win the game"), library, synth, CURRENT_NAME, IDLE_CODE,

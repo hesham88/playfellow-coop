@@ -199,6 +199,15 @@ def test_a_replay_that_does_not_match_the_saved_numbers_exits_1(tmp_path):
     assert main(["--replay", str(wrong)]) == 1
 
 
+def test_a_planted_same_game_example_is_refused_with_the_fake_model(tmp_path):
+    from playfellow_coop.skillsmith.synth import example_for
+
+    _game, code = example_for("key_caves")
+    with pytest.raises(ValueError):
+        run_game("maze_chase", FakeModel(), tmp_path / "lib", [0], [100], validation_steps=10,
+                 example=("maze_chase", code))
+
+
 def test_a_promoted_skill_plays_only_the_held_out_seeds_and_play_is_free(tmp_path):
     result = run_game("key_caves", FakeModel(), tmp_path / "lib", [0], [100], candidates=1,
                       validation_steps=120, held_out_steps=60)
