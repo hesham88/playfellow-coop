@@ -1,7 +1,9 @@
 """Tests for tools/make_charts.py: every chart is built from committed results/**/*.json files only,
 every chart states whether a model row is 'assisted (skills play, the model picks)' or 'model alone',
 non-model runs are labelled 'harness check: scripted chooser, no model' or 'no model (local floor)',
-every SVG has a matching PNG copy for the video, and no chart displays a number that does not trace to a result file."""
+every SVG has a matching PNG copy for the video, the per-game ladder chart shows all 14 games + Assist + 2048
+with the oracle ceiling line labelled 'oracle (our skill reading pixels), not the buddy' and unrun rungs marked
+'pending', and no chart displays a number that does not trace to a result file."""
 from __future__ import annotations
 
 import json
@@ -9,7 +11,6 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-import pytest
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +22,7 @@ from tools import make_charts  # noqa: E402
 
 def test_make_charts_writes_svg_and_png_pairs_from_committed_results(tmp_path):
     written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
-    assert len(written) >= 3
+    assert len(written) >= 4
     for stem, paths in written.items():
         svg_path, png_path = paths["svg"], paths["png"]
         assert svg_path.is_file() and svg_path.suffix == ".svg"
@@ -35,7 +36,10 @@ def test_every_chart_labels_assisted_or_model_alone(tmp_path):
     written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
     for stem, paths in written.items():
         text = make_charts.visible_text(paths["svg"]).lower()
-        assert "assisted (skills play, the model picks)" in text or "model alone" in text, stem
+        if stem == "learning-curve":
+            assert "assisted: model-written skill" in text or "harness check: fake model" in text or "pending" in text, stem
+        else:
+            assert "assisted (skills play, the model picks)" in text or "model alone" in text, stem
 
 
 def test_every_number_in_every_chart_traces_to_committed_result_files(tmp_path):
@@ -52,10 +56,10 @@ def test_number_provenance_check_fails_when_a_chart_shows_an_invented_number(tmp
     first_svg = next(iter(written.values()))["svg"]
     tampered = tmp_path / "tampered.svg"
     tampered.write_text(
-        first_svg.read_text(encoding="utf-8").replace("</svg>", "<text x='10' y='10'>84.73%</text></svg>"),
+        first_svg.read_text(encoding="utf-8").replace("</svg>", "<text x='10' y='10'>84.7391%</text></svg>"),
         encoding="utf-8",
     )
-    assert "84.73" in make_charts.unmatched_numbers(tampered, allowed)
+    assert "84.7391" in make_charts.unmatched_numbers(tampered, allowed)
 
 
 def test_non_model_rows_use_honesty_ladder_labels_and_never_claim_a_model(tmp_path):
@@ -82,13 +86,19 @@ def test_non_model_rows_use_honesty_ladder_labels_and_never_claim_a_model(tmp_pa
             assert "model" not in low.replace("no model", ""), line
 
 
-def test_every_arena_row_names_its_test_set_and_result_file(tmp_path):
+def test_every_arena_row_names_its_test_set_date_and_result_file(tmp_path):
     written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
     arena_text = make_charts.visible_text(written["arena-wins-and-cost"]["svg"])
-    assert "glass look, 5 skill games, 29 Oct" in arena_text
+    assert "glass look, 5 skill games, 29 Oct · muse-skills-20261029.json" in arena_text
+    assert "plain look, 5 skill games, 31 Oct · muse-skills-pt1.json" in arena_text
+    assert "14-game R1, 2 Nov · muse-sam-20261102.json" in arena_text
     assert "unseen games, 27 Oct" in arena_text
     for fname in (
         "muse-skills-20261029.json",
+        "muse-skills-pt1.json",
+        "open-skills-20261102.json",
+        "muse-skills-20261102.json",
+        "muse-sam-20261102.json",
         "scripted-20261029.json",
         "builtin-20261029.json",
         "random-20261029.json",
@@ -114,3 +124,175 @@ def test_cache_chart_states_computed_documented_prices_and_rejects_saved_without
         encoding="utf-8",
     )
     assert make_charts.unaccompanied_saved_lines(tampered) != []
+
+
+def test_per_game_ladder_chart_shows_oracle_ceiling_pending_rungs_r1_assist_and_2048(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    assert "ladder-per-game" in written
+    ladder_svg = written["ladder-per-game"]["svg"]
+    ladder_text = make_charts.visible_text(ladder_svg)
+    assert "oracle: our skill reading pixels" in ladder_text
+    assert "engine oracle: reads the game's own state, not pixels" in ladder_text
+    assert "pending" in ladder_text
+    for game_key in make_charts.ALL_FOURTEEN_GAMES:
+        assert game_key in ladder_text, game_key
+    assert "65/66" in ladder_text
+    assert "4/10" in ladder_text
+    assert "20/20" in ladder_text
+    assert "4/4" in ladder_text
+
+
+def test_oracle_file_names_a_source_per_game_pixel_skill_or_engine_state_oracle():
+    from playfellow_coop.skills import SKILLS
+
+    doc = json.loads((ROOT / "results" / "fifteen" / "oracle-steps-20261102.json").read_text(encoding="utf-8"))
+    for game, entry in doc.items():
+        source = entry["source"]
+        if entry["skill"]:
+            assert game in SKILLS and source.startswith("pixel skill (") and source.endswith(".py)"), (game, source)
+            assert (ROOT / "playfellow_coop" / "skills" / source[len("pixel skill ("):-1]).is_file(), source
+        else:
+            assert source.startswith("engine state oracle (") and "policy_" in source and "pixel" not in source, (game, source)
+
+
+def test_ladder_ceiling_caption_names_its_source_and_a_game_without_skill_never_carries_the_pixel_caption(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    doc = json.loads((ROOT / "results" / "fifteen" / "oracle-steps-20261102.json").read_text(encoding="utf-8"))
+    lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    for game, entry in doc.items():
+        game_lines = [ln for ln in lines if ln.startswith(f"{game} ") or ln.startswith(f"{game}\u00a0")]
+        assert game_lines, game
+        caption = [ln for ln in lines if ln.startswith(f"{game} ceiling:")]
+        assert len(caption) == 1, (game, caption)
+        if entry["skill"]:
+            assert make_charts.PIXEL_ORACLE_CAPTION in caption[0], caption
+        else:
+            assert make_charts.ENGINE_ORACLE_CAPTION in caption[0] and "pixels" not in caption[0].replace("not pixels", ""), caption
+    assert "oracle (our skill reading pixels), not the buddy" not in "\n".join(lines)
+    assert make_charts.ceiling_caption({"skill": False}) == make_charts.ENGINE_ORACLE_CAPTION
+    assert make_charts.ceiling_caption({"skill": True}) == make_charts.PIXEL_ORACLE_CAPTION
+
+
+def test_live_assist_is_labelled_as_the_model_playing_the_part_with_no_local_skill_never_model_alone(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    live = [ln for ln in lines if ln.lower().startswith("live assist")]
+    assert live, lines
+    for ln in live:
+        assert make_charts.LIVE_ASSIST_LABEL in ln, ln
+        assert "model alone" not in ln.lower(), ln
+    assert make_charts.LIVE_ASSIST_LABEL == "live assist: the model plays the part, no local skill"
+
+
+def test_learning_curve_chart_labels_and_modes(tmp_path):
+    # 1. Unrun / empty results directory renders as pending
+    empty_dir = tmp_path / "empty_results"
+    empty_dir.mkdir()
+    res_pending = make_charts._build_learning_curve(empty_dir, tmp_path / "pending_out", committed_only=False)
+    assert res_pending is not None
+    text_pending = make_charts.visible_text(res_pending["svg"]).lower()
+    assert "pending" in text_pending
+
+    # 2. Fake model run renders as "harness check: fake model"
+    fake_doc = {
+        "schema": "pf-arena-run/1",
+        "condition": "skillsmith-fake",
+        "brain": "fake",
+        "model": "fake-stand-in (not a model result)",
+        "games": {
+            "maze_chase": {
+                "goal": "collect the coins, take the key and reach the door",
+                "promoted": "cand1",
+                "curve": [
+                    {"round": 0, "current_progress": 0.0, "best_progress": 0.58, "promoted": "cand1", "reason": "improved"},
+                    {"round": 1, "current_progress": 0.58, "best_progress": 0.58, "promoted": None, "reason": "no change"},
+                ]
+            }
+        }
+    }
+    fake_dir = tmp_path / "fake_results" / "skillsmith"
+    fake_dir.mkdir(parents=True)
+    fake_file = fake_dir / "skillsmith-fake.json"
+    fake_file.write_text(json.dumps(fake_doc), encoding="utf-8")
+    res_fake = make_charts._build_learning_curve(fake_dir.parent, tmp_path / "fake_out", committed_only=False, run_file=fake_file)
+    assert res_fake is not None
+    text_fake = make_charts.visible_text(res_fake["svg"]).lower()
+    assert "harness check: fake model" in text_fake
+    assert "result" not in text_fake.replace("not a model result", "")
+
+    # 3. Live file renders as "assisted: model-written skill"
+    live_file = ROOT / "results" / "skillsmith" / "skillsmith-muse-room-20261102.json"
+    if live_file.is_file():
+        res_live = make_charts._build_learning_curve(ROOT / "results", tmp_path / "live_out", committed_only=False, run_file=live_file)
+        assert res_live is not None
+        text_live = make_charts.visible_text(res_live["svg"]).lower()
+        assert "assisted: model-written skill" in text_live
+
+
+def test_mouse_games_specify_click_routing_in_oracle_file():
+    doc = json.loads((ROOT / "results" / "fifteen" / "oracle-steps-20261102.json").read_text(encoding="utf-8"))
+    for game in ("mini_chess", "tiny_kingdom"):
+        entry = doc[game]
+        route = entry.get("oracle_route") or entry.get("click_path")
+        assert route, f"{game} in oracle-steps-20261102.json must specify oracle_route / click_path"
+        assert "playfellowgym.step" in route.lower()
+        assert "mouse" in route.lower() or "click" in route.lower()
+        assert "bench/arena_run" in route.lower() or "runner" in route.lower()
+
+
+def test_game_with_zero_sweep_wins_can_never_render_as_won_and_mouse_games_labelled(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    ladder_lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    ladder_text = "\n".join(ladder_lines)
+
+    # 1. Mini Chess and Tiny Kingdom must show the exact mouse runner explanation
+    expected_mouse_status = "pixel skill wins in the gym (mouse); the runner has no mouse path yet: 0/3"
+    assert expected_mouse_status in ladder_text
+
+    # 2. Sweep total must be stated as 36 of 42 (12 of 14 games)
+    assert "The sweep total is 36 of 42 (12 of 14 games)" in ladder_text
+    assert "all 14 games won" not in ladder_text.lower()
+    assert "14 of 14 games" not in ladder_text.lower()
+
+    # 3. A game with 0 sweep wins can never render as won
+    for line in ladder_lines:
+        if "mini_chess" in line or "tiny_kingdom" in line:
+            assert " 3/3" not in line
+            assert "won" not in line.lower() or "0/3" in line
+
+
+def test_sweep_rows_read_scripted_no_model_label_and_never_rung_4(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    ladder_lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    ladder_text = "\n".join(ladder_lines)
+
+    # Sweep rows must use SCRIPTED_NO_MODEL_LABEL without Rung 4 prefix
+    assert "harness check: scripted chooser, no model: 3/3" in ladder_text
+    assert "Rung 4 harness check: scripted chooser" not in ladder_text
+
+    # Unrun games must show Rung 4 as pending
+    unrun_r4 = [ln for ln in ladder_lines if "Rung 4: pending" in ln or "Rung 4 (model picks): pending" in ln]
+    assert len(unrun_r4) >= 7
+
+
+def test_ladder_chart_shows_model_written_held_out_numbers_on_maze_chase_and_key_caves(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    ladder_lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    ladder_text = "\n".join(ladder_lines)
+
+    assert "Rung 3 model-written: progress 0.58, 0 wins" in ladder_text
+    assert "Rung 3 model-written: progress 0.33, 0 wins" in ladder_text
+
+    # Neither maze_chase nor key_caves should have Rung 3 marked pending
+    for line in ladder_lines:
+        if "maze_chase" in line or "key_caves" in line:
+            assert "Rung 3 model-written skills: pending" not in line
+
+
+def test_learning_curve_subtitle_has_only_model_written_label_and_no_skills_play_model_picks(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    curve_text = make_charts.visible_text(written["learning-curve"]["svg"])
+
+    assert "assisted (skills play, the model picks)" not in curve_text
+    assert "Rung 3, assisted: model-written skill" in curve_text
+
