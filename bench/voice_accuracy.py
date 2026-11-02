@@ -89,15 +89,17 @@ def score(rows: list[dict]) -> dict:
     return out
 
 
-def run(clips: Path, transcriber) -> dict:
-    lines = expected_lines(clips / "RECORD-THESE.md")
+def run(clips: Path, transcriber, lines_md: Path | None = None, convert=None) -> dict:
+    """lines_md: the line list (default RECORD-THESE.md beside the clips). Clips may be named 01.m4a or 1.m4a."""
+    lines = expected_lines(lines_md if lines_md is not None else clips / "RECORD-THESE.md")
+    convert = convert or to_wav
     rows = []
-    for path in sorted(p for p in clips.iterdir() if re.match(r"^\d\d\.[a-z0-9]+$", p.name, re.I)):
-        number = path.stem
+    numbered = [(f"{int(p.stem):02d}", p) for p in clips.iterdir() if re.match(r"^\d{1,2}\.[a-z0-9]+$", p.name, re.I)]
+    for number, path in sorted(numbered):
         if number not in lines:
             continue
         line, group = lines[number]
-        heard = transcriber.transcribe(to_wav(path), language="english" if group == "english" else "arabic")
+        heard = transcriber.transcribe(convert(path), language="english" if group == "english" else "arabic")
         rows.append({"clip": number, "group": group, "expected": line, "heard": heard, "wer": wer(line, heard),
                      "command_ok": command_match(line, heard)})
     return {"rows": rows, "summary": score(rows)}
@@ -107,6 +109,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--clips", required=True)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--lines", default=None, help="the line list, when it is not RECORD-THESE.md beside the clips")
     args = ap.parse_args(argv)
     from playfellow_coop.__main__ import load_muse_key
     from playfellow_coop.voice import MuseVoiceTranscriber
@@ -114,7 +117,7 @@ def main(argv=None) -> int:
     key = load_muse_key()
     if not key:
         raise SystemExit("needs a Muse key (MODEL_API_KEY)")
-    result = run(Path(args.clips), MuseVoiceTranscriber(key))
+    result = run(Path(args.clips), MuseVoiceTranscriber(key), lines_md=Path(args.lines) if args.lines else None)
     result.update({"schema": "pf-voice/1", "written": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
                    "model": "muse-voice-transcribe-1.0", "speaker": "one adult speaker (the project owner), Egyptian Arabic and English",
                    "honesty": "One speaker, about 20 short clips: a first measurement, not a population result. The clips are not published."})

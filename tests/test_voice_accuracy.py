@@ -73,3 +73,24 @@ def test_run_converts_any_clip_and_scores_each_group(tmp_path):
     out = va.run(tmp_path, Fake())
     assert [r["command_ok"] for r in out["rows"]] == [True, False, True]
     assert out["summary"]["all"]["command_match"] == 2 and out["summary"]["arabic"]["command_match_rate"] == 1.0
+
+
+def test_clips_named_without_a_leading_zero_and_a_line_list_in_another_folder_are_matched(tmp_path):
+    """The owner's 20 clips came as 1.m4a .. 20.m4a in their own folder, with the line list elsewhere."""
+    from bench import voice_accuracy as va
+
+    clips, lists = tmp_path / "clips", tmp_path / "lists"
+    clips.mkdir()
+    lists.mkdir()
+    (lists / "RECORD-THESE.md").write_text("## English\n01. Take me to the door.\n02. Stop.\n", encoding="utf-8")
+    for name in ("1.m4a", "2.m4a", "notes.txt"):
+        (clips / name).write_bytes(b"x")
+
+    class Heard:
+        def transcribe(self, wav, language="english"):
+            return {"1": "take me to the door", "2": "stop"}[self.next.pop(0)]
+
+    heard = Heard()
+    heard.next = ["1", "2"]
+    result = va.run(clips, heard, lines_md=lists / "RECORD-THESE.md", convert=lambda path: b"wav")
+    assert [r["clip"] for r in result["rows"]] == ["01", "02"] and result["summary"]["all"]["command_match"] == 2
