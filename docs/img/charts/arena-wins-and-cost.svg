@@ -1,76 +1,127 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
   <rect x="0" y="0" width="1920" height="1080" fill="#04061a"/>
-  <rect x="48" y="36" width="1824" height="1008" fill="#0a1030" rx="18" ry="18" stroke="#445498" stroke-width="2"/>
-  <text x="96" y="98" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="bold" text-anchor="start">Arena Win Rate and Spend by Operating Mode</text>
-  <text x="96" y="142" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="normal" text-anchor="start">Every row states assisted (skills play, the model picks) or model alone; non-model runs are marked harness check.</text>
-  <text x="96" y="182" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Run / Benchmark Set &amp; Operating Rung</text>
-  <text x="820" y="182" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Episodes Won (Win Share)</text>
-  <text x="1480" y="182" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Recorded Spend &amp; Token Load</text>
-  <line x1="88" y1="196" x2="1832" y2="196" stroke="#445498" stroke-width="1"/>
-  <rect x="84" y="208" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
-  <text x="104" y="240" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse) — glass look, 5 skill games, 29 Oct · muse-skills-20261029.json</text>
-  <text x="104" y="274" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">assisted (skills play, the model picks)</text>
-  <rect x="820" y="226" width="380" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
-  <rect x="820" y="226" width="380" height="32" fill="#43e3ff" rx="8" ry="8"/>
-  <text x="1218" y="250" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
-  <text x="820" y="282" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 100.0%   Mean turns: 1.0</text>
-  <text x="1480" y="248" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0422</text>
-  <text x="1480" y="280" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Per win: $0.00281</text>
-  <rect x="84" y="304" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
-  <text x="104" y="336" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse) — unseen games, 27 Oct · muse-raw-20261027.json</text>
-  <text x="104" y="370" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">model alone</text>
-  <rect x="820" y="322" width="380" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
-  <text x="1218" y="346" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
-  <text x="820" y="378" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 15.1%   Mean turns: 19.27</text>
-  <text x="1480" y="344" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $1.1878</text>
-  <text x="1480" y="376" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 548,607</text>
-  <rect x="84" y="400" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
-  <text x="104" y="432" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">meta-models/muse-spark-open-1026 (open) — unseen games, 27 Oct · open-raw-20261027.json</text>
-  <text x="104" y="466" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">model alone</text>
-  <rect x="820" y="418" width="380" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
-  <text x="1218" y="442" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
-  <text x="820" y="474" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 14.1%   Mean turns: 15.07</text>
-  <text x="1480" y="440" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $1.0184</text>
-  <text x="1480" y="472" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 439,805</text>
-  <rect x="84" y="496" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
-  <text x="104" y="528" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">scripted-chooser (scripted) — glass look, 5 skill games, 29 Oct · scripted-20261029.json</text>
-  <text x="104" y="562" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model</text>
-  <rect x="820" y="514" width="380" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
-  <rect x="820" y="514" width="380" height="32" fill="#ffcc4d" rx="8" ry="8"/>
-  <text x="1218" y="538" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
-  <text x="820" y="570" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 100.0%   Mean turns: 1.0</text>
-  <text x="1480" y="536" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
-  <text x="1480" y="568" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Per win: $0.00000</text>
-  <rect x="84" y="592" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
-  <text x="104" y="624" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">builtin-nav (builtin) — glass look, 5 skill games, 29 Oct · builtin-20261029.json</text>
-  <text x="104" y="658" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">no model (local floor)</text>
-  <rect x="820" y="610" width="380" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
-  <text x="1218" y="634" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 25 (0.0%)</text>
-  <text x="820" y="666" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 7.9%   Mean turns: 17.92</text>
-  <text x="1480" y="632" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
-  <text x="1480" y="664" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
-  <rect x="84" y="688" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
-  <text x="104" y="720" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">none (random) — glass look, 5 skill games, 29 Oct · random-20261029.json</text>
-  <text x="104" y="754" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">no model (local floor)</text>
-  <rect x="820" y="706" width="380" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
-  <text x="1218" y="730" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 25 (0.0%)</text>
-  <text x="820" y="762" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 7.9%   Mean turns: 17.72</text>
-  <text x="1480" y="728" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
-  <text x="1480" y="760" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
-  <rect x="84" y="784" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
-  <text x="104" y="816" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">builtin-nav (builtin) — unseen games, 27 Oct · builtin-free-20261027.json</text>
-  <text x="104" y="850" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">no model (local floor)</text>
-  <rect x="820" y="802" width="380" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
-  <text x="1218" y="826" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
-  <text x="820" y="858" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 17.4%   Mean turns: 151.6</text>
-  <text x="1480" y="824" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
-  <text x="1480" y="856" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
-  <rect x="84" y="880" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
-  <text x="104" y="912" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">none (random) — unseen games, 27 Oct · random-20261027.json</text>
-  <text x="104" y="946" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">no model (local floor)</text>
-  <rect x="820" y="898" width="380" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
-  <text x="1218" y="922" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 40 (0.0%)</text>
-  <text x="820" y="954" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 11.7%   Mean turns: 31.52</text>
-  <text x="1480" y="920" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
-  <text x="1480" y="952" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
+  <rect x="48" y="30" width="1824" height="1020" fill="#0a1030" rx="18" ry="18" stroke="#445498" stroke-width="2"/>
+  <text x="96" y="84" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="bold" text-anchor="start">Arena Win Rate and Spend by Operating Mode</text>
+  <text x="96" y="122" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="normal" text-anchor="start">Every row states assisted (skills play, the model picks) or model alone; non-model runs are marked harness check.</text>
+  <text x="96" y="152" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">Run / Benchmark Set &amp; Operating Rung</text>
+  <text x="840" y="152" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">Episodes Won (Win Share)</text>
+  <text x="1480" y="152" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">Recorded Spend &amp; Token Load</text>
+  <line x1="88" y1="162" x2="1832" y2="162" stroke="#445498" stroke-width="1"/>
+  <rect x="84" y="170" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="192" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse) — glass look, 5 skill games, 29 Oct · muse-skills-20261029.json</text>
+  <text x="104" y="214" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">assisted (skills play, the model picks)</text>
+  <rect x="840" y="178" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="840" y="178" width="360" height="20" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="1216" y="195" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
+  <text x="840" y="216" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 100.0%   Mean turns: 1.0</text>
+  <text x="1480" y="194" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.04218</text>
+  <text x="1480" y="215" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Per win: $0.00281</text>
+  <rect x="84" y="232" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="254" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse) — plain look, 5 skill games, 31 Oct · muse-skills-pt1.json</text>
+  <text x="104" y="276" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">assisted (skills play, the model picks)</text>
+  <rect x="840" y="240" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="840" y="240" width="360" height="20" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="1216" y="257" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
+  <text x="840" y="278" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 100.0%   Mean turns: 1.0</text>
+  <text x="1480" y="256" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.04075</text>
+  <text x="1480" y="277" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Per win: $0.00272</text>
+  <rect x="84" y="294" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="316" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">meta-models/muse-spark-open-1026 (open) — 14-game R1, 2 Nov · open-skills-20261102.json</text>
+  <text x="104" y="338" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">assisted (skills play, the model picks)</text>
+  <rect x="840" y="302" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="840" y="302" width="360" height="20" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="1216" y="319" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
+  <text x="840" y="340" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 100.0%   Mean turns: 1.0</text>
+  <text x="1480" y="318" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.03772</text>
+  <text x="1480" y="339" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Per win: $0.00251</text>
+  <rect x="84" y="356" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="378" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse) — 14-game R1, 2 Nov · muse-skills-20261102.json</text>
+  <text x="104" y="400" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">assisted (skills play, the model picks)</text>
+  <rect x="840" y="364" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="840" y="364" width="312" height="20" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="1216" y="381" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">13 / 15 (86.7%)</text>
+  <text x="840" y="402" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 86.7%   Mean turns: 0.87</text>
+  <text x="1480" y="380" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.03564</text>
+  <text x="1480" y="401" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Per win: $0.00274</text>
+  <rect x="84" y="418" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="440" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse) — 14-game R1, 2 Nov · muse-sam-20261102.json</text>
+  <text x="104" y="462" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">model alone</text>
+  <rect x="840" y="426" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="443" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 28 (0.0%)</text>
+  <text x="840" y="464" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 21.7%   Mean turns: 17.54</text>
+  <text x="1480" y="442" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $5.97680</text>
+  <text x="1480" y="463" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 888,770</text>
+  <rect x="84" y="480" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="502" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse) — 14-game R1, 2 Nov · muse-raw-20261102.json</text>
+  <text x="104" y="524" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">model alone</text>
+  <rect x="840" y="488" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="505" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 28 (0.0%)</text>
+  <text x="840" y="526" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 18.5%   Mean turns: 14.46</text>
+  <text x="1480" y="504" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $1.54708</text>
+  <text x="1480" y="525" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 734,298</text>
+  <rect x="84" y="542" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="564" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">meta-models/muse-spark-open-1026 (open) — 14-game R1, 2 Nov · open-raw-20261102.json</text>
+  <text x="104" y="586" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">model alone</text>
+  <rect x="840" y="550" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="567" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 28 (0.0%)</text>
+  <text x="840" y="588" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 12.5%   Mean turns: 5.89</text>
+  <text x="1480" y="566" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.75304</text>
+  <text x="1480" y="587" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 299,542</text>
+  <rect x="84" y="604" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="626" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse) — unseen games, 27 Oct · muse-raw-20261027.json</text>
+  <text x="104" y="648" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">model alone</text>
+  <rect x="840" y="612" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="629" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
+  <text x="840" y="650" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 15.1%   Mean turns: 19.27</text>
+  <text x="1480" y="628" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $1.18775</text>
+  <text x="1480" y="649" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 548,607</text>
+  <rect x="84" y="666" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="688" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">meta-models/muse-spark-open-1026 (open) — unseen games, 27 Oct · open-raw-20261027.json</text>
+  <text x="104" y="710" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">model alone</text>
+  <rect x="840" y="674" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="691" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
+  <text x="840" y="712" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 14.1%   Mean turns: 15.07</text>
+  <text x="1480" y="690" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $1.01837</text>
+  <text x="1480" y="711" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 439,805</text>
+  <rect x="84" y="728" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="750" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">scripted-chooser (scripted) — glass look, 5 skill games, 29 Oct · scripted-20261029.json</text>
+  <text x="104" y="772" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model</text>
+  <rect x="840" y="736" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="840" y="736" width="360" height="20" fill="#ffcc4d" rx="6" ry="6"/>
+  <text x="1216" y="753" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
+  <text x="840" y="774" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 100.0%   Mean turns: 1.0</text>
+  <text x="1480" y="752" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.00000</text>
+  <text x="1480" y="773" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Per win: $0.00000</text>
+  <rect x="84" y="790" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="812" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">builtin-nav (builtin) — glass look, 5 skill games, 29 Oct · builtin-20261029.json</text>
+  <text x="104" y="834" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">no model (local floor)</text>
+  <rect x="840" y="798" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="815" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 25 (0.0%)</text>
+  <text x="840" y="836" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 7.9%   Mean turns: 17.92</text>
+  <text x="1480" y="814" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.00000</text>
+  <text x="1480" y="835" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 0</text>
+  <rect x="84" y="852" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="874" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">none (random) — glass look, 5 skill games, 29 Oct · random-20261029.json</text>
+  <text x="104" y="896" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">no model (local floor)</text>
+  <rect x="840" y="860" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="877" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 25 (0.0%)</text>
+  <text x="840" y="898" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 7.9%   Mean turns: 17.72</text>
+  <text x="1480" y="876" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.00000</text>
+  <text x="1480" y="897" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 0</text>
+  <rect x="84" y="914" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="936" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">builtin-nav (builtin) — unseen games, 27 Oct · builtin-free-20261027.json</text>
+  <text x="104" y="958" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">no model (local floor)</text>
+  <rect x="840" y="922" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="939" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
+  <text x="840" y="960" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 17.4%   Mean turns: 151.6</text>
+  <text x="1480" y="938" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.00000</text>
+  <text x="1480" y="959" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 0</text>
+  <rect x="84" y="976" width="1752" height="54" fill="#141c4c" rx="10" ry="10" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="998" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">none (random) — unseen games, 27 Oct · random-20261027.json</text>
+  <text x="104" y="1020" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">no model (local floor)</text>
+  <rect x="840" y="984" width="360" height="20" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <text x="1216" y="1001" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">0 / 40 (0.0%)</text>
+  <text x="840" y="1022" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Mean progress: 11.7%   Mean turns: 31.52</text>
+  <text x="1480" y="1000" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="start">Spend: $0.00000</text>
+  <text x="1480" y="1021" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Tokens in: 0</text>
 </svg>
