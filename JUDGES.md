@@ -45,17 +45,15 @@ split/ALL    done 1/3 (33%, 95% (0.0615, 0.7923)) spared 526 refused 69 breaches
 
 "done" counts requests ("make the next quarter of progress") judged by the game's own numbers; "spared" is key presses the player did not
 have to make; "refused" is presses of the key the player kept (split controls) that never reached the game; "breaches" must be 0.
-The full run (5 games, 5 seeds) is `results/access/access-20261102.json`: assisted 65/66.
+The full run (`python -m bench.access_bench --seeds 5`, committed as `results/access/access-20261102.json`): **65 of 66 parts done,
+0 breaches, 21,066 presses spared**; split controls refused 83,696 presses of kept keys with **0 breaches**; random keys finished 11 of 36.
+No disabled player was simulated or involved.
 
 The tests of the assist itself (hand-back by itself, a crashing check never counts as done, F12 stays a stop, kept keys never pressed or
-released on any route, the second look before "done" counts):
+released on any route, new words replace the running part, the second look before "done" counts):
 
 ```
-python -m pytest tests/test_assist.py -q
-```
-
-```
-34 passed, 2 skipped
+python -m pytest tests/test_assist.py tests/test_access_bench.py -q -W error
 ```
 
 To play it yourself with the built-in brain (no key): start the engine's Practice Arena, then
@@ -64,8 +62,12 @@ To play it yourself with the built-in brain (no key): start the engine's Practic
 python -m playfellow_coop --assist 6 --typed
 ```
 
-and type `grab the coins on the left`. With the built-in brain a part ends at its turn limit (6 here) and the controls come back with a
-line of counted facts; the "is it done" check needs a model (part 3). Add `--keep j,k` to keep keys for yourself.
+and type `grab the coins on the left`. Offline, the built-in brain never says a part is done, so the part ends at its turn limit (6 here)
+with "I couldn't finish ..." and the controls come back with a line of counted facts; do not read that as the buddy detecting a finished
+part. Add `--keep j,k` to keep keys for yourself. **F9** takes the controls back at any moment; **F12** stops everything.
+
+With your own key (`--brain muse --assist`, part 3), a part ends when the model says it is done **and a second look** at the picture from
+when you asked and the picture now agrees (`done_by: model_verified`); the record always says which.
 
 ## 3. Live with your own keys
 
@@ -108,3 +110,5 @@ Output:
 ```
 
 Every win in this repo's result files is labelled **assisted** (a local skill helped) or **model alone**; nothing here claims a level above L0 on the Practice Arena.
+
+The ADK evaluator (`playfellow_coop/adk_app/arena_eval/run.py`, run in the pinned ADK environment from `tools/adk_env.py`) also needs the engine installed, exactly as in the README install step: clone the engine at the `pre-hackathon` tag beside this repo and `pip install -e playfellow`, or set `PLAYFELLOW_ENGINE` to its `software` folder. Without an engine it now stops as a setup failure; it never reports a lost game.

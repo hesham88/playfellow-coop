@@ -35,6 +35,25 @@ def test_goal_number_must_touch_its_noun_not_just_share_a_line():
     assert goal.check(["Level: 3"]).done
 
 
+def test_a_number_before_the_noun_is_not_counted_when_the_noun_has_its_own_number():
+    goal = GoalChecker("reach level 3")
+    assert not goal.check(["Lives 3 Level 1"]).done  # the 3 is the lives count; the level shown is 1
+    assert not goal.check(["Wave 3 Level 1"]).done
+    assert not goal.check(["3 Level 1"]).done  # a leading count cannot borrow the noun whose own number follows
+
+
+def test_a_number_before_its_noun_counts_when_the_noun_has_none_of_its_own():
+    goal = GoalChecker("reach level 3")
+    assert goal.check(["3 Level"]).done
+    assert goal.check(["3rd level"]).done  # the ordinal says which level, with no competing count after the noun
+
+
+def test_an_arabic_level_label_pairs_with_its_number():
+    goal = GoalChecker("reach level 3")
+    assert goal.check(["المستوى ٣"]).done  # the HUD noun is Arabic, the digit Arabic-Indic
+    assert not goal.check(["النقاط ٣ المستوى ١"]).done  # the 3 belongs to the points, not the level
+
+
 def test_goal_numbers_read_arabic_digits_on_either_side():
     goal = GoalChecker("reach level 3")
     assert goal.check(["Level ٣"]).done  # Arabic-Indic digit on screen
@@ -81,6 +100,27 @@ def test_opposites_cancel_across_devices_not_only_between_keys():
 def test_the_guardrails_see_keys_already_held_across_turns():
     plan = GuardRails().check(ActionBinder().bind("[MOVE_RIGHT]"), held_keys={"a"})  # D7: 'a' is down from a persistent hold
     assert plan.steps == [] and any("already held" in n for n in plan.notes)
+
+
+# ---------- K-lane result honesty: a paid run that reached no model is void ----------
+
+PAID_BRAINS = frozenset({"muse", "open"})  # brains whose calls are billed; the free ones (builtin, random, scripted) read 0 tokens honestly
+
+
+def test_a_paid_result_with_no_tokens_must_say_it_is_void():
+    import json
+    from pathlib import Path
+
+    offenders = []
+    for path in sorted((Path(__file__).resolve().parents[1] / "results").rglob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            continue
+        overall = data.get("overall") or {}
+        if data.get("brain") in PAID_BRAINS and (overall.get("episodes") or 0) > 0 and (overall.get("tokens_in") or 0) == 0 and not data.get("void"):
+            offenders.append(path.name)
+    assert not offenders, f"paid result files with episodes but no tokens and no void mark: {offenders}"
 
 
 # ---------- S2: card steps through the guardrails, one grid mapper ----------

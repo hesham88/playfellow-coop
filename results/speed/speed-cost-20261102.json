@@ -1,0 +1,387 @@
+{
+ "schema": "pf-speed-cost/1",
+ "written": "2026-11-02T10:47:29+02:00",
+ "note": "Built only from committed result files; every value names its source. Not measured is said, never zero.",
+ "sources": [
+  "results/cache/cache-ratio-20261030.json",
+  "results/fastpath_bench-20261027-032325-efc6314.json",
+  "results/glass/builtin-20261029.json",
+  "results/glass/muse-skills-20261029.json",
+  "results/glass/random-20261029.json",
+  "results/glass/scripted-20261029.json",
+  "results/k-lane/baseten-skills.json",
+  "results/k-lane/latency-scripted.json",
+  "results/k-lane/muse-probe.json",
+  "results/k-lane/muse-skills-pt1-billing-failed.json",
+  "results/k-lane/muse-skills-pt1.json",
+  "results/unseen/builtin-free-20261027.json",
+  "results/unseen/muse-raw-20261027.json",
+  "results/unseen/open-raw-20261027.json",
+  "results/unseen/random-20261027.json"
+ ],
+ "stages_per_turn": {
+  "results/k-lane/baseten-skills.json": {
+   "capture": {
+    "p50_s": 0.012513,
+    "p90_s": 0.012513,
+    "episodes_measured": 14,
+    "source": "results/k-lane/baseten-skills.json"
+   },
+   "shrink": {
+    "p50_s": 0.000256,
+    "p90_s": 0.000256,
+    "episodes_measured": 14,
+    "source": "results/k-lane/baseten-skills.json"
+   },
+   "mark": "not measured",
+   "encode": {
+    "p50_s": 0.001884,
+    "p90_s": 0.001884,
+    "episodes_measured": 14,
+    "source": "results/k-lane/baseten-skills.json"
+   },
+   "request": {
+    "p50_s": 4.990192,
+    "p90_s": 4.990192,
+    "episodes_measured": 14,
+    "source": "results/k-lane/baseten-skills.json"
+   },
+   "parse_and_check": {
+    "p50_s": 3.8e-05,
+    "p90_s": 3.8e-05,
+    "episodes_measured": 14,
+    "source": "results/k-lane/baseten-skills.json"
+   },
+   "key_down": "not measured",
+   "skill": {
+    "p50_s": 10.248676,
+    "p90_s": 10.248676,
+    "episodes_measured": 14,
+    "source": "results/k-lane/baseten-skills.json"
+   }
+  },
+  "results/k-lane/latency-scripted.json": {
+   "capture": {
+    "p50_s": 0.007359,
+    "p90_s": 0.007359,
+    "episodes_measured": 6,
+    "source": "results/k-lane/latency-scripted.json"
+   },
+   "shrink": {
+    "p50_s": 0.000174,
+    "p90_s": 0.000174,
+    "episodes_measured": 6,
+    "source": "results/k-lane/latency-scripted.json"
+   },
+   "mark": "not measured",
+   "encode": "not measured",
+   "request": {
+    "p50_s": 2.1e-05,
+    "p90_s": 2.1e-05,
+    "episodes_measured": 6,
+    "source": "results/k-lane/latency-scripted.json"
+   },
+   "parse_and_check": {
+    "p50_s": 3.7e-05,
+    "p90_s": 3.7e-05,
+    "episodes_measured": 6,
+    "source": "results/k-lane/latency-scripted.json"
+   },
+   "key_down": "not measured",
+   "skill": {
+    "p50_s": 18.32655,
+    "p90_s": 18.32655,
+    "episodes_measured": 6,
+    "source": "results/k-lane/latency-scripted.json"
+   }
+  },
+  "results/k-lane/muse-probe.json": {
+   "capture": {
+    "p50_s": 0.006105,
+    "p90_s": 0.006105,
+    "episodes_measured": 1,
+    "source": "results/k-lane/muse-probe.json"
+   },
+   "shrink": {
+    "p50_s": 0.000106,
+    "p90_s": 0.000106,
+    "episodes_measured": 1,
+    "source": "results/k-lane/muse-probe.json"
+   },
+   "mark": "not measured",
+   "encode": {
+    "p50_s": 0.020984,
+    "p90_s": 0.020984,
+    "episodes_measured": 1,
+    "source": "results/k-lane/muse-probe.json"
+   },
+   "request": {
+    "p50_s": 2.489914,
+    "p90_s": 2.489914,
+    "episodes_measured": 1,
+    "source": "results/k-lane/muse-probe.json"
+   },
+   "parse_and_check": {
+    "p50_s": 3.7e-05,
+    "p90_s": 3.7e-05,
+    "episodes_measured": 1,
+    "source": "results/k-lane/muse-probe.json"
+   },
+   "key_down": "not measured",
+   "skill": {
+    "p50_s": 3.721062,
+    "p90_s": 3.721062,
+    "episodes_measured": 1,
+    "source": "results/k-lane/muse-probe.json"
+   }
+  },
+  "results/k-lane/muse-skills-pt1-billing-failed.json": {
+   "capture": "not measured",
+   "shrink": "not measured",
+   "mark": "not measured",
+   "encode": "not measured",
+   "request": "not measured",
+   "parse_and_check": "not measured",
+   "key_down": "not measured",
+   "skill": "not measured"
+  },
+  "results/k-lane/muse-skills-pt1.json": {
+   "capture": {
+    "p50_s": 0.010169,
+    "p90_s": 0.010169,
+    "episodes_measured": 15,
+    "source": "results/k-lane/muse-skills-pt1.json"
+   },
+   "shrink": {
+    "p50_s": 0.000179,
+    "p90_s": 0.000179,
+    "episodes_measured": 15,
+    "source": "results/k-lane/muse-skills-pt1.json"
+   },
+   "mark": "not measured",
+   "encode": {
+    "p50_s": 0.00184,
+    "p90_s": 0.00184,
+    "episodes_measured": 15,
+    "source": "results/k-lane/muse-skills-pt1.json"
+   },
+   "request": {
+    "p50_s": 2.418103,
+    "p90_s": 2.418103,
+    "episodes_measured": 15,
+    "source": "results/k-lane/muse-skills-pt1.json"
+   },
+   "parse_and_check": {
+    "p50_s": 2.8e-05,
+    "p90_s": 2.8e-05,
+    "episodes_measured": 15,
+    "source": "results/k-lane/muse-skills-pt1.json"
+   },
+   "key_down": "not measured",
+   "skill": {
+    "p50_s": 8.427375,
+    "p90_s": 8.427375,
+    "episodes_measured": 15,
+    "source": "results/k-lane/muse-skills-pt1.json"
+   }
+  }
+ },
+ "per_rung": [
+  {
+   "source": "results/glass/builtin-20261029.json",
+   "brain": "builtin",
+   "model": "builtin-nav",
+   "rung": "local_floor",
+   "label": "[Local floor: no model]",
+   "episodes": 25,
+   "wins": 0,
+   "usd_per_win": "not measured (no wins)",
+   "tokens_per_win": "not measured (no wins)",
+   "cache_share": "not measured"
+  },
+  {
+   "source": "results/glass/muse-skills-20261029.json",
+   "brain": "muse",
+   "model": "muse-spark-1.3",
+   "rung": "human_skills",
+   "label": "[Assisted: Human Local Skill]",
+   "episodes": 15,
+   "wins": 15,
+   "usd_per_win": 0.00281,
+   "tokens_per_win": 1677.1,
+   "cache_share": 0.5744
+  },
+  {
+   "source": "results/glass/random-20261029.json",
+   "brain": "random",
+   "model": "none",
+   "rung": "local_floor",
+   "label": "[Local floor: no model]",
+   "episodes": 25,
+   "wins": 0,
+   "usd_per_win": "not measured (no wins)",
+   "tokens_per_win": "not measured (no wins)",
+   "cache_share": "not measured"
+  },
+  {
+   "source": "results/glass/scripted-20261029.json",
+   "brain": "scripted",
+   "model": "scripted-chooser",
+   "rung": "local_floor",
+   "label": "[Assisted: Human Local Skill]",
+   "episodes": 15,
+   "wins": 15,
+   "usd_per_win": 0.0,
+   "tokens_per_win": 0.0,
+   "cache_share": "not measured"
+  },
+  {
+   "source": "results/k-lane/baseten-skills.json",
+   "brain": "open",
+   "model": "meta-models/muse-spark-open-1026",
+   "rung": "human_skills",
+   "label": "[Assisted: Human Local Skill]",
+   "episodes": 15,
+   "wins": 14,
+   "usd_per_win": 0.00255,
+   "tokens_per_win": 1644.1,
+   "cache_share": 0.3279
+  },
+  {
+   "source": "results/k-lane/latency-scripted.json",
+   "brain": "scripted",
+   "model": "scripted-chooser",
+   "rung": "local_floor",
+   "label": "[Assisted: Human Local Skill]",
+   "episodes": 6,
+   "wins": 6,
+   "usd_per_win": 0.0,
+   "tokens_per_win": 0.0,
+   "cache_share": "not measured"
+  },
+  {
+   "source": "results/k-lane/muse-probe.json",
+   "brain": "muse",
+   "model": "muse-spark-1.3",
+   "rung": "human_skills",
+   "label": "[Assisted: Human Local Skill]",
+   "episodes": 1,
+   "wins": 1,
+   "usd_per_win": 0.00282,
+   "tokens_per_win": 1672.0,
+   "cache_share": 0.0
+  },
+  {
+   "source": "results/k-lane/muse-skills-pt1.json",
+   "brain": "muse",
+   "model": "muse-spark-1.3",
+   "rung": "human_skills",
+   "label": "[Assisted: Human Local Skill]",
+   "episodes": 15,
+   "wins": 15,
+   "usd_per_win": 0.00272,
+   "tokens_per_win": 1654.7,
+   "cache_share": 0.6389
+  },
+  {
+   "source": "results/unseen/builtin-free-20261027.json",
+   "brain": "builtin",
+   "model": "builtin-nav",
+   "rung": "local_floor",
+   "label": "[Local floor: no model]",
+   "episodes": 15,
+   "wins": 0,
+   "usd_per_win": "not measured (no wins)",
+   "tokens_per_win": "not measured (no wins)",
+   "cache_share": "not measured"
+  },
+  {
+   "source": "results/unseen/muse-raw-20261027.json",
+   "brain": "muse",
+   "model": "muse-spark-1.3",
+   "rung": "raw_paused",
+   "label": "[Model Alone]",
+   "episodes": 15,
+   "wins": 0,
+   "usd_per_win": "not measured (no wins)",
+   "tokens_per_win": "not measured (no wins)",
+   "cache_share": 0.5204
+  },
+  {
+   "source": "results/unseen/open-raw-20261027.json",
+   "brain": "open",
+   "model": "meta-models/muse-spark-open-1026",
+   "rung": "raw_paused",
+   "label": "[Model Alone]",
+   "episodes": 15,
+   "wins": 0,
+   "usd_per_win": "not measured (no wins)",
+   "tokens_per_win": "not measured (no wins)",
+   "cache_share": 0.5087
+  },
+  {
+   "source": "results/unseen/random-20261027.json",
+   "brain": "random",
+   "model": "none",
+   "rung": "local_floor",
+   "label": "[Local floor: no model]",
+   "episodes": 40,
+   "wins": 0,
+   "usd_per_win": "not measured (no wins)",
+   "tokens_per_win": "not measured (no wins)",
+   "cache_share": "not measured"
+  }
+ ],
+ "cache": [
+  {
+   "source": "results/cache/cache-ratio-20261030.json",
+   "file": "results/glass/muse-skills-20261029.json",
+   "cached_share": 0.5744,
+   "cached_share_95": [
+    0.3526,
+    0.7818
+   ]
+  },
+  {
+   "source": "results/cache/cache-ratio-20261030.json",
+   "file": "results/unseen/muse-raw-20261027.json",
+   "cached_share": 0.5204,
+   "cached_share_95": [
+    0.5046,
+    0.538
+   ]
+  },
+  {
+   "source": "results/cache/cache-ratio-20261030.json",
+   "file": "results/unseen/open-raw-20261027.json",
+   "cached_share": 0.5087,
+   "cached_share_95": [
+    0.4947,
+    0.523
+   ]
+  }
+ ],
+ "fastpath": {
+  "public_figure": "17\u201324x",
+  "measured_speedup_x": [
+   17.3,
+   21.6,
+   19.6,
+   23.9
+  ],
+  "source": "results/fastpath_bench-20261027-032325-efc6314.json",
+  "note": "the public figure brackets the measured medians; it is never a single best run"
+ },
+ "local_vs_model": {
+  "local_skill_ms_per_step": {
+   "ms": 69.092,
+   "source": "results/k-lane/baseten-skills.json",
+   "note": "skill stage p50 divided by the episode's skill steps, median over episodes"
+  },
+  "model_call_ms": {
+   "ms": 4990.2,
+   "source": "results/k-lane/baseten-skills.json",
+   "note": "request stage p50 of the paid run in that file"
+  }
+ }
+}

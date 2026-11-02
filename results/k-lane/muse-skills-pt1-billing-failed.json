@@ -4,6 +4,7 @@
  "condition": "muse-none",
  "brain": "muse",
  "model": "muse-spark-1.3",
+ "void": "billing failed: no call reached the model; not a result",
  "note": "PT1 glass look, model picks skill (owner go 2026-10-31, cap 0.20) marks=none; skills=True; effort=minimal; turns<= 3; looks=playfellow_looks (re-skinned games read through calibrated looks).",
  "overall": {
   "episodes": 15,
@@ -140,7 +141,7 @@
    "title": "Raw model, paused clock",
    "clock": "paused"
   },
-  "label": "[Model Alone]",
+  "label": "[Void: billing failed]",
   "action_share": {
    "human_skill": 0.0,
    "model_skill": 0.0,
