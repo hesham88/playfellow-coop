@@ -2,27 +2,72 @@
 
 **Built on the PlayFellow engine (hesham88/playfellow). Two tags say what existed when: before-kickoff = b7b72a8 (committed 08:04, pushed 12:01 on 26 Oct, before the kickoff); pre-hackathon = d63c1b4 (pushed 19:33 on 26 Oct), re-exporting engine work finished before the kickoff in our private repo (LM Studio adapter, memory check, proxy/CA hardening, redaction, game clock), plus packaging. Everything in this repo was built during the event.**
 
-PlayFellow is an open-source engine that plays a PC game *with* you: it watches one game window, asks a brain what to do next, and presses only the keys that game's controls card allows. This repo adds the event work as a plugin package. It does not contain the engine; it installs it.
+PlayFellow is an open-source engine that plays a PC game *with* you: it watches one game window, asks a brain what to do next, and presses only the keys that game's controls card allows. This repo adds the event work as a plugin package. It does not contain the engine; it installs it. "Coop" here means human-AI co-play: you and the buddy share one game, and you can take the controls back at any moment. The interface is **game-agnostic** (any window, pixels in, keys out); it is not "plays any game" — perception and skills are still fitted per game or work in 2D only.
 
-"Coop" here means human-AI co-play: you and the buddy share one game, and you can take the controls back at any moment. The interface is **game-agnostic** (any window, pixels in, keys out); it is not "plays any game" — perception and skills are still fitted per game or work in 2D only, and the honest status of each piece is in the table below.
+## The accessibility promise, and its evidence
 
-## What is new in this repo
+This is a co-op for adults whose hands can't keep up: one-handed play, tremor, RSI, fatigue. You play; when a part is too hard you say what you want — "grab the coins on the left", "get me past this jump", "take me to the door" — in English or Arabic, by voice or by typing. The buddy does that one part, with the same keys you would press, only in the game window you chose, and then the controls come back to you by themselves. Split controls ("you block, I heal") keep the keys you kept out of the buddy's hands entirely. **F9** hands the controls over and back; **F12** and the mouse in the top-left corner stop everything at once.
 
-| Piece | What it does | Status and honest limits |
+No disabled player has tested this build. We say that plainly instead of claiming a study that never happened. What stands behind the promise is measured, and every number below names its file:
+
+- **Breaches.** Every run counts a breach — a key outside the game's card, or input while another window was in front. In every result file in this repo the breach count is **0**, because the engine checks each reply against the card before the hands move, and presses nothing while the game is not in front.
+- **Parts done, presses spared.** The offline assist bench scores parts against the games' own progress (`done_by: game_progress`): parts done, presses the player did not have to make, zero breaches. Its result file lands in `results/access/` when the assist merge lands.
+- **What "done" means.** Live, the planner says a part is finished (`done_by: model_said`) or the screen-goal check says so (`done_by: screen_goal`, built on the strict goal-number pairing in `playfellow_coop/universal/state.py`). The record always names which; the model's word is never reported as a measured fact. Offline with the built-in brain, a part ends at its turn limit and says so: "I couldn't finish …".
+
+## What was measured
+
+**Assisted** means local skills play and the model picks which one; **model alone** means the model had no skill to start. The gap between the two rows is the honest headline.
+
+| Row | Result | File |
 |---|---|---|
-| `playfellow_coop/muse_brain.py` | A brain that asks a Muse model on the Meta Model API what to do. Pinned address, no proxy or CA variables, redirects refused, the key never shown | built; live capped calls recorded 2026-10-31: `results/k-lane/muse-probe.json` (1 of 1, $0.00282) and `results/k-lane/muse-skills-pt1.json` (**15 of 15 = 5 games (snake, box_push, slide_2048, lane_dash, brick_breaker) x 3 seeds**, $0.04075). **Assisted**: the model started local skills, so those wins are assisted play, not model alone |
-| Baseten bench row (open weights) | The same assisted bench with Muse Spark Open served by Baseten; a bench row, not a runtime brain | measured 2026-10-31 in `results/k-lane/baseten-skills.json`: **14 of 15 assisted** ($0.03576). **Assisted**: local skills play, the model picks |
-| Model alone (no skills) | The same Muse brain with no skill to start, raw pixels, as the honest control | measured 2026-10-27 in `results/unseen/muse-raw-20261027.json`: **0 of 15 wins**, mean progress 0.151, $1.18775. This is the model-alone row every assisted row is compared with |
-| `playfellow_coop/budget.py` | A daily spending cap (dollars and calls) kept in a small file; a call over the cap is stopped before it is sent | built; prices are the published Standard prices for muse-spark |
-| `playfellow_coop/handover.py`, `session.py` | **You take over, I take over.** F9 takes the controls: every held key is released, the buddy presses nothing and asks no AI. F9 again hands them back with a one-line summary made only of counted facts (seconds, turns skipped, AI calls made). F12 and the mouse corner still stop everything | built; tested with pretend eyes, hands and brain. **Not yet run live on the Practice Arena** |
-| `playfellow_coop/stage_timer.py`, `bench.py`, `bench/speed_bench.py` | Times capture, shrink, encode, request, parse-and-check and key-down per turn and writes one `pf-results/1` file (p50, p90, p95) | built; offline-tested. `encode` is measured only for the Muse brain; `first_byte` and `change_test` are not measured, and the file says "not measured" instead of inventing a number. **No live run yet** |
-| `playfellow_coop/sam_marks.py`, `sam_eval.py` | SAM 3.1 marks: where things are on screen, drawn as numbered labels on the picture the buddy sees, with the engine's own legend. Asked again only when the picture changes; every request is gated by the daily budget | built and tested against a **fake server** built from the Practice Arena's own truth. **No real SAM call yet**: the response wrapper is unverified. The scores from the fake server check the harness only and say nothing about SAM's accuracy |
-| `playfellow_coop/voice.py` | Voice commands ("grab the coins on the left") with Muse Voice Transcribe in file mode (push-to-talk), and **typed commands as the fallback**, so the demo never needs a microphone. The command goes to the planner next to the marks; only keys on the controls card are pressed | built; offline-tested (`tests/test_voice.py`). No real voice call yet |
-| `playfellow_coop/realtime_voice.py`, `push_to_talk.py`, `microphone.py` | **Hold a key, speak, release.** The microphone streams to Muse Voice Transcribe over a WebSocket; partial text shows live; the final words become a command; a typed line works the same. The key goes only in the handshake frame. It also measures the time from letting go of the talk key to the buddy's first game key | built and tested against a **fake WebSocket server** and a pretend microphone. **Not yet run against the real service or a real microphone**: the frame format comes from our notes, so the first real call saves the real frames as a fixture before anything else builds on them. The measured key-release-to-first-key time is "not measured" until a live run |
-| `rust/fastpath`, `playfellow_coop/fastpath.py`, `bench/fastpath_bench.py` | An **optional Rust fast path** (grid search and the thumbnail change test) with an identical Python twin; tests require identical answers; the speed-up is measured by the bench | built during the event; see `rust/README.md` |
-| Split controls ("you block, I heal") | Share the keys between you and the buddy | planned, a stretch goal |
+| Assisted: Muse Spark 1.3 picks a skill | **15 of 15 = 5 games (snake, box_push, slide_2048, lane_dash, brick_breaker) x 3 seeds**, $0.04075, 21,579 tokens in (13,787 cached) | `results/k-lane/muse-skills-pt1.json` |
+| One-call probe | 1 of 1, $0.00282 | `results/k-lane/muse-probe.json` |
+| Assisted: Muse Spark Open on Baseten picks a skill | **14 of 15 assisted**, $0.03576 | `results/k-lane/baseten-skills.json` |
+| Model alone: Muse Spark 1.3, raw pixels, no skill | **0 of 15 wins**, mean progress 0.151, $1.18775 | `results/unseen/muse-raw-20261027.json` |
+| Model alone: open weights, raw pixels | **0 of 15 wins**, mean progress 0.141, $1.01837 | `results/unseen/open-raw-20261027.json` |
 
-Items marked planned are not built: a row changes only when a dated commit shows it.
+One file is not a result and says so inside itself: `results/k-lane/muse-skills-pt1-billing-failed.json` ("void": billing failed, no call reached the model). A test keeps any paid row with episodes but zero tokens from standing without that mark, so no chart can read a billing failure as a score.
+
+![Arena wins and cost: assisted against model alone](docs/img/charts/arena-wins-and-cost.png)
+
+![Assisted results, game by game](docs/img/charts/assisted-per-game-breakdown.png)
+
+![What prompt caching saved on the raw run](docs/img/charts/prompt-cache-savings.png)
+
+## The three Meta models, and Baseten
+
+- **Muse Spark** (`muse-spark-1.3`, `playfellow_coop/muse_brain.py`) reads the marked frame, your words and the controls card, and answers with a plan and keys as JSON. Pinned address, no proxy or CA variables, redirects refused, contributor models refused in code, the key never shown. A daily budget cap (`playfellow_coop/budget.py`) stops a call **before** it is sent.
+- **SAM 3.1** (`playfellow_coop/sam_marks.py`, `sam_eval.py`) turns the screen into numbered marks the brain can point at, asked again only when the picture changes and gated by the same budget. The protocol reading is strict; offline it is checked against a fake server built from the arena's own truth and against Meta's shared conformance cases. Fake-server scores check the harness only and say nothing about SAM's accuracy; the table above never mixes the two.
+- **Muse Voice Transcribe** (`playfellow_coop/voice.py`, `realtime_voice.py`, `push_to_talk.py`, `microphone.py`): hold a key, speak, release — English and Arabic, partial text live, the final words become a command. Typed commands are the always-available fallback, so no demo needs a microphone. The realtime socket refuses redirects so the key is never sent onward.
+- **Baseten** serves Muse Spark Open for the open-weights bench row only. It is not a runtime brain: nothing public or judge-facing is routed there, and a test keeps it that way.
+
+Any agent can ask for one part under the same rules through the MCP server (`docs/mcp.md`): `python -m playfellow_coop.mcp_server`.
+
+## Judges: try it
+
+**Judges:** see the access note in the submission. [JUDGES.md](JUDGES.md) has the three paths — replay with no key, offline live on the Practice Arena with the built-in brain, live with your own keys — and how to test it yourself on a game. Every command there has been run and its output pasted in.
+
+## Limits, said plainly
+
+- No disabled player has tested this build, and no player study is claimed.
+- Perception and skills are fitted per game or work in 2D only; a new game is learned, not assumed.
+- The open code is a single-rate loop. Nothing here claims a multi-rate, 60 Hz or three-speed loop, an inverse-dynamics model, or a level above L0 on the Practice Arena.
+- Split controls are built and offline-tested on the architect's branch; this README calls them shipped only when that merge lands here.
+- The hand-over, typed commands and marks are tested offline with pretend eyes, hands and brain; live runs are the dated result files above, nothing more.
+
+## What is in this repo
+
+| Piece | What it does | Status |
+|---|---|---|
+| `playfellow_coop/muse_brain.py`, `budget.py` | The Muse brain and its daily spending cap | built; live rows above |
+| `playfellow_coop/handover.py`, `session.py` | You take over, I take over (F9), with a hand-back line made only of counted facts; the turn loop around the engine's public building blocks | built; tested with pretend eyes, hands and brain |
+| `playfellow_coop/sam_marks.py`, `sam_eval.py`, `sam_protocol.py` | SAM 3.1 marks and their strict reading | built; fake-server and conformance-tested offline |
+| `playfellow_coop/voice.py`, `realtime_voice.py`, `push_to_talk.py`, `microphone.py` | Voice or typed commands, EN/AR | built; fake-socket tested; no real voice call yet |
+| `playfellow_coop/mcp_server.py` | The MCP server: any agent asks for one part under the player's rules | built; tested with a fake brain, no network (`docs/mcp.md`) |
+| `playfellow_coop/universal/` | The goal checker (strict number-noun pairing), the guardrails, the screen-state reader, the game clock and supervisor | built; synthetic-input tests |
+| `playfellow_coop/adk_app/` | Google ADK agents and ADK's own evaluator on our exported evalset, in ADK's own pinned environment | built; a missing engine is a setup failure there, never a lost game |
+| `playfellow_coop/stage_timer.py`, `bench/` | Per-stage timing that writes "not measured" instead of inventing a number | built; offline-tested |
+| `rust/fastpath`, `playfellow_coop/fastpath.py` | An optional Rust fast path with an identical Python twin | built during the event; see `rust/README.md` |
 
 ## Install and run
 
@@ -55,7 +100,12 @@ The engine's controls cards and settings files sit next to its code, so the engi
 5. Type a command in the terminal, for example `grab the coins on the left`, and press Enter. It goes to the planner on the buddy's next turn.
 6. **F12**, or the mouse in the top-left corner, stops everything at once.
 
-What was checked, and what was not: the hand-over, the typed commands and the marks are tested offline with pretend eyes, hands and a fake server. They have not yet been run live on the Practice Arena, and no real Meta call has been made.
+```
+python -m playfellow_coop --brain muse --marks sam  # F9 takes the controls, F9 again gives them back, F12 stops
+python -m playfellow_coop --brain local-open --model <id>  # an open model on this PC through LM Studio (the engine's memory check runs first)
+python -m playfellow_coop --overlay                # the floating command center (Ctrl+Alt+P opens and closes it); offline-tested, NOT yet run live: see docs/owner-live-checks.md
+python -m playfellow_coop                           # the same with the engine's built-in brain (no key, no network)
+```
 
 ## Tests
 
@@ -63,28 +113,15 @@ What was checked, and what was not: the hand-over, the typed commands and the ma
 python -m pytest -q
 ```
 
-To use the Muse brain, put your own key in the environment as `MODEL_API_KEY` (Meta's name for it) or in the Windows credential manager. It is never read from a file in this repo, and it is never printed. Then:
-
-```
-python -m playfellow_coop --brain muse --marks sam  # F9 takes the controls, F9 again gives them back, F12 stops
-python -m playfellow_coop --brain local-open --model <id>  # an open model on this PC through LM Studio (the engine's memory check runs first)
-python -m playfellow_coop --overlay                # the floating command center (Ctrl+Alt+P opens and closes it); built, offline-tested, NOT yet run live: see docs/owner-live-checks.md
-python -m playfellow_coop                     # the same with the engine's built-in brain (no key, no network)
-```
-
-Without the optional Rust DLL (see `rust/README.md`), the tests that compare it with its Python twin are skipped, not failed. Every test runs offline: a fake server on 127.0.0.1 stands in for the Meta API, and nothing presses a key, grabs the screen or spends money.
-
-The realtime voice socket refuses a redirect (the key is never sent to wherever a server points): that holds on websockets 16.1.1 and 17.3, the two versions it is tested on, so `pyproject.toml` allows only `websockets>=16,<18`.
+Every test runs offline: a fake server on 127.0.0.1 stands in for the Meta API, and nothing presses a key, grabs the screen or spends money. Without the optional Rust DLL (see `rust/README.md`), the tests that compare it with its Python twin are skipped, not failed. The realtime voice socket refuses a redirect on websockets 16.1.1 and 17.3, the two versions it is tested on, so `pyproject.toml` allows only `websockets>=16,<18`.
 
 ## What this does and does not do
 
-It plays and talks with you. It does not judge or score the player. The demo uses our own Practice Arena, the arena pack and one open-source game.
+It plays and talks with you. It does not judge or score the player. The demo uses our own Practice Arena, the arena pack and one open-source game. Offline, single-player games only (`RESPONSIBLE_USE.md`).
 
 ## Contributing
 
-This is an open project, and the maintainer reviews every contribution in depth: [CONTRIBUTING.md](CONTRIBUTING.md) says how, [SECURITY.md](SECURITY.md) says how to report a vulnerability privately, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) says how we treat each other. Because the hackathon requires that the submission was made during the event by approved participants, **no outside change is merged before the judging ends on 9 November 2026**; issues and pull requests are welcome to open and discuss before then. The open research behind this work, and what is done and not done, is in [docs/research-roadmap.md](docs/research-roadmap.md); the three-part design (open model, open framework, private platform), the loop, the equations and the checks for every piece are in [docs/gegaa.md](docs/gegaa.md).
-
-**Judges:** see the access note in the submission.
+This is an open project, and the maintainer reviews every contribution in depth: [CONTRIBUTING.md](CONTRIBUTING.md) says how, [SECURITY.md](SECURITY.md) says how to report a vulnerability privately, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) says how we treat each other. Because the hackathon requires that the submission was made during the event by approved participants, **no outside change is merged before the judging ends on 9 November 2026**; issues and pull requests are welcome to open and discuss before then. The open research behind this work, and what is done and not done, is in [docs/research-roadmap.md](docs/research-roadmap.md); what the application said, corrected against this code, is in [docs/what-the-application-said.md](docs/what-the-application-said.md); the three-part design (open model, open framework, private platform), the loop, the equations and the checks for every piece are in [docs/gegaa.md](docs/gegaa.md).
 
 ## Credits and licence
 
