@@ -34,6 +34,34 @@ One file is not a result and says so inside itself: `results/k-lane/muse-skills-
 
 ![What prompt caching saved on the raw run](docs/img/charts/prompt-cache-savings.png)
 
+## The ladder
+
+Each game group shows the same rungs. A row is filled only from a committed result file named in it; a rung with no file says so. Assisted rows are never read as model-alone rows.
+
+The five games with human-written skills (snake, box_push, slide_2048, lane_dash, brick_breaker), 3 seeds each unless said:
+
+| Rung | Wins | Mean progress | File |
+|---|---|---|---|
+| 0 Local floor (random, 8 seeds a game) | 0 of 40 | 0.117 | `results/unseen/random-20261027.json` |
+| 0 Local floor (built-in, no model) | 0 of 15 | 0.174 | `results/unseen/builtin-free-20261027.json` |
+| 1–2 Model alone, Muse Spark 1.3 (20-call cap; a win needs 39–5,994 steps) | 0 of 15 | 0.151 | `results/unseen/muse-raw-20261027.json` |
+| 1–2 Model alone, Muse Spark Open (same cap) | 0 of 15 | 0.141 | `results/unseen/open-raw-20261027.json` |
+| 2+ Model alone, fair budget + action chunks (F2) | pending: run after the owner's yes | — | no file yet |
+| 2+ Model + SAM 3.1 marks at the same cap | not in this repo's arena files | — | no arena file here |
+| 3 Model-written skills (SkillSmith, F1) | pending: run after the owner's yes | — | harness `bench/skillsmith_run.py`; offline fake round only |
+| 4 Model picks + human skill, Muse Spark 1.3 | 15 of 15 | 1.0 | `results/k-lane/muse-skills-pt1.json` |
+| 4 Model picks + human skill, Muse Spark Open | 14 of 15 (snake 2 of 3) | 0.933 | `results/k-lane/baseten-skills.json` |
+
+The SkillSmith games (no human skill exists for them):
+
+| Game | Rung 3 state | File |
+|---|---|---|
+| maze_chase | pending: run after the owner's yes | no file yet |
+| key_caves | pending: run after the owner's yes | no file yet |
+| action_quest | the gym has no progress score for it yet, so it cannot be scored | no file yet |
+
+Speed and cost per rung (stage times, dollars and tokens per win, cache share, local step against a model call) are in `results/speed/speed-cost-20261102.json`, built only from the files above by `bench/speed_cost_table.py`. The Rust fast path's public figure is 17–24x, the bracket of the measured medians in that table's source file.
+
 ## The three Meta models, and Baseten
 
 - **Muse Spark** (`muse-spark-1.3`, `playfellow_coop/muse_brain.py`) reads the marked frame, your words and the controls card, and answers with a plan and keys as JSON. Pinned address, no proxy or CA variables, redirects refused, contributor models refused in code, the key never shown. A daily budget cap (`playfellow_coop/budget.py`) stops a call **before** it is sent.
