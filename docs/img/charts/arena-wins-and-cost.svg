@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <rect x="0" y="0" width="1920" height="1080" fill="#04061a"/>
+  <rect x="48" y="36" width="1824" height="1008" fill="#0a1030" rx="18" ry="18" stroke="#445498" stroke-width="2"/>
+  <text x="96" y="98" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="bold" text-anchor="start">Arena Win Rate and Spend by Operating Mode</text>
+  <text x="96" y="142" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="normal" text-anchor="start">Every row states assisted (skills play, the model picks) or model alone; non-model runs are marked harness check.</text>
+  <text x="96" y="182" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Model / Brain &amp; Attribution Mode</text>
+  <text x="740" y="182" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Episodes Won (Win Share)</text>
+  <text x="1470" y="182" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Recorded Spend &amp; Token Load</text>
+  <line x1="88" y1="196" x2="1832" y2="196" stroke="#445498" stroke-width="1"/>
+  <rect x="84" y="208" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="244" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse)</text>
+  <text x="104" y="278" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">assisted (skills play, the model picks)</text>
+  <rect x="740" y="226" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <rect x="740" y="226" width="430" height="32" fill="#43e3ff" rx="8" ry="8"/>
+  <text x="1188" y="250" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
+  <text x="740" y="282" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 100.0%   Mean turns: 1.0</text>
+  <text x="1470" y="248" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0422</text>
+  <text x="1470" y="280" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Per win: $0.00281</text>
+  <rect x="84" y="304" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="340" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse)</text>
+  <text x="104" y="374" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">model alone</text>
+  <rect x="740" y="322" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <text x="1188" y="346" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
+  <text x="740" y="378" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 15.1%   Mean turns: 19.27</text>
+  <text x="1470" y="344" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $1.1878</text>
+  <text x="1470" y="376" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 548,607</text>
+  <rect x="84" y="400" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="436" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">meta-models/muse-spark-open-1026 (open)</text>
+  <text x="104" y="470" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">model alone</text>
+  <rect x="740" y="418" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <text x="1188" y="442" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
+  <text x="740" y="474" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 14.1%   Mean turns: 15.07</text>
+  <text x="1470" y="440" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $1.0184</text>
+  <text x="1470" y="472" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 439,805</text>
+  <rect x="84" y="496" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="532" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">scripted-chooser (scripted) — harness check</text>
+  <text x="104" y="566" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · assisted (skills play, the model picks)</text>
+  <rect x="740" y="514" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <rect x="740" y="514" width="430" height="32" fill="#ffcc4d" rx="8" ry="8"/>
+  <text x="1188" y="538" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
+  <text x="740" y="570" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 100.0%   Mean turns: 1.0</text>
+  <text x="1470" y="536" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
+  <text x="1470" y="568" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Per win: $0.00000</text>
+  <rect x="84" y="592" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="628" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">builtin-nav (builtin) — harness check</text>
+  <text x="104" y="662" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · model alone</text>
+  <rect x="740" y="610" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <text x="1188" y="634" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 25 (0.0%)</text>
+  <text x="740" y="666" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 7.9%   Mean turns: 17.92</text>
+  <text x="1470" y="632" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
+  <text x="1470" y="664" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
+  <rect x="84" y="688" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="724" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">none (random) — harness check</text>
+  <text x="104" y="758" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · model alone</text>
+  <rect x="740" y="706" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <text x="1188" y="730" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 25 (0.0%)</text>
+  <text x="740" y="762" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 7.9%   Mean turns: 17.72</text>
+  <text x="1470" y="728" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
+  <text x="1470" y="760" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
+  <rect x="84" y="784" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="820" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">builtin-nav (builtin) — harness check</text>
+  <text x="104" y="854" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · model alone</text>
+  <rect x="740" y="802" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <text x="1188" y="826" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
+  <text x="740" y="858" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 17.4%   Mean turns: 151.6</text>
+  <text x="1470" y="824" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
+  <text x="1470" y="856" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
+  <rect x="84" y="880" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="104" y="916" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">none (random) — harness check</text>
+  <text x="104" y="950" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · model alone</text>
+  <rect x="740" y="898" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <text x="1188" y="922" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 40 (0.0%)</text>
+  <text x="740" y="954" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 11.7%   Mean turns: 31.52</text>
+  <text x="1470" y="920" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Spend: $0.0000</text>
+  <text x="1470" y="952" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
+</svg>

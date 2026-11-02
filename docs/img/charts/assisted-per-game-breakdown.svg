@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <rect x="0" y="0" width="1920" height="1080" fill="#04061a"/>
+  <rect x="48" y="36" width="1824" height="1008" fill="#0a1030" rx="18" ry="18" stroke="#445498" stroke-width="2"/>
+  <text x="96" y="98" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="bold" text-anchor="start">Per-Game Outcome: Assisted Skill Selection vs Model Alone</text>
+  <text x="96" y="142" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="normal" text-anchor="start">Comparing muse-spark-1.3 assisted (skills play, the model picks) against muse-spark-1.3 model alone.</text>
+  <rect x="84" y="215" width="1752" height="134" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="112" y="267" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="start">snake</text>
+  <text x="112" y="305" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Local skill steps: 375</text>
+  <text x="640" y="255" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">assisted (skills play, the model picks): 3 / 3 wins (100%), spend $0.00815</text>
+  <rect x="640" y="265" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="640" y="265" width="520" height="22" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="640" y="317" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">model alone: 0 / 3 wins, mean progress 19.6%, spend $0.21312</text>
+  <rect x="640" y="327" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="640" y="327" width="102" height="22" fill="#9b6bff" rx="6" ry="6"/>
+  <rect x="84" y="367" width="1752" height="134" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="112" y="419" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="start">box_push</text>
+  <text x="112" y="457" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Local skill steps: 117</text>
+  <text x="640" y="407" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">assisted (skills play, the model picks): 3 / 3 wins (100%), spend $0.00828</text>
+  <rect x="640" y="417" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="640" y="417" width="520" height="22" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="640" y="469" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">model alone: 0 / 3 wins, mean progress 0.0%, spend $0.24181</text>
+  <rect x="640" y="479" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="84" y="519" width="1752" height="134" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="112" y="571" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="start">slide_2048</text>
+  <text x="112" y="609" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Local skill steps: 435</text>
+  <text x="640" y="559" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">assisted (skills play, the model picks): 3 / 3 wins (100%), spend $0.00829</text>
+  <rect x="640" y="569" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="640" y="569" width="520" height="22" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="640" y="621" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">model alone: 0 / 3 wins, mean progress 52.4%, spend $0.24939</text>
+  <rect x="640" y="631" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="640" y="631" width="272" height="22" fill="#9b6bff" rx="6" ry="6"/>
+  <rect x="84" y="671" width="1752" height="134" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="112" y="723" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="start">lane_dash</text>
+  <text x="112" y="761" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Local skill steps: 1,800</text>
+  <text x="640" y="711" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">assisted (skills play, the model picks): 3 / 3 wins (100%), spend $0.00846</text>
+  <rect x="640" y="721" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="640" y="721" width="520" height="22" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="640" y="773" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">model alone: 0 / 3 wins, mean progress 3.3%, spend $0.25265</text>
+  <rect x="640" y="783" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="640" y="783" width="17" height="22" fill="#9b6bff" rx="6" ry="6"/>
+  <rect x="84" y="823" width="1752" height="134" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
+  <text x="112" y="875" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="start">brick_breaker</text>
+  <text x="112" y="913" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Local skill steps: 21,901</text>
+  <text x="640" y="863" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">assisted (skills play, the model picks): 3 / 3 wins (100%), spend $0.00900</text>
+  <rect x="640" y="873" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+  <rect x="640" y="873" width="520" height="22" fill="#43e3ff" rx="6" ry="6"/>
+  <text x="640" y="925" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">model alone: 0 / 3 wins, mean progress 0.0%, spend $0.23077</text>
+  <rect x="640" y="935" width="520" height="22" fill="#04061a" rx="6" ry="6" stroke="#445498" stroke-width="1"/>
+</svg>

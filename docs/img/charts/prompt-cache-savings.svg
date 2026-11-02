@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <rect x="0" y="0" width="1920" height="1080" fill="#04061a"/>
+  <rect x="48" y="36" width="1824" height="1008" fill="#0a1030" rx="18" ry="18" stroke="#445498" stroke-width="2"/>
+  <text x="96" y="98" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="bold" text-anchor="start">Prompt Cache Reuse and Spend Reduction Across Paid Runs</text>
+  <text x="96" y="142" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="normal" text-anchor="start">Measured from saved result files (assisted (skills play, the model picks) vs model alone).</text>
+  <rect x="84" y="220" width="1752" height="216" fill="#141c4c" rx="14" ry="14" stroke="#445498" stroke-width="1"/>
+  <text x="112" y="272" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse)</text>
+  <text x="112" y="310" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">assisted (skills play, the model picks)</text>
+  <text x="112" y="352" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Episodes: 15   Calls: 15   Input tokens: 21,579</text>
+  <text x="112" y="388" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Cached input tokens: 12,394   Output tokens: 3,577</text>
+  <text x="760" y="266" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Cached share of input: 57.44% (35.26% to 78.18%)</text>
+  <rect x="760" y="286" width="620" height="38" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <rect x="760" y="286" width="356" height="38" fill="#b6f23d" rx="8" ry="8"/>
+  <text x="760" y="364" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="normal" text-anchor="start">Documented price: $0.028543 charged vs $0.042176 uncached</text>
+  <text x="760" y="400" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Saved by prompt cache: $0.013633   (budget cap ledger: $0.042176)</text>
+  <rect x="84" y="460" width="1752" height="216" fill="#141c4c" rx="14" ry="14" stroke="#445498" stroke-width="1"/>
+  <text x="112" y="512" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="bold" text-anchor="start">muse-spark-1.3 (muse)</text>
+  <text x="112" y="550" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">model alone</text>
+  <text x="112" y="592" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Episodes: 15   Calls: 289   Input tokens: 548,607</text>
+  <text x="112" y="628" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Cached input tokens: 285,472   Output tokens: 118,115</text>
+  <text x="760" y="506" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Cached share of input: 52.04% (50.46% to 53.80%)</text>
+  <rect x="760" y="526" width="620" height="38" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <rect x="760" y="526" width="323" height="38" fill="#b6f23d" rx="8" ry="8"/>
+  <text x="760" y="604" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="normal" text-anchor="start">Documented price: $0.873728 charged vs $1.187747 uncached</text>
+  <text x="760" y="640" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Saved by prompt cache: $0.314019   (budget cap ledger: $1.187748)</text>
+  <rect x="84" y="700" width="1752" height="216" fill="#141c4c" rx="14" ry="14" stroke="#445498" stroke-width="1"/>
+  <text x="112" y="752" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="bold" text-anchor="start">meta-models/muse-spark-open-1026 (open)</text>
+  <text x="112" y="790" fill="#9b6bff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">model alone</text>
+  <text x="112" y="832" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Episodes: 15   Calls: 226   Input tokens: 439,805</text>
+  <text x="112" y="868" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="19" font-weight="normal" text-anchor="start">Cached input tokens: 223,744   Output tokens: 110,262</text>
+  <text x="760" y="746" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">Cached share of input: 50.87% (49.47% to 52.30%)</text>
+  <rect x="760" y="766" width="620" height="38" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
+  <rect x="760" y="766" width="315" height="38" fill="#b6f23d" rx="8" ry="8"/>
+  <text x="760" y="856" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="normal" text-anchor="start">Recorded spend in budget ledger: $1.01837</text>
+</svg>
