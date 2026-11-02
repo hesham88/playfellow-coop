@@ -194,6 +194,16 @@ class StateClassifier:
         confidence = 0.0 if second[1] <= 0 else max(0.0, min(1.0, (second[1] - best[1]) / second[1]))
         return best[0], confidence
 
+    def end_screen(self, frame: np.ndarray, previous: np.ndarray | None = None, min_confidence: float = 0.0) -> str | None:
+        """S6: "dead" or "victory" when a classifier fitted with learned regions (see `fit(..., regions=n)`) reads the end where the game writes it, else None.
+
+        An unfitted classifier, or one fitted without regions, never claims an end here: the whole-picture measurements cannot see a few letters in a corner,
+        and a false "the game is over" is worse than a missed one."""
+        if not self.fitted or not self.regions:
+            return None
+        label, confidence = self.classify(frame, previous)
+        return label if label in ("dead", "victory") and confidence >= min_confidence else None
+
 
 @dataclass
 class Verdict:
@@ -204,6 +214,13 @@ class Verdict:
 
 STOP_WORDS = frozenset("a an the to of and or in on at for with your my some any find get collect reach make go gather pick up open obtain".split())
 NUMBER = re.compile(r"\d+")
+# Arabic-Indic (U+0660..U+0669) and Eastern Arabic (U+06F0..U+06F9) digits read as the plain digits, on either side of the check.
+_DIGITS = str.maketrans({**{chr(0x660 + i): str(i) for i in range(10)}, **{chr(0x6F0 + i): str(i) for i in range(10)}})
+_TOKEN = re.compile(r"[a-z]+|\d+")
+
+
+def _plain_digits(text: str) -> str:
+    return text.translate(_DIGITS)
 
 
 def _words(text: str) -> list[str]:
@@ -222,22 +239,61 @@ def _close(a: str, b: str) -> bool:
     return any(long_[:i] + long_[i + 1:] == short for i in range(len(long_)))
 
 
+NEGATION_WORDS = frozenset({"do", "not", "never", "avoid", "don", "t"})
+SHOP_WORDS = frozenset({"shop", "buy", "price", "cost", "sale", "store", "vendor"})
+
+
+def _is_shop_line(line: str) -> bool:
+    return any(any(_close(word, seen) for seen in _words(line)) for word in SHOP_WORDS)
+
+
 class GoalChecker:
-    """Checks a plain-words goal against what is on screen. The goal's key words (and numbers) must all be found among the screen texts and reported objects."""
+    """Checks a plain-words goal against what is on screen. The goal's key words (and numbers) must all be found among the screen texts and reported objects.
+
+    Three guards against crying "done" on the wrong screen (pillar review D2-D5): a number counts only with the goal word right next to it
+    ("Level 3", never "Score 3 / Level 1"); a word found only in a shop listing is not owning the thing; and a negated goal
+    ("do not pick up the sword") is done only while the thing is nowhere to be seen."""
 
     def __init__(self, goal: str):
         self.goal = goal
-        self.keywords = _words(goal)
-        self.numbers = [int(n) for n in NUMBER.findall(goal)]
+        self.negated = bool(re.search(r"\b(not|never|avoid)\b|n't", goal.lower()))
+        self.keywords = [w for w in _words(goal) if not w.isdigit() and w not in NEGATION_WORDS]
+        self.numbers = [int(n) for n in NUMBER.findall(_plain_digits(goal))]
+
+    def _next_to(self, line: str, number: int) -> bool:
+        """True only when the number sits right next to a goal word (either order, at most a space, colon or dash between): "Level 3" counts, "Score 3 / Level 1" does not. With no goal word, any sighting of the number counts."""
+        plain = _plain_digits(line).lower()
+        tokens = [(m.group(), m.start(), m.end()) for m in _TOKEN.finditer(plain)]
+        for index, (token, _, _) in enumerate(tokens):
+            if not (token.isdigit() and int(token) == number):
+                continue
+            if not self.keywords:
+                return True
+            for other in (index - 1, index + 1):
+                if 0 <= other < len(tokens):
+                    word, start, end = tokens[other]
+                    gap = plain[tokens[index][2]:start] if other > index else plain[end:tokens[index][1]]
+                    if not word.isdigit() and set(gap) <= set(" \t:-") and any(_close(key, word) for key in self.keywords):
+                        return True
+        return False
 
     def check(self, texts: list[str], objects: list[str] | None = None) -> Verdict:
-        seen = _words(" ".join(texts + (objects or [])))
+        lines = [part for text in texts for part in str(text).splitlines() if part.strip()]
+        plain = [line for line in lines if not _is_shop_line(line)]  # a shop can name anything; it proves nothing about what the player has
+        plain_words = _words(" ".join(plain))
+        object_words = _words(" ".join(objects or []))
+
+        def found(word: str) -> bool:
+            return any(_close(word, seen) for seen in plain_words + object_words)
+
+        if self.negated:
+            present = [word for word in self.keywords if found(word)]
+            return Verdict(done=bool(self.keywords) and not present,
+                           matched=[word for word in self.keywords if word not in present], missing=present)
         matched, missing = [], []
         for word in self.keywords:
-            if word.isdigit():
-                continue
-            (matched if any(_close(word, s) for s in seen) else missing).append(word)
+            (matched if found(word) else missing).append(word)
         for number in self.numbers:
-            screen_numbers = {int(n) for n in NUMBER.findall(" ".join(texts))}
-            (matched if number in screen_numbers else missing).append(str(number))
+            paired = any(self._next_to(line, number) for line in plain)
+            (matched if paired else missing).append(str(number))
         return Verdict(done=bool(self.keywords or self.numbers) and not missing, matched=matched, missing=missing)

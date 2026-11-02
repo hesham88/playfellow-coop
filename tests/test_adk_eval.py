@@ -16,6 +16,25 @@ def test_the_export_has_one_case_per_game_and_seed_with_the_skill_as_the_expecte
     assert cases[0]["conversation"][0]["user_content"]["parts"][0]["text"] == "Play snake, seed 0."
 
 
+def test_output_file_is_passed_only_when_the_installed_adk_accepts_it(tmp_path):
+    from playfellow_coop.adk_app.arena_eval.run import _evaluate_kwargs
+
+    rows = tmp_path / "rows.csv"
+
+    async def old_style(agent_module, eval_dataset_file_path_or_dir, num_runs=2, print_detailed_results=True):
+        pass
+
+    async def new_style(agent_module, eval_dataset_file_path_or_dir, num_runs=2, print_detailed_results=True, output_file=None):
+        pass
+
+    async def any_style(agent_module, eval_dataset_file_path_or_dir, **kwargs):
+        pass
+
+    assert _evaluate_kwargs(old_style, rows) == {}  # google-adk 2.0: no such argument, never pass it
+    assert _evaluate_kwargs(new_style, rows) == {"output_file": str(rows)}  # google-adk 2.13: the rows go where we read them
+    assert _evaluate_kwargs(any_style, rows) == {"output_file": str(rows)}
+
+
 def test_adks_rows_are_read_one_per_case_and_metric():
     rows = [{"eval_id": "snake-seed0", "metric_name": "tool_trajectory_avg_score", "score": "1.0", "eval_status": "PASSED", "actual_response": "I won snake."},
             {"eval_id": "snake-seed0", "metric_name": "tool_call_count_v1", "score": "1.0", "eval_status": "INFORMATIONAL", "actual_response": "I won snake."},
@@ -43,5 +62,7 @@ def test_adks_evaluator_scores_a_real_case_from_our_export(tmp_path):
     from playfellow_coop.adk_app.arena_eval.run import evaluate
     EvalSet.model_validate(build_evalset(["snake", "box_push"], [0, 1, 2]))  # the whole default shape is a valid ADK evalset
     summary = asyncio.run(evaluate(tmp_path, "own", ["snake"], [0]))
-    assert summary["cases"] == 1 and summary["matched"] == 1 and summary["games_won"] == 1
+    assert summary["cases"] == 1 and summary["matched"] == 1
+    # Newer ADK writes per-case rows (the answers prove the win); older ADK (2.0) writes none, so a win is matched but not answer-proven there.
+    assert summary["games_won"] == (1 if (tmp_path / "rows-own.csv").is_file() else 0)
     assert (tmp_path / "arena.evalset.json").is_file() and (tmp_path / "test_config.json").is_file()
