@@ -11,20 +11,24 @@ NONE = "none"  # the model's answer when it wants to press keys itself this turn
 
 
 class SkillBook:
-    def __init__(self, game_key: str, looks=None):
-        if game_key not in SKILLS:
+    def __init__(self, game_key: str, looks=None, skill=None):
+        """`skill`: a genre skill built from the game's controls card (for a game with no skill of its own)."""
+        if skill is None and game_key not in SKILLS:
             raise KeyError(f"no skills for game {game_key!r}")
+        self.genre_skill = skill is not None
         self.game_key = game_key
         self.looks = list(looks or [])  # other ways this game may be drawn (re-skins), tried in order after the plain look
         self.look_name = "arena"
-        self.skill = SKILLS[game_key]()
+        self.skill = skill if skill is not None else SKILLS[game_key]()
         self.last: SkillResult | None = None
         self.native_size: tuple[int, int] | None = None  # (width, height) of the picture the skill was proven to read; a resized window is scaled back to this
         self.blind_runs = 0  # runs that ended before a single key: the skill cannot see this game any more
 
     def readable(self, picture) -> bool:
         """Can a skill read this game's picture? Tries the plain look, then each known re-skin; the first look the skill can read with is kept (`look_name`).
-        A skill that cannot see must not be offered to the model: False when no look works."""
+        A skill that cannot see must not be offered to the model: False when no look works. A genre skill reads only whether the picture moves: always readable."""
+        if self.genre_skill:
+            return True
         from playfellow_coop.skills.base import Done, as_frame
         frame = as_frame(picture)
         if self.native_size is not None and (frame.shape[1], frame.shape[0]) != self.native_size:

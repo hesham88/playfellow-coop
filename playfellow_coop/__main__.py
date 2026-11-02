@@ -248,9 +248,16 @@ def attach_skills(parts, cfg, switch: str) -> None:
     from playfellow_coop.skills.book import SkillBook
     from playfellow_coop.skills.registry import SKILLS
     game = str(cfg.controls_card).removeprefix("arena_")
-    if switch == "off" or game not in SKILLS or not hasattr(parts.brain, "set_skills"):
+    if switch == "off" or not hasattr(parts.brain, "set_skills"):
         return
-    parts.skills = SkillBook(game)
+    if game in SKILLS:
+        parts.skills = SkillBook(game)
+    else:  # no skill of its own: a genre skill built from the controls card, when the card's genre has one
+        from playfellow_coop.skills.platform_runner import RunAndJump, keys_from_card
+        keys = keys_from_card(parts.card, direction="right")
+        if keys is None:
+            return
+        parts.skills = SkillBook(game, skill=RunAndJump(keys))
     parts.wait_for_ticks = True  # live play: a real-time game ticks on its own clock, so a skill waits for the picture to move between keys
     parts.brain.set_skills(parts.skills.names)
     from playfellow_coop.harness.runtime import Harness
