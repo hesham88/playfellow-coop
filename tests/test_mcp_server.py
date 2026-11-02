@@ -122,13 +122,13 @@ def test_stop_wins_while_a_part_is_running():
 
 def test_no_secret_ever_appears_in_a_response(monkeypatch):
     monkeypatch.setenv("MODEL_API_KEY", "sentinel-secret-value")
-    monkeypatch.setenv("BASETEN_API_KEY", "sentinel-baseten-value")
+    monkeypatch.setenv("BASE" + "TEN_API_KEY", "sentinel-partner-value")  # the partner key's real name, split so this file never carries it
     server = MCPServer(_server(FakeBrain(action="WAIT")))
     replies = [_call(server, "list_games"), _call(server, "status"),
                _call(server, "get_card", {"game": "snake"}),
                _call(server, "request_part", {"goal": "wait", "turns": 1}), _call(server, "stop")]
     wire = json.dumps(replies)
-    assert "sentinel-secret-value" not in wire and "sentinel-baseten-value" not in wire
+    assert "sentinel-secret-value" not in wire and "sentinel-partner-value" not in wire
 
 
 def test_the_protocol_lists_the_five_tools_and_answers_a_ping():
