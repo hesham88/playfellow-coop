@@ -1,0 +1,40 @@
+# Shot list for tools/assemble_video.py — the assembly of docs/video-script.md.
+# Film or export each clip to the path named, then run:
+#   python tools/assemble_video.py docs/video-shotlist.yaml -o demo-cut.mp4
+# Durations sum to exactly 180s; captions are the script's narration columns.
+width: 1920
+height: 1080
+fps: 30
+shots:
+  - path: clips/01-hands-arena.mp4
+    start: 0.0
+    duration: 20.0
+    caption_en: "Some of us love games our hands can't keep up with. This is a buddy that shares the keys — and hands them back whenever you say so."
+    caption_ar: "بعضنا يحب ألعابًا لا تستطيع أيدينا مجاراتها. هذا رفيق يشاركك المفاتيح، ويعيدها إليك متى طلبت."
+  - path: clips/02-f9-handover.mp4
+    start: 0.0
+    duration: 30.0
+    caption_en: "F9: you take over. Every key is let go. F9 again: it takes over, and tells you exactly what happened while you played."
+    caption_ar: "باستخدام F9 تتولى أنت التحكم، وتُترك كل المفاتيح. وبالضغط عليه مجددًا يستعيد الرفيق التحكم ويخبرك بدقة بما حدث أثناء لعبك."
+  - path: docs/img/sam-marked-frame.png
+    duration: 30.0
+    caption_en: "It sees the screen, marks what matters, picks a mark — and the game only ever receives keys on this card. The same mark kept its number in 129 of 129 frame pairs."
+    caption_ar: "يرى الشاشة، ويحدد ما يهم، ويختار علامة، ولا تصل إلى اللعبة إلا المفاتيح المسموحة في هذه البطاقة. واحتفظت العلامة نفسها برقمها في 129 من 129 زوجًا من الإطارات."
+  - path: clips/04-typed-request.mp4
+    start: 0.0
+    duration: 30.0
+    caption_en: "Tell it what to do, by voice or by typing. Asked for one part at a time, it finished 65 of 66 parts, and no key it pressed ever broke the card."
+    caption_ar: "أخبره بما تريد، بالصوت أو بالكتابة. وعندما طُلب منه جزء واحد في كل مرة، أنجز 65 من 66 جزءًا، ولم يضغط أبدًا مفتاحًا خارج البطاقة."
+  - path: docs/img/charts/assisted-per-game-breakdown.png
+    duration: 30.0
+    caption_en: "With a model choosing every key, it did the asked part 4 times in 10 — and every 'done' it confirmed was true. Afterwards it reviews the run, but only from numbers it counted: 10 of 10 debriefs passed that check."
+    caption_ar: "وعندما اختار النموذج كل مفتاح بنفسه، أنجز الجزء المطلوب 4 مرات من 10، وكان كل تأكيد بالانتهاء صحيحًا. وبعد ذلك يراجع الجولة اعتمادًا فقط على أرقام قام بعدّها: 10 من 10 ملخصات اجتازت هذا الفحص."
+  - path: clips/06-f12-stop.mp4
+    start: 0.0
+    duration: 25.0
+    caption_en: "One key ends it. F12, any time, instantly. It cannot be switched off."
+    caption_ar: "مفتاح واحد ينهي كل شيء: F12، في أي وقت، وفورًا. ولا يمكن تعطيله."
+  - path: docs/img/charts/arena-wins-and-cost.png
+    duration: 15.0
+    caption_en: "This is what is measured today, and this is what is not claimed. The code is open; run it yourself."
+    caption_ar: "هذا ما تم قياسه اليوم، وهذا ما لا ندّعيه. الشفرة مفتوحة؛ جرّبها بنفسك."
