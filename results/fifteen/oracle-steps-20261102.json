@@ -103,16 +103,16 @@
   },
   "mini_chess": {
     "max_ticks": 400,
-    "skill": false,
+    "skill": true,
     "oracle_won": true,
-    "oracle_steps": 60,
+    "oracle_steps": 46,
     "steps_per_seed": {
-      "0": 60,
+      "0": 46,
       "1": 60,
       "2": 60
     },
     "seconds": 5.3,
-    "source": "engine state oracle (tests/test_arena_pack_oracles.py::policy_mini_chess)"
+    "source": "pixel skill (chess_bot.py)"
   },
   "action_quest": {
     "max_ticks": 1500,
@@ -129,16 +129,16 @@
   },
   "mini_fighter": {
     "max_ticks": 930,
-    "skill": false,
+    "skill": true,
     "oracle_won": true,
-    "oracle_steps": 104,
+    "oracle_steps": 131,
     "steps_per_seed": {
-      "0": 104,
-      "1": 161,
-      "2": 125
+      "0": 131,
+      "1": 159,
+      "2": 145
     },
     "seconds": 1.1,
-    "source": "engine state oracle (tests/test_arena_pack_oracles.py::policy_mini_fighter)"
+    "source": "pixel skill (ring_fighter.py)"
   },
   "ray_maze": {
     "max_ticks": 800,
@@ -168,15 +168,15 @@
   },
   "top_racer": {
     "max_ticks": 500,
-    "skill": false,
+    "skill": true,
     "oracle_won": true,
-    "oracle_steps": 163,
+    "oracle_steps": 169,
     "steps_per_seed": {
-      "0": 163,
-      "1": 163,
-      "2": 163
+      "0": 169,
+      "1": 171,
+      "2": 169
     },
     "seconds": 1.2,
-    "source": "engine state oracle (tests/test_arena_pack_oracles.py::policy_top_racer)"
+    "source": "pixel skill (track_racer.py)"
   }
 }

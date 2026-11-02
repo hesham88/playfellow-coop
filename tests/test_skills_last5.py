@@ -17,7 +17,8 @@ from playfellow_coop.skills import SKILLS
 from playfellow_coop.skills.registry import skill_for_game
 
 ROOT = Path(__file__).resolve().parents[1]
-INITIAL_TWO = ["turn_quest", "tiny_kingdom"]
+ALL_FIVE = ["turn_quest", "tiny_kingdom", "mini_chess", "top_racer", "mini_fighter"]
+SKINNED_FOUR = ["turn_quest", "tiny_kingdom", "top_racer", "mini_fighter"]
 
 
 def _skinned_engine_dir() -> Path | None:
@@ -27,7 +28,7 @@ def _skinned_engine_dir() -> Path | None:
     return None
 
 
-@pytest.mark.parametrize("game_key", INITIAL_TWO)
+@pytest.mark.parametrize("game_key", ALL_FIVE)
 def test_skill_is_registered_and_oracle_wins_every_seed_with_complete_reward(game_key: str):
     assert game_key in SKILLS
     report = check_game(game_key, lambda seed, g=game_key: ar.load_game(g, seed), seeds=range(3))
@@ -36,7 +37,7 @@ def test_skill_is_registered_and_oracle_wins_every_seed_with_complete_reward(gam
     assert all(abs(r - 1.0) < 1e-9 for r in report.returns)
 
 
-@pytest.mark.parametrize("game_key", INITIAL_TWO)
+@pytest.mark.parametrize("game_key", ALL_FIVE)
 def test_skill_reads_unskinned_and_refuses_blank_pictures(game_key: str):
     game = ar.load_game(game_key, 0)
     frame = np.asarray(game.render().convert("RGB"))
@@ -47,7 +48,7 @@ def test_skill_reads_unskinned_and_refuses_blank_pictures(game_key: str):
     assert skill.detect_look(blank) is None
 
 
-@pytest.mark.parametrize("game_key", INITIAL_TWO)
+@pytest.mark.parametrize("game_key", SKINNED_FOUR)
 def test_skill_reads_and_wins_on_skinned_look_when_skin_worktree_present(game_key: str, monkeypatch: pytest.MonkeyPatch):
     skinned_dir = _skinned_engine_dir()
     if skinned_dir is None:
