@@ -1,0 +1,2743 @@
+{
+ "schema": "pf-arena-run/1",
+ "written": "2026-11-02T17:33:15+02:00",
+ "condition": "scripted-none",
+ "brain": "scripted",
+ "model": "scripted-chooser",
+ "note": "marks=none; skills=True; effort=minimal; turns<= 20; the engine's public arena pack (unskinned). REPORTING: some wins used local skills that the model started; report them as the system winning with local help, not as the model alone.",
+ "overall": {
+  "episodes": 42,
+  "wins": 36,
+  "win_rate": 0.857,
+  "wilson95": [
+   0.722,
+   0.933
+  ],
+  "mean_progress": 0.857,
+  "mean_turns": 3.71,
+  "mean_seconds": 24.05,
+  "invalid_plan_rate": 0.0,
+  "tokens_in": 0,
+  "tokens_cached": 0,
+  "tokens_out": 0,
+  "cost_usd": 0.0,
+  "tokens_per_win": 0.0,
+  "usd_per_win": 0.0,
+  "local_help_episodes": 36,
+  "skill_steps_total": 26491
+ },
+ "by_game": {
+  "snake": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 1.34,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 375
+  },
+  "box_push": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 0.51,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 117
+  },
+  "slide_2048": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 2.69,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 435
+  },
+  "lane_dash": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 12.52,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 1800
+  },
+  "maze_chase": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 0.67,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 126
+  },
+  "key_caves": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 2.04,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 243
+  },
+  "turn_quest": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 1.16,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 172
+  },
+  "mini_chess": {
+   "episodes": 3,
+   "wins": 0,
+   "win_rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.562
+   ],
+   "mean_progress": 0.0,
+   "mean_turns": 20.0,
+   "mean_seconds": 1.27,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": null,
+   "usd_per_win": null,
+   "local_help_episodes": 0,
+   "skill_steps_total": 0
+  },
+  "action_quest": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 1.66,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 204
+  },
+  "mini_fighter": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 2.32,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 435
+  },
+  "ray_maze": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 1.5,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 174
+  },
+  "tiny_kingdom": {
+   "episodes": 3,
+   "wins": 0,
+   "win_rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.562
+   ],
+   "mean_progress": 0.0,
+   "mean_turns": 20.0,
+   "mean_seconds": 0.72,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": null,
+   "usd_per_win": null,
+   "local_help_episodes": 0,
+   "skill_steps_total": 0
+  },
+  "top_racer": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 4.17,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 509
+  },
+  "brick_breaker": {
+   "episodes": 3,
+   "wins": 3,
+   "win_rate": 1.0,
+   "wilson95": [
+    0.438,
+    1.0
+   ],
+   "mean_progress": 1.0,
+   "mean_turns": 1.0,
+   "mean_seconds": 304.2,
+   "invalid_plan_rate": 0.0,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "tokens_per_win": 0.0,
+   "usd_per_win": 0.0,
+   "local_help_episodes": 3,
+   "skill_steps_total": 21901
+  }
+ },
+ "honesty": {
+  "rung": {
+   "key": "local_floor",
+   "number": 0,
+   "title": "Local floor (no model)",
+   "clock": "paused"
+  },
+  "label": "[Assisted: Human Local Skill]",
+  "action_share": {
+   "human_skill": 1.0,
+   "model_skill": 0.0,
+   "model_chunk": 0.0,
+   "fallback": 0.0
+  },
+  "progress_iqm": {
+   "estimate": 1.0,
+   "ci95": [
+    1.0,
+    1.0
+   ]
+  }
+ },
+ "episodes": [
+  {
+   "game": "snake",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 113,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.2,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 113,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.002173599998059217,
+      "p90": 0.002173599998059217,
+      "p95": 0.002173599998059217
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00035120000029564835,
+      "p90": 0.00035120000029564835,
+      "p95": 0.00035120000029564835
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.010000025620684e-05,
+      "p90": 2.010000025620684e-05,
+      "p95": 2.010000025620684e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 4.489999992074445e-05,
+      "p90": 4.489999992074445e-05,
+      "p95": 4.489999992074445e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.1953916999991634,
+      "p90": 1.1953916999991634,
+      "p95": 1.1953916999991634
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "snake",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 141,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.49,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 141,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0017711000000417698,
+      "p90": 0.0017711000000417698,
+      "p95": 0.0017711000000417698
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00015829999756533653,
+      "p90": 0.00015829999756533653,
+      "p95": 0.00015829999756533653
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.550000160932541e-05,
+      "p90": 1.550000160932541e-05,
+      "p95": 1.550000160932541e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 3.529999958118424e-05,
+      "p90": 3.529999958118424e-05,
+      "p95": 3.529999958118424e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.481512800000928,
+      "p90": 1.481512800000928,
+      "p95": 1.481512800000928
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "snake",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 121,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.32,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 121,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0019204000018362422,
+      "p90": 0.0019204000018362422,
+      "p95": 0.0019204000018362422
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.0002897000013035722,
+      "p90": 0.0002897000013035722,
+      "p95": 0.0002897000013035722
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.6199999663513154e-05,
+      "p90": 1.6199999663513154e-05,
+      "p95": 1.6199999663513154e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.9899998480686918e-05,
+      "p90": 2.9899998480686918e-05,
+      "p95": 2.9899998480686918e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.3081392000021879,
+      "p90": 1.3081392000021879,
+      "p95": 1.3081392000021879
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 39,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.52,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 39,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0036538000022119377,
+      "p90": 0.0036538000022119377,
+      "p95": 0.0036538000022119377
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.005559799999900861,
+      "p90": 0.005559799999900861,
+      "p95": 0.005559799999900861
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.390000008745119e-05,
+      "p90": 2.390000008745119e-05,
+      "p95": 2.390000008745119e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 4.489999992074445e-05,
+      "p90": 4.489999992074445e-05,
+      "p95": 4.489999992074445e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 0.5096626000013202,
+      "p90": 0.5096626000013202,
+      "p95": 0.5096626000013202
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 39,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.53,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 39,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.004235300002619624,
+      "p90": 0.004235300002619624,
+      "p95": 0.004235300002619624
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.0049475999985588714,
+      "p90": 0.0049475999985588714,
+      "p95": 0.0049475999985588714
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.8599999495781958e-05,
+      "p90": 2.8599999495781958e-05,
+      "p95": 2.8599999495781958e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 4.510000144364312e-05,
+      "p90": 4.510000144364312e-05,
+      "p95": 4.510000144364312e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 0.5167067000002135,
+      "p90": 0.5167067000002135,
+      "p95": 0.5167067000002135
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "box_push",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 39,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.49,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 39,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.004785399996762862,
+      "p90": 0.004785399996762862,
+      "p95": 0.004785399996762862
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004268700002285186,
+      "p90": 0.004268700002285186,
+      "p95": 0.004268700002285186
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.6000001778593287e-05,
+      "p90": 1.6000001778593287e-05,
+      "p95": 1.6000001778593287e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.5499997718725353e-05,
+      "p90": 2.5499997718725353e-05,
+      "p95": 2.5499997718725353e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 0.47249160000137636,
+      "p90": 0.47249160000137636,
+      "p95": 0.47249160000137636
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 152,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.57,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 152,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0036552999990817625,
+      "p90": 0.0036552999990817625,
+      "p95": 0.0036552999990817625
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00027209999825572595,
+      "p90": 0.00027209999825572595,
+      "p95": 0.00027209999825572595
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.4900000678608194e-05,
+      "p90": 1.4900000678608194e-05,
+      "p95": 1.4900000678608194e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.4900000425986946e-05,
+      "p90": 2.4900000425986946e-05,
+      "p95": 2.4900000425986946e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 2.5577702000009594,
+      "p90": 2.5577702000009594,
+      "p95": 2.5577702000009594
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 140,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.76,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 140,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0036830999997619074,
+      "p90": 0.0036830999997619074,
+      "p95": 0.0036830999997619074
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00025610000011511147,
+      "p90": 0.00025610000011511147,
+      "p95": 0.00025610000011511147
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.3800003216601908e-05,
+      "p90": 1.3800003216601908e-05,
+      "p95": 1.3800003216601908e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.2100000933278352e-05,
+      "p90": 2.2100000933278352e-05,
+      "p95": 2.2100000933278352e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 2.7511938999996346,
+      "p90": 2.7511938999996346,
+      "p95": 2.7511938999996346
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "slide_2048",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 143,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.73,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 143,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0043737000014516525,
+      "p90": 0.0043737000014516525,
+      "p95": 0.0043737000014516525
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00017139999908977188,
+      "p90": 0.00017139999908977188,
+      "p95": 0.00017139999908977188
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.5499997971346602e-05,
+      "p90": 1.5499997971346602e-05,
+      "p95": 1.5499997971346602e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.5000001187436283e-05,
+      "p90": 2.5000001187436283e-05,
+      "p95": 2.5000001187436283e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 2.723635499998636,
+      "p90": 2.723635499998636,
+      "p95": 2.723635499998636
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 600,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 12.47,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 600,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0037240000019664876,
+      "p90": 0.0037240000019664876,
+      "p95": 0.0037240000019664876
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00013500000204658136,
+      "p90": 0.00013500000204658136,
+      "p95": 0.00013500000204658136
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.720000000204891e-05,
+      "p90": 1.720000000204891e-05,
+      "p95": 1.720000000204891e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.9499999072868377e-05,
+      "p90": 2.9499999072868377e-05,
+      "p95": 2.9499999072868377e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 12.467142100002093,
+      "p90": 12.467142100002093,
+      "p95": 12.467142100002093
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 600,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 12.48,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 600,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.003971300000557676,
+      "p90": 0.003971300000557676,
+      "p95": 0.003971300000557676
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00026309999884688295,
+      "p90": 0.00026309999884688295,
+      "p95": 0.00026309999884688295
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.2800002625444904e-05,
+      "p90": 2.2800002625444904e-05,
+      "p95": 2.2800002625444904e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 5.2600000344682485e-05,
+      "p90": 5.2600000344682485e-05,
+      "p95": 5.2600000344682485e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 12.469452199999068,
+      "p90": 12.469452199999068,
+      "p95": 12.469452199999068
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "lane_dash",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 600,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 12.6,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 600,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.003813099996477831,
+      "p90": 0.003813099996477831,
+      "p95": 0.003813099996477831
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00015630000052624382,
+      "p90": 0.00015630000052624382,
+      "p95": 0.00015630000052624382
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.2700001863995567e-05,
+      "p90": 2.2700001863995567e-05,
+      "p95": 2.2700001863995567e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.510000194888562e-05,
+      "p90": 2.510000194888562e-05,
+      "p95": 2.510000194888562e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 12.592427300001873,
+      "p90": 12.592427300001873,
+      "p95": 12.592427300001873
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "maze_chase",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 42,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.72,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 42,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0030822000007901806,
+      "p90": 0.0030822000007901806,
+      "p95": 0.0030822000007901806
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.005998100001306739,
+      "p90": 0.005998100001306739,
+      "p95": 0.005998100001306739
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.1200001356191933e-05,
+      "p90": 2.1200001356191933e-05,
+      "p95": 2.1200001356191933e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.769999991869554e-05,
+      "p90": 2.769999991869554e-05,
+      "p95": 2.769999991869554e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 0.7100929000007454,
+      "p90": 0.7100929000007454,
+      "p95": 0.7100929000007454
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "maze_chase",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 42,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.64,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 42,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0026900000011664815,
+      "p90": 0.0026900000011664815,
+      "p95": 0.0026900000011664815
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004511099999945145,
+      "p90": 0.004511099999945145,
+      "p95": 0.004511099999945145
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.469999915570952e-05,
+      "p90": 1.469999915570952e-05,
+      "p95": 1.469999915570952e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.4500001018168405e-05,
+      "p90": 2.4500001018168405e-05,
+      "p95": 2.4500001018168405e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 0.6269680000004882,
+      "p90": 0.6269680000004882,
+      "p95": 0.6269680000004882
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "maze_chase",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 42,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.64,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 42,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.002847199997631833,
+      "p90": 0.002847199997631833,
+      "p95": 0.002847199997631833
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004497300000366522,
+      "p90": 0.004497300000366522,
+      "p95": 0.004497300000366522
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.5199999324977398e-05,
+      "p90": 1.5199999324977398e-05,
+      "p95": 1.5199999324977398e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.550000135670416e-05,
+      "p90": 2.550000135670416e-05,
+      "p95": 2.550000135670416e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 0.6249152999989747,
+      "p90": 0.6249152999989747,
+      "p95": 0.6249152999989747
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "key_caves",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 81,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.99,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 81,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.003625500001362525,
+      "p90": 0.003625500001362525,
+      "p95": 0.003625500001362525
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004477000002225395,
+      "p90": 0.004477000002225395,
+      "p95": 0.004477000002225395
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.5199999324977398e-05,
+      "p90": 1.5199999324977398e-05,
+      "p95": 1.5199999324977398e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.5700002879602835e-05,
+      "p90": 2.5700002879602835e-05,
+      "p95": 2.5700002879602835e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.983297599999787,
+      "p90": 1.983297599999787,
+      "p95": 1.983297599999787
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "key_caves",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 81,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.06,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 81,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0037623999996867497,
+      "p90": 0.0037623999996867497,
+      "p95": 0.0037623999996867497
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004458200000954093,
+      "p90": 0.004458200000954093,
+      "p95": 0.004458200000954093
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 3.1299998227041215e-05,
+      "p90": 3.1299998227041215e-05,
+      "p95": 3.1299998227041215e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 4.609999814420007e-05,
+      "p90": 4.609999814420007e-05,
+      "p95": 4.609999814420007e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 2.0493811999986065,
+      "p90": 2.0493811999986065,
+      "p95": 2.0493811999986065
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "key_caves",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 81,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.08,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 81,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0035225999999966007,
+      "p90": 0.0035225999999966007,
+      "p95": 0.0035225999999966007
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004586300001392374,
+      "p90": 0.004586300001392374,
+      "p95": 0.004586300001392374
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 3.079999805777334e-05,
+      "p90": 3.079999805777334e-05,
+      "p95": 3.079999805777334e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 4.1200000850949436e-05,
+      "p90": 4.1200000850949436e-05,
+      "p95": 4.1200000850949436e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 2.0673662000008335,
+      "p90": 2.0673662000008335,
+      "p95": 2.0673662000008335
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "turn_quest",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 53,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.13,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 53,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.007294999999430729,
+      "p90": 0.007294999999430729,
+      "p95": 0.007294999999430729
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.0047712000014144,
+      "p90": 0.0047712000014144,
+      "p95": 0.0047712000014144
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.0700001186924055e-05,
+      "p90": 2.0700001186924055e-05,
+      "p95": 2.0700001186924055e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 3.300000025774352e-05,
+      "p90": 3.300000025774352e-05,
+      "p95": 3.300000025774352e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.1135213000015938,
+      "p90": 1.1135213000015938,
+      "p95": 1.1135213000015938
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "turn_quest",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 59,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.16,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 59,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.007218599999760045,
+      "p90": 0.007218599999760045,
+      "p95": 0.007218599999760045
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.0036159000010229647,
+      "p90": 0.0036159000010229647,
+      "p95": 0.0036159000010229647
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.469999915570952e-05,
+      "p90": 1.469999915570952e-05,
+      "p95": 1.469999915570952e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.3100001271814108e-05,
+      "p90": 2.3100001271814108e-05,
+      "p95": 2.3100001271814108e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.148954699998285,
+      "p90": 1.148954699998285,
+      "p95": 1.148954699998285
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "turn_quest",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 60,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.18,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 60,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.007130699999834178,
+      "p90": 0.007130699999834178,
+      "p95": 0.007130699999834178
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.003993800000898773,
+      "p90": 0.003993800000898773,
+      "p95": 0.003993800000898773
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.929999780259095e-05,
+      "p90": 1.929999780259095e-05,
+      "p95": 1.929999780259095e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 3.189999915775843e-05,
+      "p90": 3.189999915775843e-05,
+      "p95": 3.189999915775843e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.1675162999999884,
+      "p90": 1.1675162999999884,
+      "p95": 1.1675162999999884
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "mini_chess",
+   "seed": 0,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 20,
+   "ticks": 0,
+   "calls": 20,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.23,
+   "invalid_plans": 0,
+   "ended": "turn_cap",
+   "extra": {
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 20,
+      "p50": 0.0047009000008984,
+      "p90": 0.005615900001430418,
+      "p95": 0.00670199999876786
+     },
+     "shrink": {
+      "n": 20,
+      "p50": 0.002060499999060994,
+      "p90": 0.0025937999998859596,
+      "p95": 0.002859200001694262
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 20,
+      "p50": 1.5400000847876072e-05,
+      "p90": 1.6699999832781032e-05,
+      "p95": 1.68999977177009e-05
+     },
+     "parse_and_check": {
+      "n": 20,
+      "p50": 2.4100001610349864e-05,
+      "p90": 2.849999873433262e-05,
+      "p95": 2.9699996957788244e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 20,
+      "p50": 0.046871300000930205,
+      "p90": 0.0518222999999125,
+      "p95": 0.05488350000086939
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "mini_chess",
+   "seed": 1,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 20,
+   "ticks": 0,
+   "calls": 20,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.35,
+   "invalid_plans": 0,
+   "ended": "turn_cap",
+   "extra": {
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 20,
+      "p50": 0.004789800001162803,
+      "p90": 0.0069328999998106156,
+      "p95": 0.006984199997532414
+     },
+     "shrink": {
+      "n": 20,
+      "p50": 0.002099000001180684,
+      "p90": 0.0031243000012182165,
+      "p95": 0.004074600001331419
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 20,
+      "p50": 1.5199999324977398e-05,
+      "p90": 2.099999983329326e-05,
+      "p95": 2.2199998056748882e-05
+     },
+     "parse_and_check": {
+      "n": 20,
+      "p50": 2.6100002287421376e-05,
+      "p90": 5.0400001782691106e-05,
+      "p95": 5.149999924469739e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 20,
+      "p50": 0.047512600001937244,
+      "p90": 0.07654009999896516,
+      "p95": 0.08838990000003832
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "mini_chess",
+   "seed": 2,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 20,
+   "ticks": 0,
+   "calls": 20,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.24,
+   "invalid_plans": 0,
+   "ended": "turn_cap",
+   "extra": {
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 20,
+      "p50": 0.0046962000014900696,
+      "p90": 0.00938759999917238,
+      "p95": 0.00974349999887636
+     },
+     "shrink": {
+      "n": 20,
+      "p50": 0.00212910000118427,
+      "p90": 0.0033450000009906944,
+      "p95": 0.0034871000025304966
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 20,
+      "p50": 1.6099998902063817e-05,
+      "p90": 2.4999997549457476e-05,
+      "p95": 3.4599997889017686e-05
+     },
+     "parse_and_check": {
+      "n": 20,
+      "p50": 2.5499997718725353e-05,
+      "p90": 3.890000152750872e-05,
+      "p95": 4.140000237384811e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 20,
+      "p50": 0.04375430000072811,
+      "p90": 0.06728370000200812,
+      "p95": 0.06765839999934542
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "action_quest",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 78,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.81,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 78,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.00693449999744189,
+      "p90": 0.00693449999744189,
+      "p95": 0.00693449999744189
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004428699998243246,
+      "p90": 0.004428699998243246,
+      "p95": 0.004428699998243246
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.930000144056976e-05,
+      "p90": 1.930000144056976e-05,
+      "p95": 1.930000144056976e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.9299997549969703e-05,
+      "p90": 2.9299997549969703e-05,
+      "p95": 2.9299997549969703e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.7946483000014268,
+      "p90": 1.7946483000014268,
+      "p95": 1.7946483000014268
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "action_quest",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 55,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.62,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 55,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0055208000012498815,
+      "p90": 0.0055208000012498815,
+      "p95": 0.0055208000012498815
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.0043240999984845985,
+      "p90": 0.0043240999984845985,
+      "p95": 0.0043240999984845985
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.7700000171316788e-05,
+      "p90": 1.7700000171316788e-05,
+      "p95": 1.7700000171316788e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 3.0499999411404133e-05,
+      "p90": 3.0499999411404133e-05,
+      "p95": 3.0499999411404133e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.6051272000004246,
+      "p90": 1.6051272000004246,
+      "p95": 1.6051272000004246
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "action_quest",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 71,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.55,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 71,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.005910099996981444,
+      "p90": 0.005910099996981444,
+      "p95": 0.005910099996981444
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004373299998405855,
+      "p90": 0.004373299998405855,
+      "p95": 0.004373299998405855
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.4499997632810846e-05,
+      "p90": 1.4499997632810846e-05,
+      "p95": 1.4499997632810846e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.4000000848900527e-05,
+      "p90": 2.4000000848900527e-05,
+      "p95": 2.4000000848900527e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.5412150000011025,
+      "p90": 1.5412150000011025,
+      "p95": 1.5412150000011025
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "mini_fighter",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 131,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.96,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 131,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.003968900000472786,
+      "p90": 0.003968900000472786,
+      "p95": 0.003968900000472786
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004827500000828877,
+      "p90": 0.004827500000828877,
+      "p95": 0.004827500000828877
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.5400000847876072e-05,
+      "p90": 1.5400000847876072e-05,
+      "p95": 1.5400000847876072e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.6500001695239916e-05,
+      "p90": 2.6500001695239916e-05,
+      "p95": 2.6500001695239916e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.9467088999990665,
+      "p90": 1.9467088999990665,
+      "p95": 1.9467088999990665
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "mini_fighter",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 159,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.46,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 159,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0044082000022172,
+      "p90": 0.0044082000022172,
+      "p95": 0.0044082000022172
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.004452799999853596,
+      "p90": 0.004452799999853596,
+      "p95": 0.004452799999853596
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.9099999917671084e-05,
+      "p90": 1.9099999917671084e-05,
+      "p95": 1.9099999917671084e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.9099999665049836e-05,
+      "p90": 2.9099999665049836e-05,
+      "p95": 2.9099999665049836e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 2.4494362999976147,
+      "p90": 2.4494362999976147,
+      "p95": 2.4494362999976147
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "mini_fighter",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 145,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 2.55,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 145,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.008381700001336867,
+      "p90": 0.008381700001336867,
+      "p95": 0.008381700001336867
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.007785199999489123,
+      "p90": 0.007785199999489123,
+      "p95": 0.007785199999489123
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.13999992411118e-05,
+      "p90": 2.13999992411118e-05,
+      "p95": 2.13999992411118e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 3.470000228844583e-05,
+      "p90": 3.470000228844583e-05,
+      "p95": 3.470000228844583e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 2.526469600001292,
+      "p90": 2.526469600001292,
+      "p95": 2.526469600001292
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "ray_maze",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 58,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.34,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 58,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.006689399997412693,
+      "p90": 0.006689399997412693,
+      "p95": 0.006689399997412693
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.0004666999993787613,
+      "p90": 0.0004666999993787613,
+      "p95": 0.0004666999993787613
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 2.170000152545981e-05,
+      "p90": 2.170000152545981e-05,
+      "p95": 2.170000152545981e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 3.600000127335079e-05,
+      "p90": 3.600000127335079e-05,
+      "p95": 3.600000127335079e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.3336353000013332,
+      "p90": 1.3336353000013332,
+      "p95": 1.3336353000013332
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "ray_maze",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 58,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.42,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 58,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.005854499999259133,
+      "p90": 0.005854499999259133,
+      "p95": 0.005854499999259133
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.0002604000001156237,
+      "p90": 0.0002604000001156237,
+      "p95": 0.0002604000001156237
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.5400000847876072e-05,
+      "p90": 1.5400000847876072e-05,
+      "p95": 1.5400000847876072e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.5699999241624027e-05,
+      "p90": 2.5699999241624027e-05,
+      "p95": 2.5699999241624027e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.414447700000892,
+      "p90": 1.414447700000892,
+      "p95": 1.414447700000892
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "ray_maze",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 58,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 1.74,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 58,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.005702399997971952,
+      "p90": 0.005702399997971952,
+      "p95": 0.005702399997971952
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00011029999950551428,
+      "p90": 0.00011029999950551428,
+      "p95": 0.00011029999950551428
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.4899997040629387e-05,
+      "p90": 1.4899997040629387e-05,
+      "p95": 1.4899997040629387e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.5800000003073364e-05,
+      "p90": 2.5800000003073364e-05,
+      "p95": 2.5800000003073364e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 1.7306895000001532,
+      "p90": 1.7306895000001532,
+      "p95": 1.7306895000001532
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "tiny_kingdom",
+   "seed": 0,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 20,
+   "ticks": 0,
+   "calls": 20,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.7,
+   "invalid_plans": 0,
+   "ended": "turn_cap",
+   "extra": {
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 20,
+      "p50": 0.0069638999993912876,
+      "p90": 0.008794299999863142,
+      "p95": 0.009040200002345955
+     },
+     "shrink": {
+      "n": 20,
+      "p50": 0.00677949999953853,
+      "p90": 0.00810030000138795,
+      "p95": 0.008312300000397954
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 20,
+      "p50": 1.3999997463542968e-05,
+      "p90": 2.13999992411118e-05,
+      "p95": 2.429999949526973e-05
+     },
+     "parse_and_check": {
+      "n": 20,
+      "p50": 2.3700002202531323e-05,
+      "p90": 3.740000101970509e-05,
+      "p95": 3.810000271187164e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 20,
+      "p50": 0.01623219999964931,
+      "p90": 0.018343600000662263,
+      "p95": 0.019187699999747565
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "tiny_kingdom",
+   "seed": 1,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 20,
+   "ticks": 0,
+   "calls": 20,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.76,
+   "invalid_plans": 0,
+   "ended": "turn_cap",
+   "extra": {
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 20,
+      "p50": 0.007394899999781046,
+      "p90": 0.011483400001452537,
+      "p95": 0.012757399999827612
+     },
+     "shrink": {
+      "n": 20,
+      "p50": 0.006999299999733921,
+      "p90": 0.010959499999444233,
+      "p95": 0.011493499998323387
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 20,
+      "p50": 1.4499997632810846e-05,
+      "p90": 1.97000008483883e-05,
+      "p95": 1.979999797185883e-05
+     },
+     "parse_and_check": {
+      "n": 20,
+      "p50": 2.5400000595254824e-05,
+      "p90": 3.640000068116933e-05,
+      "p95": 4.549999721348286e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 20,
+      "p50": 0.017142500000772998,
+      "p90": 0.02287100000103237,
+      "p95": 0.022923199998331256
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "tiny_kingdom",
+   "seed": 2,
+   "won": false,
+   "lost": false,
+   "progress": 0.0,
+   "turns": 20,
+   "ticks": 0,
+   "calls": 20,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 0.69,
+   "invalid_plans": 0,
+   "ended": "turn_cap",
+   "extra": {
+    "skill_steps": 0,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 20,
+      "p50": 0.0070071000009193085,
+      "p90": 0.008455200000753393,
+      "p95": 0.008457700001599733
+     },
+     "shrink": {
+      "n": 20,
+      "p50": 0.007185499998740852,
+      "p90": 0.008468600000924198,
+      "p95": 0.008496700000250712
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 20,
+      "p50": 1.4500001270789653e-05,
+      "p90": 1.930000144056976e-05,
+      "p95": 2.1699997887481004e-05
+     },
+     "parse_and_check": {
+      "n": 20,
+      "p50": 2.469999890308827e-05,
+      "p90": 2.720000338740647e-05,
+      "p95": 2.8599999495781958e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 20,
+      "p50": 0.01660529999935534,
+      "p90": 0.018007300001045223,
+      "p95": 0.018442300002789125
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "top_racer",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 169,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 4.57,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 169,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.00528409999969881,
+      "p90": 0.00528409999969881,
+      "p95": 0.00528409999969881
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00690260000192211,
+      "p90": 0.00690260000192211,
+      "p95": 0.00690260000192211
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.880000127130188e-05,
+      "p90": 1.880000127130188e-05,
+      "p95": 1.880000127130188e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.9100003303028643e-05,
+      "p90": 2.9100003303028643e-05,
+      "p95": 2.9100003303028643e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 4.555051700001059,
+      "p90": 4.555051700001059,
+      "p95": 4.555051700001059
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "top_racer",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 171,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 4.01,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 171,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.00491130000227713,
+      "p90": 0.00491130000227713,
+      "p95": 0.00491130000227713
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.005305900001985719,
+      "p90": 0.005305900001985719,
+      "p95": 0.005305900001985719
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.590000101714395e-05,
+      "p90": 1.590000101714395e-05,
+      "p95": 1.590000101714395e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.469999890308827e-05,
+      "p90": 2.469999890308827e-05,
+      "p95": 2.469999890308827e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 3.993967700000212,
+      "p90": 3.993967700000212,
+      "p95": 3.993967700000212
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "top_racer",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 169,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 3.94,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 169,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0046016000014788006,
+      "p90": 0.0046016000014788006,
+      "p95": 0.0046016000014788006
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.005229999998846324,
+      "p90": 0.005229999998846324,
+      "p95": 0.005229999998846324
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.680000059423037e-05,
+      "p90": 1.680000059423037e-05,
+      "p95": 1.680000059423037e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.6199999410891905e-05,
+      "p90": 2.6199999410891905e-05,
+      "p95": 2.6199999410891905e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 3.9295526999994763,
+      "p90": 3.9295526999994763,
+      "p95": 3.9295526999994763
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 0,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 5994,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 257.32,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 5994,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0035591000014392193,
+      "p90": 0.0035591000014392193,
+      "p95": 0.0035591000014392193
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00015529999654972926,
+      "p90": 0.00015529999654972926,
+      "p95": 0.00015529999654972926
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.3999997463542968e-05,
+      "p90": 1.3999997463542968e-05,
+      "p95": 1.3999997463542968e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.4000000848900527e-05,
+      "p90": 2.4000000848900527e-05,
+      "p95": 2.4000000848900527e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 257.3161981999983,
+      "p90": 257.3161981999983,
+      "p95": 257.3161981999983
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 1,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 8026,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 334.87,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 8026,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.0035736999998334795,
+      "p90": 0.0035736999998334795,
+      "p95": 0.0035736999998334795
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00010800000018207356,
+      "p90": 0.00010800000018207356,
+      "p95": 0.00010800000018207356
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.4199998986441642e-05,
+      "p90": 1.4199998986441642e-05,
+      "p95": 1.4199998986441642e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.7300000510876998e-05,
+      "p90": 2.7300000510876998e-05,
+      "p95": 2.7300000510876998e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 334.8651452999984,
+      "p90": 334.8651452999984,
+      "p95": 334.8651452999984
+     }
+    },
+    "clock": "paused"
+   }
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 2,
+   "won": true,
+   "lost": false,
+   "progress": 1.0,
+   "turns": 1,
+   "ticks": 7881,
+   "calls": 1,
+   "tokens_in": 0,
+   "tokens_cached": 0,
+   "tokens_out": 0,
+   "cost_usd": 0.0,
+   "seconds": 320.41,
+   "invalid_plans": 0,
+   "ended": "won",
+   "extra": {
+    "skill_steps": 7881,
+    "look": "arena",
+    "stages": {
+     "capture": {
+      "n": 1,
+      "p50": 0.003750799998670118,
+      "p90": 0.003750799998670118,
+      "p95": 0.003750799998670118
+     },
+     "shrink": {
+      "n": 1,
+      "p50": 0.00022170000011101365,
+      "p90": 0.00022170000011101365,
+      "p95": 0.00022170000011101365
+     },
+     "mark": "not measured",
+     "encode": "not measured",
+     "request": {
+      "n": 1,
+      "p50": 1.9499999325489625e-05,
+      "p90": 1.9499999325489625e-05,
+      "p95": 1.9499999325489625e-05
+     },
+     "parse_and_check": {
+      "n": 1,
+      "p50": 2.6999998226528987e-05,
+      "p90": 2.6999998226528987e-05,
+      "p95": 2.6999998226528987e-05
+     },
+     "key_down": "not measured",
+     "skill": {
+      "n": 1,
+      "p50": 320.39925720000247,
+      "p90": 320.39925720000247,
+      "p95": 320.39925720000247
+     }
+    },
+    "clock": "paused"
+   }
+  }
+ ]
+}

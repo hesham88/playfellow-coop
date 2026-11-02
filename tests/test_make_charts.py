@@ -179,3 +179,48 @@ def test_live_assist_is_labelled_as_the_model_playing_the_part_with_no_local_ski
         assert make_charts.LIVE_ASSIST_LABEL in ln, ln
         assert "model alone" not in ln.lower(), ln
     assert make_charts.LIVE_ASSIST_LABEL == "live assist: the model plays the part, no local skill"
+
+
+def test_learning_curve_chart_labels_and_modes(tmp_path):
+    # 1. Unrun / empty results directory renders as pending
+    empty_dir = tmp_path / "empty_results"
+    empty_dir.mkdir()
+    res_pending = make_charts._build_learning_curve(empty_dir, tmp_path / "pending_out", committed_only=False)
+    assert res_pending is not None
+    text_pending = make_charts.visible_text(res_pending["svg"]).lower()
+    assert "pending" in text_pending
+
+    # 2. Fake model run renders as "harness check: fake model"
+    fake_doc = {
+        "schema": "pf-arena-run/1",
+        "condition": "skillsmith-fake",
+        "brain": "fake",
+        "model": "fake-stand-in (not a model result)",
+        "games": {
+            "maze_chase": {
+                "goal": "collect the coins, take the key and reach the door",
+                "promoted": "cand1",
+                "curve": [
+                    {"round": 0, "current_progress": 0.0, "best_progress": 0.58, "promoted": "cand1", "reason": "improved"},
+                    {"round": 1, "current_progress": 0.58, "best_progress": 0.58, "promoted": None, "reason": "no change"},
+                ]
+            }
+        }
+    }
+    fake_dir = tmp_path / "fake_results" / "skillsmith"
+    fake_dir.mkdir(parents=True)
+    fake_file = fake_dir / "skillsmith-fake.json"
+    fake_file.write_text(json.dumps(fake_doc), encoding="utf-8")
+    res_fake = make_charts._build_learning_curve(fake_dir.parent, tmp_path / "fake_out", committed_only=False, run_file=fake_file)
+    assert res_fake is not None
+    text_fake = make_charts.visible_text(res_fake["svg"]).lower()
+    assert "harness check: fake model" in text_fake
+    assert "result" not in text_fake.replace("not a model result", "")
+
+    # 3. Live file renders as "assisted: model-written skill"
+    live_file = ROOT / "results" / "skillsmith" / "skillsmith-muse-room-20261102.json"
+    if live_file.is_file():
+        res_live = make_charts._build_learning_curve(ROOT / "results", tmp_path / "live_out", committed_only=False, run_file=live_file)
+        assert res_live is not None
+        text_live = make_charts.visible_text(res_live["svg"]).lower()
+        assert "assisted: model-written skill" in text_live

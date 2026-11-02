@@ -159,6 +159,14 @@ class Canvas:
         self.svg_parts.append(f'  <line x1="{ix1}" y1="{iy1}" x2="{ix2}" y2="{iy2}" stroke="{_hex(stroke)}" stroke-width="{width}"/>')
         self.draw.line((ix1, iy1, ix2, iy2), fill=stroke, width=width)
 
+    def circle(self, cx: float, cy: float, r: float, fill: tuple[int, int, int],
+               stroke: tuple[int, int, int] | None = None, stroke_width: int = 1) -> None:
+        icx, icy, ir = round(cx), round(cy), round(r)
+        stroke_attr = f' stroke="{_hex(stroke)}" stroke-width="{stroke_width}"' if stroke else ""
+        self.svg_parts.append(f'  <circle cx="{icx}" cy="{icy}" r="{ir}" fill="{_hex(fill)}"{stroke_attr}/>')
+        box = (icx - ir, icy - ir, icx + ir, icy + ir)
+        self.draw.ellipse(box, fill=fill, outline=stroke, width=stroke_width if stroke else 0)
+
     def text(self, x: float, y: float, content: str, size: int = 24, fill: tuple[int, int, int] = INK,
              bold: bool = False, anchor: str = "start") -> None:
         ix, iy = round(x), round(y)
@@ -674,7 +682,11 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
             w_o = f"{d_oskl[g]['wins']}/{d_oskl[g]['episodes']}"
             r4_text = f"Rung 4 {ASSISTED_LABEL}: Muse {w_m}, Open {w_o}"
             r4_color = CYAN
-        elif g in new_f4_skills:
+        elif "scripted-20261102.json" in arena_lookup and g in arena_lookup["scripted-20261102.json"]["by_game"]:
+            row = arena_lookup["scripted-20261102.json"]["by_game"][g]
+            r4_text = f"Rung 4 {SCRIPTED_NO_MODEL_LABEL}: {row['wins']}/{row['episodes']}"
+            r4_color = CYAN if row["wins"] > 0 else INK_2
+        elif orac.get("skill"):
             r4_text = "Rung 4 assisted: pixel skill built, run pending"
             r4_color = LIME
         else:
@@ -736,6 +748,145 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
     return c.save(out_dir / "ladder-per-game.svg", out_dir / "ladder-per-game.png")
 
 
+def _build_learning_curve(results_dir: Path, out_dir: Path, committed_only: bool = True,
+                          run_file: Path | None = None) -> dict[str, Path] | None:
+    if run_file is None:
+        candidates = []
+        for path in list_result_files(results_dir, committed_only=committed_only):
+            if path.parent.name == "skillsmith" or path.name.startswith("skillsmith-"):
+                if path.name.endswith(".json") and not path.name.startswith("sandbox-proof"):
+                    candidates.append(path)
+        preferred = ["skillsmith-muse-room-20261102.json", "skillsmith-open-20261102.json", "skillsmith-muse-20261102.json"]
+        for pref in preferred:
+            for cand in candidates:
+                if cand.name == pref:
+                    run_file = cand
+                    break
+            if run_file is not None:
+                break
+        if run_file is None and candidates:
+            run_file = candidates[0]
+
+    c = Canvas()
+    c.rect(32, 24, W - 64, H - 48, BG_1, stroke=LINE, radius=16, stroke_width=2)
+    c.text(64, 68, "SkillSmith Learning Curve: Model-Written Skills Over Iteration Rounds", size=30, fill=INK, bold=True)
+
+    if run_file is None or not run_file.is_file():
+        c.text(64, 98, f"Rung 3 · assisted: model-written skill · {ASSISTED_LABEL} · pending", size=15, fill=INK_2)
+        c.line(64, 122, W - 64, 122, LINE, width=1)
+        c.rect(64, 150, W - 128, H - 210, BG_2, stroke=LINE, radius=12, stroke_width=1)
+        c.text(W // 2 - 250, H // 2 - 30, "SkillSmith Learning Curve: pending", size=26, fill=INK, bold=True)
+        c.text(W // 2 - 320, H // 2 + 10, "No model-written skill run is committed yet. Runs will appear here once executed.", size=16, fill=INK_2)
+        return c.save(out_dir / "learning-curve.svg", out_dir / "learning-curve.png")
+
+    try:
+        data = json.loads(run_file.read_text(encoding="utf-8"))
+    except Exception:
+        data = {}
+
+    games = data.get("games", {})
+    curve_games = [(k, v) for k, v in games.items() if isinstance(v, dict) and "curve" in v]
+
+    is_fake = is_harness_check(data) or data.get("brain") == "fake" or "fake" in str(data.get("model", "")).lower()
+    if is_fake:
+        subtitle = f"Rung 3 · {HARNESS_CHECK_LABEL}: fake model · fake stand-in (not a model result) · {ASSISTED_LABEL}"
+    else:
+        subtitle = f"Rung 3 · assisted: model-written skill · {ASSISTED_LABEL} · {data.get('model', 'model')} ({run_file.name})"
+
+    c.text(64, 98, subtitle, size=15, fill=INK_2)
+    c.line(64, 122, W - 64, 122, LINE, width=1)
+
+    if not curve_games:
+        c.rect(64, 150, W - 128, H - 210, BG_2, stroke=LINE, radius=12, stroke_width=1)
+        c.text(W // 2 - 250, H // 2 - 30, "SkillSmith Learning Curve: pending", size=26, fill=INK, bold=True)
+        c.text(W // 2 - 320, H // 2 + 10, "No curve entries recorded in this run file.", size=16, fill=INK_2)
+        return c.save(out_dir / "learning-curve.svg", out_dir / "learning-curve.png")
+
+    N = len(curve_games)
+    col_w = (W - 128 - (N - 1) * 24) // N
+    for idx, (game_key, gdata) in enumerate(curve_games):
+        x0 = 64 + idx * (col_w + 24)
+        y0 = 146
+        card_h = H - 190
+        c.rect(x0, y0, col_w, card_h, BG_2, stroke=LINE, radius=12, stroke_width=1)
+
+        c.text(x0 + 20, y0 + 36, game_key, size=24, fill=INK, bold=True)
+        goal = str(gdata.get("goal") or "")
+        if goal:
+            c.text(x0 + 20, y0 + 64, f"Goal: {goal[:45]}", size=14, fill=INK_2)
+        promoted = gdata.get("promoted")
+        c.text(
+            x0 + 20,
+            y0 + 92,
+            f"Promoted: {promoted or 'None (refused)'}",
+            size=16,
+            fill=LIME if promoted else CORAL,
+            bold=True,
+        )
+
+        curve = gdata.get("curve", [])
+        px0 = x0 + 64
+        py0 = y0 + 130
+        pw = col_w - 96
+        ph = 280
+        c.rect(px0, py0, pw, ph, BG_0, stroke=LINE, radius=8, stroke_width=1)
+
+        for pct in (0, 20, 40, 60, 80, 100):
+            gy = py0 + ph - int((pct / 100.0) * ph)
+            c.line(px0, gy, px0 + pw, gy, LINE, width=1)
+            c.text(px0 - 48, gy + 5, f"{pct}%", size=13, fill=INK_2)
+
+        num_rounds = max(1, len(curve))
+        step_w = pw / num_rounds
+        for r_idx, pt in enumerate(curve):
+            rx = px0 + int((r_idx + 0.5) * step_w)
+            c.line(rx, py0, rx, py0 + ph, LINE, width=1)
+            r_num = pt.get("round", r_idx)
+            c.text(rx - 24, py0 + ph + 24, f"Round {r_num}", size=13, fill=INK_2)
+
+            curr_p = float(pt.get("current_progress") or 0.0)
+            best_p = float(pt.get("best_progress") or 0.0)
+            prom = pt.get("promoted")
+
+            curr_y = py0 + ph - int(min(1.0, max(0.0, curr_p)) * ph)
+            best_y = py0 + ph - int(min(1.0, max(0.0, best_p)) * ph)
+
+            c.circle(rx - 10, curr_y, 7, fill=CYAN)
+            c.circle(rx + 10, best_y, 7, fill=VIOLET)
+
+            v_top = min(curr_y, best_y) - 28
+            if prom:
+                c.rect(rx - 40, v_top, 80, 20, LIME, radius=4)
+                c.text(rx, v_top + 15, "PROMOTED", size=11, fill=BG_0, bold=True, anchor="middle")
+            else:
+                c.rect(rx - 32, v_top, 64, 20, CORAL, radius=4)
+                c.text(rx, v_top + 15, "REFUSED", size=11, fill=BG_0, bold=True, anchor="middle")
+
+        leg_y = py0 + ph + 56
+        c.circle(px0 + 20, leg_y, 6, fill=CYAN)
+        c.text(px0 + 34, leg_y + 5, "Current Progress", size=14, fill=CYAN, bold=True)
+        c.circle(px0 + 200, leg_y, 6, fill=VIOLET)
+        c.text(px0 + 214, leg_y + 5, "Best Candidate", size=14, fill=VIOLET, bold=True)
+
+        table_y = leg_y + 30
+        for r_idx, pt in enumerate(curve):
+            ry = table_y + r_idx * 90
+            c.rect(x0 + 20, ry, col_w - 40, 80, BG_0, stroke=LINE, radius=6, stroke_width=1)
+            r_num = pt.get("round", r_idx)
+            curr_p = float(pt.get("current_progress") or 0.0)
+            best_p = float(pt.get("best_progress") or 0.0)
+            prom = pt.get("promoted")
+
+            c.text(x0 + 32, ry + 24, f"Round {r_num}: current {curr_p:.2f}, best {best_p:.2f}", size=15, fill=INK, bold=True)
+            verdict = "PROMOTED" if prom else "REFUSED"
+            v_color = LIME if prom else CORAL
+            c.text(x0 + 32, ry + 48, f"Verdict: {verdict}", size=14, fill=v_color, bold=True)
+            reason_text = "score strictly improved" if prom else "no candidate strictly beats current"
+            c.text(x0 + 32, ry + 70, f"Reason: {reason_text}", size=13, fill=INK_2)
+
+    return c.save(out_dir / "learning-curve.svg", out_dir / "learning-curve.png")
+
+
 def build_all(results_dir: Path = ROOT / "results", out_dir: Path = ROOT / "docs" / "img" / "charts",
               committed_only: bool = True) -> dict[str, dict[str, Path]]:
     files = list_result_files(results_dir, committed_only=committed_only)
@@ -772,6 +923,9 @@ def build_all(results_dir: Path = ROOT / "results", out_dir: Path = ROOT / "docs
     ladder_out = _build_per_game_ladder(results_dir, arena_lookup, out_dir)
     if ladder_out is not None:
         out["ladder-per-game"] = ladder_out
+    learning_out = _build_learning_curve(results_dir, out_dir, committed_only=committed_only)
+    if learning_out is not None:
+        out["learning-curve"] = learning_out
     return out
 
 
