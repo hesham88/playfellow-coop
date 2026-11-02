@@ -152,9 +152,22 @@ The engine's controls cards and settings files sit next to its code, so the engi
 ```
 python -m playfellow_coop --brain muse --marks sam  # F9 takes the controls, F9 again gives them back, F12 stops
 python -m playfellow_coop --brain local-open --model <id>  # an open model on this PC through LM Studio (the engine's memory check runs first)
-python -m playfellow_coop --overlay                # the floating command center (Ctrl+Alt+P opens and closes it); offline-tested, NOT yet run live: see docs/owner-live-checks.md
+python -m playfellow_coop --overlay                # the in-game widget: a slim bar at the top centre with the mic (see below)
 python -m playfellow_coop                           # the same with the engine's built-in brain (no key, no network)
 ```
+
+### Any game, full screen or not
+
+Start the game first, then PlayFellow, naming the game's window. With no controls card for that game, `any_game` is the general one, and `--brief` has the planner write down what it knows of the game first (only keys on the card survive).
+
+```
+python -m playfellow_coop --window "<game window title>" --card any_game --brain muse --overlay --assist 4 --brief --input scancode
+```
+
+- **The widget.** A slim bar docked at the top centre of the screen, over the game. It starts folded and see-through (opacity 0.55). The arrow slides the panel down and back up with an eased animation, and the opacity slider stops at 0.3, so the widget never vanishes. The mic is on the bar itself: hold it, speak, release. Your words go to the buddy in any game, not only one.
+- **Full screen.** The widget is a no-focus, always-on-top window that re-asserts "on top" every 300 ms. It never takes the game's focus. The owner checked that method over a full-screen commercial game on Windows 11. The widget's own live check is listed in `docs/owner-live-checks.md`.
+- **Keys.** `--input scancode` sends hardware scan codes, which games that read raw input (most full-screen games) accept. Every card key has one.
+- **Hand-back.** After `--assist N` turns, or when the buddy and a second look agree the part is done, the controls come back to you by themselves. Saying "wait" or "I've got it" hands them back at once; "stop" (or F12) stops everything.
 
 ## Tests
 

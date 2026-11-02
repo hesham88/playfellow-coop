@@ -28,6 +28,19 @@ Two checks need a person at the keyboard because they press real keys or look at
 
 What good looks like: **focus losses 0** and **panel pixels 0 or very small** (the game itself moves, so a small count can be the game).
 
+Check 2 drives the older Tk panel. The widget that `--overlay` now opens is the Qt one (check 2b).
+
+## Check 2b: the in-game widget over a full-screen game (about 5 minutes)
+
+1. Start the game full screen, then run `python -m playfellow_coop --window "<its window title>" --card any_game --overlay --input scancode`.
+2. A slim bar must appear at the top centre, over the game, and see-through. The game must keep the focus, so its keys still work.
+3. Click the arrow. The panel must slide down smoothly, and the arrow again must slide it back up.
+4. Drag the opacity slider fully left. The widget must still be visible.
+5. Hold the mic on the bar, say a short request, and release. The request must show in the panel, and the buddy must act on it.
+6. Write down: did it ever disappear behind the game? did the game lose a key or the focus?
+
+The no-focus, always-on-top method was checked over a full-screen commercial game on 2 November 2026 (a plain test bar). Steps 2 to 6 for the widget itself are still open.
+
 ## Check 3 (only if checks 1 and 2 went well): a calm open-source game
 
 Repeat check 2 over SuperTux in borderless mode, and watch that not one key is dropped.
