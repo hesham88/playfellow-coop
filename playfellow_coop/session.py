@@ -246,6 +246,9 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
         parts.live.reset()
     watch = getattr(parts, "screen_watch", None)
     ends_seen = 0
+    assist = getattr(parts, "assist", None) if handover is not None else None  # the accessibility co-op (assist.py)
+    if assist is not None and not handover.human_has_controls:
+        handover.take_over()  # the player starts with the controls; the buddy does only the parts it is asked for
     try:
         while safety.check() is None:
             if max_turns is not None and turns >= max_turns:
@@ -271,6 +274,15 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                         latency.discard()  # this phrase never reaches the planner, so its voice stopwatch must not linger
                 if safety.check() is not None:
                     break
+            if assist is not None and handover.human_has_controls:
+                if assist.active:  # the player took the controls back (F9 or "I've got it") before the part was over
+                    assist.end("player_took", safety.calls)
+                words = commands.drain() if commands is not None else []
+                if words:  # a request: the buddy takes this one part, and the planner hears the words as the player's own
+                    for line in words:
+                        commands.put(line)
+                    handover.give_back()
+                    on_event("say", assist.begin(" ".join(words), safety.calls, parts=parts))
             if handover is not None and handover.human_has_controls:
                 handover.note_skipped()  # the player is playing: no picture for the AI, no AI, no key
                 if wait(settings.look_every_seconds):
@@ -312,8 +324,15 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                 timer.turns.pop()
             errors = 0
             turns += 1 if reply is not None else 0
+            if assist is not None and assist.active and reply is not None:
+                line = assist.after_turn(parts, len(reply.action_names()), safety.calls)
+                if line is not None:  # the part is done, or its turn limit is reached: the controls go back by themselves
+                    handover.take_over()
+                    on_event("say", line)
             if wait(settings.look_every_seconds):
                 break
     finally:
         parts.hands.on_stop()  # every held key goes up, whatever ended the session
+        if assist is not None:
+            assist.end(safety.reason or "stopped_button", safety.calls)  # a part cut short by a stop is a stop, never a success
     return safety.reason or "stopped_button"

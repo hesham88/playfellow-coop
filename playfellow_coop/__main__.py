@@ -84,6 +84,11 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--card", help="the controls card name (default: from the settings)")
     parser.add_argument("--minutes", type=int)
     parser.add_argument("--typed", action="store_true", help="type commands in this window, one per line (no microphone needed)")
+    parser.add_argument("--assist", type=int, nargs="?", const=12, default=None, metavar="TURNS",
+                        help="the accessibility co-op: you start with the controls; say or type what you want done and the buddy does that "
+                             "part, then gives the controls back by itself (after TURNS turns at most, 12 if not given)")
+    parser.add_argument("--keep", default="", metavar="KEYS",
+                        help="split controls: the keys you keep, comma-separated (for example j,k); the buddy never presses or releases them")
     parser.add_argument("--talk-key", default="", help="hold this key (for example f8) to talk to the buddy; needs a Muse key and a microphone")
     parser.add_argument("--marks", choices=("off", "sam", "fake"), default=None,
                         help="numbered marks on the picture: sam = SAM 3.1 (needs a key), fake = a fake server for a pipeline demo; "
@@ -128,6 +133,10 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     cfg = dataclasses.replace(cfg, **{k: v for k, v in overrides.items() if v is not None})
     parts = build_parts(cfg)
     parts.typed = args.typed
+    if args.assist is not None:
+        from playfellow_coop.assist import Assist, DoneSpotter, model_said_done
+        parts.brain = DoneSpotter(parts.brain)  # the live "is the part done" check: the planner says so, as the JSON value true
+        parts.assist = Assist(max_turns=args.assist, done=model_said_done)
     if args.dry_run:
         from playfellow_coop.dry_run import DryRunHands
         parts.hands = DryRunHands(parts.hands)
@@ -141,6 +150,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
             raise BrainError("brain_trouble", detail="--input scancode needs Windows")
         parts.hands.backend = DirectInputCompat()  # the engine's own hands and safety rules, now pressing scan codes
     parts.stop_on_end = args.stop_on_end
+    if args.keep:  # after every backend choice (dry run, scan codes), so the guard wraps the hands that really press
+        from playfellow_coop.assist import apply_split
+        apply_split(parts, [k for k in args.keep.split(",") if k.strip()])
     if args.live == "on":
         from playfellow_coop.universal.live import LiveLoop
         parts.live = LiveLoop()
@@ -184,6 +196,12 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
             parts.brain.set_actions(parts.card.actions)
         attach_skills(parts, cfg, args.skills)
     return parts, cfg
+
+
+def assist_system(system: str) -> str:
+    """The planner's instructions with the assist's done rule added (only when --assist is on)."""
+    from playfellow_coop.assist import DONE_RULE
+    return system + "\n\n" + DONE_RULE
 
 
 def attach_skills(parts, cfg, switch: str) -> None:
@@ -296,6 +314,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         return run(parts, cfg, play_system, timer, handover, on_event=on_event, commands=commands, latency=latency)
 
     play_system = play.system_for(parts, cfg) + (parts.skills.system_text() if getattr(parts, "skills", None) else "")
+    if getattr(parts, "assist", None) is not None:
+        play_system = assist_system(play_system)
     if overlay is None:
         reason = run_session()
     else:  # the window loop owns this thread; the game session runs on another
