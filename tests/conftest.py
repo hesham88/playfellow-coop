@@ -11,3 +11,16 @@ os.environ["PLAYFELLOW_ENGINE"] = str(ENGINE)  # tests read the engine folder fr
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+
+import pytest  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _fresh_circuit_breaker():
+    """The circuit breaker is process-wide state (one circuit per host). This fixture imports nothing: after each test, if the HTTP module
+    was loaded at all, every circuit is closed again, so one test's failures never open a circuit for the next."""
+    yield
+    module = sys.modules.get("playfellow_coop._http")
+    if module is not None:
+        module.BREAKER.reset()

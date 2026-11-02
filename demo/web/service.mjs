@@ -1,6 +1,8 @@
 // The page's side of the live demo: it builds the request the demo service expects (marks the page computes from its own state, the player's words, the
 // allowed keys; NO picture is sent) and reads the answer. This is the only page file that may use the network (a test pins that), and it reaches only the
 // address in config.mjs. The service holds the model key; the page never sees one.
+import { CircuitBreaker } from './backoff.mjs';
+
 export const FRAME = { width: 960, height: 540, format: 'jpeg' };
 const MAX_MARKS = 32;
 
@@ -33,7 +35,7 @@ export function planRequest(arena, command, sessionId, extra = {}) {
   };
 }
 
-const ERRORS = {
+export const ERRORS = {
   origin_not_allowed: 'This page is not allowed to use the live demo.',
   demo_misconfigured: 'The live demo is not set up yet.',
   kill_switch: 'The live demo is paused.',
@@ -44,33 +46,63 @@ const ERRORS = {
   provider_error: 'The model service had a problem.',
 };
 
+// The answers the page makes itself (not the service): the page's Arabic table must have a text for each, as it does for every code in ERRORS.
+export const LOCAL_CODES = ['not_configured', 'offline', 'timeout', 'resting'];
+
 export function newSessionId(random = Math.random) {
   return 's' + Array.from({ length: 18 }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(random() * 36)]).join('');
 }
 
+// The service saying that the MODEL side is down. Everything else it answers (paused, budget, busy for you, origin) is a deliberate answer, not a failure.
+const SERVICE_DOWN = new Set(['provider_unreachable', 'provider_error']);
+// A backstop for a request that never answers, NOT a tight limit: the demo service gives each model call 15 s and tries up to 3 times with back-offs of at most 2 s,
+// so it can legitimately take 3 x 15 + 2 x 2 = 49 s to answer a plan (voice makes one 15 s call). The page must wait longer than that, or a slow but valid plan is
+// abandoned and counted as a failure. backoff.test.mjs pins this relationship.
+export const REQUEST_TIMEOUT_MS = 60000;
+
 export class LiveService {
-  constructor({ base, fetchImpl, sessionId = newSessionId(), turnstileToken = null }) {
+  constructor({ base, fetchImpl, sessionId = newSessionId(), turnstileToken = null, breaker = new CircuitBreaker(), timeoutMs = REQUEST_TIMEOUT_MS }) {
     this.base = base ? String(base).replace(/\/$/, '') : null;
     this.fetch = fetchImpl || (typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : undefined);
     this.sessionId = sessionId;
     this.turnstileToken = turnstileToken;
     this.first = true;
+    this.breaker = breaker;
+    this.timeoutMs = timeoutMs;
   }
 
   get available() { return !!this.base && typeof this.fetch === 'function'; }
 
   async _post(path, body) {
     if (!this.available) return { ok: false, error: 'not_configured', message: 'The live demo is not available here.' };
-    let response;
-    try {
-      response = await this.fetch(this.base + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), credentials: 'omit' });
-    } catch {
-      return { ok: false, error: 'offline', message: 'Could not reach the live demo.' };
+    const wait = this.breaker.before();
+    if (wait > 0) { // the service keeps failing: nothing is sent until the circuit lets one probe through
+      const seconds = Math.max(1, Math.ceil(wait / 1000));
+      return { ok: false, error: 'resting', seconds, message: `The live demo is resting after some problems. Try again in ${seconds} seconds, or watch the recorded session.` };
     }
+    // every request has a time limit: a hung one is given up instead of leaving the page busy for ever
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), this.timeoutMs) : null;
+    let response;
     let data = null;
-    try { data = await response.json(); } catch { /* not JSON */ }
+    try {
+      response = await this.fetch(this.base + path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), credentials: 'omit', ...(controller ? { signal: controller.signal } : {}) });
+      try { data = await response.json(); } catch (error) { if (error && error.name === 'AbortError') throw error; /* not JSON */ }
+    } catch (error) {
+      this.breaker.failure();
+      if (error && error.name === 'AbortError') return { ok: false, error: 'timeout', message: 'The live demo took too long to answer.' };
+      return { ok: false, error: 'offline', message: 'Could not reach the live demo.' };
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    // what the answer says about the service's health: an answer of any kind proves it is up, except the model side being down; a 504 says only that the request ran long
+    const status = response.status;
+    const said = data && data.error ? String(data.error) : '';
+    if (!Number.isInteger(status) || status === 504) this.breaker.neutral();
+    else if (SERVICE_DOWN.has(said) || (!said && status >= 500)) this.breaker.failure();
+    else this.breaker.success();
     if (!response.ok || !data || data.ok !== true) {
-      const code = data && data.error ? String(data.error) : 'http_' + response.status;
+      const code = said || 'http_' + status;
       return { ok: false, error: code, message: ERRORS[code] || 'The live demo could not answer.' };
     }
     return data;

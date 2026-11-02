@@ -11,7 +11,7 @@ import config from './config.mjs';
 import { LiveService } from './service.mjs';
 import { Recorder } from './voice.mjs';
 
-const WORDS = {
+export const WORDS = {
   english: { replay: 'Watch Fello play (recorded)', stop: 'Stop (F12)', handover: 'Hand over (F9)', restart: 'Play again (R)', holder: { buddy: 'Fello has the controls', player: 'You have the controls', stopped: 'Stopped' },
     note: 'This is the web arena. The Windows app plays your own games.', dir: 'ltr',
     ask: 'Ask Fello', talk: 'Hold to talk', placeholder: 'e.g. grab the coins on the left', thinking: 'Fello is thinking…', needBuddy: 'Give the controls back to Fello first (F9).',
@@ -21,7 +21,16 @@ const WORDS = {
     note: 'هذه ساحة الويب. تطبيق ويندوز يلعب ألعابك أنت.', dir: 'rtl',
     ask: 'اطلب من فيلو', talk: 'اضغط مطولاً للتحدث', placeholder: 'مثلاً: خذ العملات على اليسار', thinking: 'فيلو يفكر…', needBuddy: 'أعد التحكم إلى فيلو أولاً (F9).',
     liveNote: 'مباشر: يخطط Muse Spark كل حركة من علامات تحسبها هذه الصفحة (يجدها تطبيق ويندوز بـ SAM). إن كان مشغولاً فشاهد الجلسة المسجلة.',
-    heard: 'سمعت', noMic: 'الميكروفون غير متاح. اكتب أمرك بدلاً من ذلك.', micBusy: 'أستمع… اترك الزر للإرسال.', done: 'تم.' },
+    heard: 'سمعت', noMic: 'الميكروفون غير متاح. اكتب أمرك بدلاً من ذلك.', micBusy: 'أستمع… اترك الزر للإرسال.', done: 'تم.',
+    // a failed live call, by code (the English text comes from the service itself; the Arabic page must not show English)
+    errors: {
+      origin_not_allowed: 'لا يُسمح لهذه الصفحة باستخدام العرض المباشر.', demo_misconfigured: 'العرض المباشر لم يُجهَّز بعد.', kill_switch: 'العرض المباشر متوقف مؤقتاً.',
+      rate_limited: 'العرض المباشر مشغول بالنسبة إليك الآن.', over_budget: 'استُنفدت ميزانية العرض المباشر لهذا اليوم.', empty_answer: 'لم يعطِ النموذج أي إجابة.',
+      provider_unreachable: 'لم تُجب خدمة النموذج.', provider_error: 'واجهت خدمة النموذج مشكلة.', not_configured: 'العرض المباشر غير متاح هنا.',
+      offline: 'تعذّر الوصول إلى العرض المباشر.', timeout: 'استغرق العرض المباشر وقتاً طويلاً في الرد.',
+      resting: 'العرض المباشر يستريح بعد بعض المشكلات. جرّب مرة أخرى بعد {n} ثانية، أو شاهد الجلسة المسجلة.',
+      other: 'تعذّر على العرض المباشر الرد.',
+    } },
 };
 
 export function startPage(doc = document, options = {}) {
@@ -56,6 +65,11 @@ export function startPage(doc = document, options = {}) {
   const liveLine = doc.getElementById('live');
   const liveBox = doc.getElementById('livebox');
   const say = (text) => { if (liveLine) liveLine.textContent = text; };
+  // a failed live call is shown in the page's language: the English text comes from the service itself, Arabic has its own table (no English on the Arabic page)
+  const errorText = (answer) => {
+    const table = WORDS[language].errors;
+    return table ? (table[answer.error] || table.other).replace('{n}', String(answer.seconds ?? '')) : answer.message;
+  };
   let liveBusy = false;
   if (liveBox) liveBox.hidden = !liveOn;
   if (liveOn) {
@@ -78,7 +92,7 @@ export function startPage(doc = document, options = {}) {
         say(WORDS[language].thinking);
         const answer = await live.plan(arena, command);
         turns += 1;
-        if (!answer.ok) { say(answer.message); break; }
+        if (!answer.ok) { say(errorText(answer)); break; }
         if (answer.say) say(answer.say);
         if (!answer.actions.length) break;
         for (const key of answer.actions) {
@@ -110,7 +124,7 @@ export function startPage(doc = document, options = {}) {
       const { wavBase64, seconds } = await taken.stop();
       say(WORDS[language].thinking);
       const heard = await live.voice(wavBase64, seconds, language === 'arabic' ? 'ar' : 'en');
-      if (!heard.ok) { say(heard.message); return; }
+      if (!heard.ok) { say(errorText(heard)); return; }
       const input = doc.getElementById('command');
       if (input) input.value = heard.text;
       say(`${WORDS[language].heard}: ${heard.text}`);
