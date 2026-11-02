@@ -1,4 +1,4 @@
-# Judges: try it in four ways
+# Judges: try it in five ways
 
 Everything below was run once on the K lane machine on 2026-11-02, and the output is pasted as it came out (paths trimmed). No run below spends money: the live part stops before any paid call unless you put in your own key.
 
@@ -108,6 +108,22 @@ Output:
 ```
 14 passed in 5.09s
 ```
+
+## 5. Watch a model-written skill play, no key
+
+One command replays the newest committed live SkillSmith file: it reloads the skill source saved inside that file, checks its fingerprint, puts it through the same static gate and sandbox, plays it again on the file's held-out seeds, and prints the saved wins and progress beside the replayed ones, plus the sandbox proof table. No key and no network are needed; play after writing is local.
+
+```
+python -m bench.skillsmith_run --replay latest
+```
+
+Until a live file is committed, the command says so plainly and still succeeds. Run here on 2026-11-02 (no live SkillSmith file is committed yet; only the sandbox proof is):
+
+```
+no live file yet: no committed live SkillSmith file under results/skillsmith/ to replay
+```
+
+(exit 0). Once the architect's live F1 file lands under `results/skillsmith/`, the same command prints each game's saved and replayed wins and progress (a mismatch exits 1, a changed or gate-failing source is refused with exit 2), followed by the sandbox proof rows naming the layer that stopped each planted hostile skill. The offline rehearsal of exactly this path, with the stand-in model, is covered by `tests/test_skillsmith_run.py` (the judge-replay and replay-latest tests).
 
 Every win in this repo's result files is labelled **assisted** (a local skill helped) or **model alone**; nothing here claims a level above L0 on the Practice Arena.
 

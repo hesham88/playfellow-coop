@@ -1,6 +1,6 @@
 {
  "schema": "pf-sandbox-proof/1",
- "written": "2026-11-02T11:54:24+02:00",
+ "written": "2026-11-02T13:18:11+02:00",
  "platform": "win32",
  "layers": [
   "static gate",
@@ -13,7 +13,7 @@
    "stopped": true,
    "layer": "static gate",
    "detail": "import of 'socket' is not allowed; only ['dataclasses', 'math', 'numpy', 'typing'] may be imported",
-   "ms": 0.1
+   "ms": 0.2
   },
   {
    "name": "write a file outside the folder",
@@ -41,14 +41,14 @@
    "stopped": true,
    "layer": "static gate",
    "detail": "import of 'subprocess' is not allowed; only ['dataclasses', 'math', 'numpy', 'typing'] may be imported",
-   "ms": 0.0
+   "ms": 0.1
   },
   {
    "name": "import ctypes",
    "stopped": true,
    "layer": "static gate",
    "detail": "import of 'ctypes' is not allowed; only ['dataclasses', 'math', 'numpy', 'typing'] may be imported",
-   "ms": 0.0
+   "ms": 0.1
   },
   {
    "name": "read an environment variable",
@@ -62,14 +62,14 @@
    "stopped": true,
    "layer": "worker namespace",
    "detail": "no answer within 1500 ms",
-   "ms": 1611.0
+   "ms": 1597.0
   },
   {
    "name": "allocate past the memory cap",
    "stopped": true,
    "layer": "OS job object",
    "detail": "the worker died or was refused at start (MemoryError: ); containment low-integrity+job",
-   "ms": 89.2
+   "ms": 75.2
   },
   {
    "name": "call eval",
@@ -90,7 +90,7 @@
    "stopped": true,
    "layer": "static gate",
    "detail": "attribute 'f_globals' is not allowed",
-   "ms": 0.2
+   "ms": 0.1
   }
  ],
  "harmless": [
@@ -99,21 +99,263 @@
    "passed": true,
    "detail": "answered inside the sandbox",
    "containment": "low-integrity+job",
-   "ms": 78.3
+   "ms": 69.7
   },
   {
    "name": "stay still",
    "passed": true,
    "detail": "answered inside the sandbox",
    "containment": "low-integrity+job",
-   "ms": 83.4
+   "ms": 75.3
   },
   {
    "name": "use numpy to steer",
    "passed": true,
    "detail": "answered inside the sandbox",
    "containment": "low-integrity+job",
-   "ms": 295.5
+   "ms": 266.4
+  }
+ ],
+ "defence_in_depth": [
+  {
+   "name": "open a socket",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "the worker died or was refused at start (ImportError: import of socket is not allowed); containment low-integrity+job",
+    "ms": 67.5
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "the skill ran and answered with only the OS limits on (containment low-integrity+job)",
+    "ms": 81.9,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "write a file outside the folder",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "NameError: name 'open' is not defined",
+    "ms": 87.6
+   },
+   "os_only": {
+    "stopped": true,
+    "layer": "OS job object",
+    "detail": "PermissionError: [Errno 13] Permission denied: 'outside.txt' (containment low-integrity+job)",
+    "ms": 72.6,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "start a child process",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "the worker died or was refused at start (ImportError: import of subprocess is not allowed); containment low-integrity+job",
+    "ms": 72.9
+   },
+   "os_only": {
+    "stopped": true,
+    "layer": "OS job object",
+    "detail": "OSError: [WinError 1816] Not enough quota is available to process this command (containment low-integrity+job)",
+    "ms": 79.0,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "import os",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "the worker died or was refused at start (ImportError: import of os is not allowed); containment low-integrity+job",
+    "ms": 74.8
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "the skill ran and answered with only the OS limits on (containment low-integrity+job)",
+    "ms": 70.6,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "import subprocess",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "the worker died or was refused at start (ImportError: import of subprocess is not allowed); containment low-integrity+job",
+    "ms": 79.3
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "the skill ran and answered with only the OS limits on (containment low-integrity+job)",
+    "ms": 93.7,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "import ctypes",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "the worker died or was refused at start (ImportError: import of ctypes is not allowed); containment low-integrity+job",
+    "ms": 80.1
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "the skill ran and answered with only the OS limits on (containment low-integrity+job)",
+    "ms": 81.9,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "read an environment variable",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "AttributeError: 'types.SimpleNamespace' object has no attribute 'environ'",
+    "ms": 76.0
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "the skill failed on its own (AttributeError: module 'math' has no attribute 'environ'); no OS limit acted (containment low-integrity+job)",
+    "ms": 82.9,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "loop forever",
+   "full": {
+    "stopped": true,
+    "layer": "worker namespace"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "no answer within 1000 ms",
+    "ms": 1094.8
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "still running after 2.5 s: the OS limits alone did not stop it (the proof watchdog ended it; containment low-integrity+job)",
+    "ms": 2513.6,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "allocate past the memory cap",
+   "full": {
+    "stopped": true,
+    "layer": "OS job object"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "OS job object",
+    "detail": "the worker died or was refused at start (MemoryError: ); containment low-integrity+job",
+    "ms": 63.9
+   },
+   "os_only": {
+    "stopped": true,
+    "layer": "OS job object",
+    "detail": "MemoryError:  (containment low-integrity+job)",
+    "ms": 74.5,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "call eval",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "NameError: name 'eval' is not defined",
+    "ms": 83.9
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "the skill returned a non-action with only the OS limits on; no OS limit acted (containment low-integrity+job)",
+    "ms": 87.8,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "call exec",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "NameError: name 'exec' is not defined",
+    "ms": 79.3
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "the skill ran and answered with only the OS limits on (containment low-integrity+job)",
+    "ms": 98.9,
+    "containment": "low-integrity+job"
+   }
+  },
+  {
+   "name": "walk frames to escape",
+   "full": {
+    "stopped": true,
+    "layer": "static gate"
+   },
+   "gate_off": {
+    "stopped": true,
+    "layer": "worker namespace",
+    "detail": "AttributeError: 'NoneType' object has no attribute 'f_globals'",
+    "ms": 89.6
+   },
+   "os_only": {
+    "stopped": false,
+    "layer": null,
+    "detail": "the skill failed on its own (AttributeError: 'NoneType' object has no attribute 'f_globals'); no OS limit acted (containment low-integrity+job)",
+    "ms": 70.7,
+    "containment": "low-integrity+job"
+   }
   }
  ],
  "all_stopped": true

@@ -217,3 +217,119 @@ def test_a_promoted_skill_plays_only_the_held_out_seeds_and_play_is_free(tmp_pat
     assert held["played"] is True and held["play_calls"] == 0 and held["play_cost_usd"] == 0.0
     assert [e["seed"] for e in held["episodes"]] == [100]  # held-out seeds only, never a validation seed
     assert held["local_step_ms"] != "not measured" and held["local_step_ms"]["n"] > 0
+
+
+class _StringErrorModel:
+    """Answers with a swallowed provider error as text (the architect live runner's failure shape)."""
+
+    def ask(self, prompt):
+        return "<BrainError>"
+
+    def usage(self):
+        return {"calls": 0, "tokens_in": "not measured", "tokens_out": "not measured", "cost_usd": 0.0}
+
+
+class _GateFailModel:
+    def ask(self, prompt):
+        return "```python\nimport os\nclass GeneratedArenaSkill:\n    def compute_action(self, obs):\n        return {'move': [0.0, 0.0], 'buttons': [], 'hold_ms': 0}\n```"
+
+    def usage(self):
+        return {"calls": 0, "tokens_in": "not measured", "tokens_out": "not measured", "cost_usd": 0.0}
+
+
+class _RaisingModel:
+    def ask(self, prompt):
+        raise RuntimeError("provider down (simulated)")
+
+    def usage(self):
+        return {"calls": 0, "tokens_in": "not measured", "tokens_out": "not measured", "cost_usd": 0.0}
+
+
+def test_proposal_failures_are_recorded_not_dropped(tmp_path):
+    """HK5-1: a candidate that is never scored must say why in the result, not only 'no candidate beats'."""
+    for model, needle in ((_StringErrorModel(), "no code"), (_GateFailModel(), "os")):
+        result = run_game("key_caves", model, tmp_path / "lib", [0], [100], candidates=1,
+                          validation_steps=40, held_out_steps=40)
+        assert result["promoted"] is None
+        proposals = result.get("proposals") or []
+        assert proposals, "the result must record what happened to each proposal"
+        assert any(needle in (p.get("detail") or "") for p in proposals), proposals
+        assert all(p.get("outcome") in ("answered", "error") for p in proposals)
+
+
+def test_an_ask_exception_is_recorded_and_the_round_still_reports(tmp_path):
+    result = run_game("key_caves", _RaisingModel(), tmp_path / "lib", [0], [100], candidates=1,
+                      validation_steps=40, held_out_steps=40)
+    assert result["promoted"] is None and result["supported"] is True
+    proposals = result.get("proposals") or []
+    assert any(p.get("outcome") == "error" and "RuntimeError" in (p.get("detail") or "") for p in proposals), proposals
+
+
+def test_the_learning_curve_has_one_point_per_round_and_rises_with_an_improving_fake(tmp_path):
+    from bench.skillsmith_run import ImprovingFakeModel
+
+    result = run_game("key_caves", ImprovingFakeModel(), tmp_path / "lib", [0], [100], candidates=1,
+                      validation_steps=120, held_out_steps=60, rounds=4)
+    curve = result.get("curve") or []
+    assert len(curve) == 4, curve  # one point per round, nothing interpolated
+    for point in curve:
+        assert "current_progress" in point and "best_progress" in point and "reason" in point
+        assert "trace_shown" in point and "lessons_shown" in point
+    assert curve[-1]["best_progress"] > curve[0]["best_progress"], curve
+    assert curve[-1]["current_progress"] >= curve[0]["current_progress"], curve
+    assert result["promoted"] is not None  # the improving fake is promoted at some round
+
+
+def test_replay_latest_reports_no_live_file_yet_and_exits_zero(tmp_path, monkeypatch, capsys):
+    import bench.skillsmith_run as run_module
+
+    empty = tmp_path / "skillsmith"
+    empty.mkdir()
+    (empty / "sandbox-proof-20261102.json").write_text('{"rows": [], "harmless": []}', encoding="utf-8")
+    monkeypatch.setattr(run_module, "ROOT", tmp_path)
+    # ROOT/results/skillsmith is where latest looks; point it at the empty folder via a fresh tree
+    live_dir = tmp_path / "results" / "skillsmith"
+    live_dir.mkdir(parents=True)
+    (live_dir / "sandbox-proof-20261102.json").write_text('{"rows": [], "harmless": []}', encoding="utf-8")
+    assert run_module.main(["--replay", "latest"]) == 0
+    assert "no live file yet" in capsys.readouterr().out
+
+
+def test_replay_latest_picks_the_newest_live_file(tmp_path, monkeypatch, capsys):
+    import json
+
+    import bench.skillsmith_run as run_module
+
+    live_dir = tmp_path / "results" / "skillsmith"
+    live_dir.mkdir(parents=True)
+    path = _promoted_document(tmp_path)
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    doc["brain"] = "muse"
+    doc["condition"] = "skillsmith-muse"
+    live = live_dir / "skillsmith-muse-20261102.json"
+    live.write_text(json.dumps(doc), encoding="utf-8")
+    (live_dir / "sandbox-proof-20261102.json").write_text(
+        json.dumps({"rows": [{"name": "import os", "stopped": True, "layer": "static gate", "ms": 0.1}],
+                    "harmless": [{"name": "stay still", "passed": True, "ms": 1.0}]}), encoding="utf-8")
+    monkeypatch.setattr(run_module, "ROOT", tmp_path)
+    assert run_module.main(["--replay", "latest"]) == 0
+    out = capsys.readouterr().out
+    assert "key_caves" in out and "sandbox" in out.lower()
+
+
+def test_a_flat_fake_gives_a_flat_curve(tmp_path):
+    from bench.skillsmith_run import IDLE_CODE
+
+    class FlatModel:
+        def ask(self, prompt):
+            return "```python\n" + IDLE_CODE + "```"
+
+        def usage(self):
+            return {"calls": 0, "tokens_in": "not measured", "tokens_out": "not measured", "cost_usd": 0.0}
+
+    result = run_game("key_caves", FlatModel(), tmp_path / "lib", [0], [100], candidates=1,
+                      validation_steps=60, held_out_steps=40, rounds=3)
+    curve = result.get("curve") or []
+    assert len(curve) == 3
+    assert all(abs(p["best_progress"] - p["current_progress"]) < 1e-9 for p in curve), curve
+    assert result["promoted"] is None
