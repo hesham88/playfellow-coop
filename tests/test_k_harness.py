@@ -35,6 +35,25 @@ def test_goal_number_must_touch_its_noun_not_just_share_a_line():
     assert goal.check(["Level: 3"]).done
 
 
+def test_a_number_before_the_noun_is_not_counted_when_the_noun_has_its_own_number():
+    goal = GoalChecker("reach level 3")
+    assert not goal.check(["Lives 3 Level 1"]).done  # the 3 is the lives count; the level shown is 1
+    assert not goal.check(["Wave 3 Level 1"]).done
+    assert not goal.check(["3 Level 1"]).done  # a leading count cannot borrow the noun whose own number follows
+
+
+def test_a_number_before_its_noun_counts_when_the_noun_has_none_of_its_own():
+    goal = GoalChecker("reach level 3")
+    assert goal.check(["3 Level"]).done
+    assert goal.check(["3rd level"]).done  # the ordinal says which level, with no competing count after the noun
+
+
+def test_an_arabic_level_label_pairs_with_its_number():
+    goal = GoalChecker("reach level 3")
+    assert goal.check(["المستوى ٣"]).done  # the HUD noun is Arabic, the digit Arabic-Indic
+    assert not goal.check(["النقاط ٣ المستوى ١"]).done  # the 3 belongs to the points, not the level
+
+
 def test_goal_numbers_read_arabic_digits_on_either_side():
     goal = GoalChecker("reach level 3")
     assert goal.check(["Level ٣"]).done  # Arabic-Indic digit on screen

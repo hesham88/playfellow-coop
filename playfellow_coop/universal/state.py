@@ -216,7 +216,14 @@ STOP_WORDS = frozenset("a an the to of and or in on at for with your my some any
 NUMBER = re.compile(r"\d+")
 # Arabic-Indic (U+0660..U+0669) and Eastern Arabic (U+06F0..U+06F9) digits read as the plain digits, on either side of the check.
 _DIGITS = str.maketrans({**{chr(0x660 + i): str(i) for i in range(10)}, **{chr(0x6F0 + i): str(i) for i in range(10)}})
-_TOKEN = re.compile(r"[a-z]+|\d+")
+_TOKEN = re.compile(r"[a-z\u0600-\u06FF]+|\d+(?:st|nd|rd|th)?")
+# HUD nouns in Arabic, as the reader may return them; they name the same counts as the English goal words.
+_HUD_ALIASES = {"المستوى": "level", "النقاط": "score", "نقاط": "score", "العملات": "coins", "عملات": "coins",
+                "الأرواح": "lives", "الموجة": "wave"}
+
+
+def _english(word: str) -> str:
+    return _HUD_ALIASES.get(word, word)
 
 
 def _plain_digits(text: str) -> str:
@@ -261,26 +268,41 @@ class GoalChecker:
         self.numbers = [int(n) for n in NUMBER.findall(_plain_digits(goal))]
 
     def _next_to(self, line: str, number: int) -> bool:
-        """True only when the number sits right next to a goal word (either order, at most a space, colon or dash between): "Level 3" counts, "Score 3 / Level 1" does not. With no goal word, any sighting of the number counts."""
+        """True only when the number belongs to a goal noun on this line: "Level 3" counts, "Score 3 / Level 1" does not.
+        A noun followed by a number takes that number. A number before the noun counts only when the noun has no
+        number after it and that number is not itself the value of another label word ("Lives 3 Level 1": the 3 is
+        the lives count, and the level shown is 1). With no goal word, any sighting of the number counts."""
         plain = _plain_digits(line).lower()
         tokens = [(m.group(), m.start(), m.end()) for m in _TOKEN.finditer(plain)]
-        for index, (token, _, _) in enumerate(tokens):
-            if not (token.isdigit() and int(token) == number):
+
+        def value(token: str) -> int | None:
+            head = re.match(r"\d+", token)
+            return int(head.group()) if head else None
+
+        if not self.keywords:
+            return any(value(token) == number for token, _, _ in tokens)
+        for index, (token, start, end) in enumerate(tokens):
+            if token[0].isdigit() or not any(_close(key, _english(token)) for key in self.keywords):
                 continue
-            if not self.keywords:
-                return True
-            for other in (index - 1, index + 1):
-                if 0 <= other < len(tokens):
-                    word, start, end = tokens[other]
-                    gap = plain[tokens[index][2]:start] if other > index else plain[end:tokens[index][1]]
-                    if not word.isdigit() and set(gap) <= set(" \t:-") and any(_close(key, word) for key in self.keywords):
+            if index + 1 < len(tokens):
+                following, after_start, _ = tokens[index + 1]
+                if value(following) is not None and set(plain[end:after_start]) <= set(" \t:-="):
+                    if value(following) == number:
                         return True
+                    continue  # the noun takes its own number; no other count on this line can borrow it
+            if index - 1 >= 0:
+                before, _, before_end = tokens[index - 1]
+                if value(before) == number and set(plain[before_end:start]) <= set(" \t:-="):
+                    if index - 2 >= 0 and not tokens[index - 2][0][0].isdigit():
+                        continue  # the count before the noun is the value of the label word before it
+                    return True
         return False
 
     def check(self, texts: list[str], objects: list[str] | None = None) -> Verdict:
         lines = [part for text in texts for part in str(text).splitlines() if part.strip()]
         plain = [line for line in lines if not _is_shop_line(line)]  # a shop can name anything; it proves nothing about what the player has
-        plain_words = _words(" ".join(plain))
+        plain_words = _words(_plain_digits(" ".join(plain)))
+        plain_words += [_english(word) for line in plain for word in re.findall(r"[\u0600-\u06FF]+", line)]
         object_words = _words(" ".join(objects or []))
 
         def found(word: str) -> bool:
