@@ -68,7 +68,8 @@ def test_the_headless_board_moves_merges_and_only_wins_at_2048():
 
 def test_the_gym_scores_the_open_source_2048_with_the_same_progress_function():
     from bench.osg_progress import progress
-    from playfellow_coop.gym.progress import PROGRESS
+    from playfellow_coop.gym.progress import OPEN_SOURCE_PROGRESS, PROGRESS
 
     first, later = {"best_tile": 4, "won": False}, {"best_tile": 64, "won": False}
-    assert "osg_2048" in PROGRESS and PROGRESS["osg_2048"](first, later) == progress(first, later)
+    assert OPEN_SOURCE_PROGRESS["osg_2048"](first, later) == progress(first, later)
+    assert "osg_2048" not in PROGRESS  # PROGRESS stays the arena's own games: the arena bench loops over it

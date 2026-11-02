@@ -8,7 +8,7 @@ Two checks need a person at the keyboard because they press real keys or look at
 1. Do the README's **Install and run** steps once. They make one folder that holds the engine (`playfellow`) and this repository side by side, with one virtual environment (`.venv`).
 2. Open **two** PowerShell windows in that folder and, in each one, turn the environment on: `.venv\Scripts\activate`. The prompt then starts with `(.venv)`. A plain `python` without it gives "No module named playfellow_coop" or "No module named practice_arena".
 3. In each window, `cd` into this repository's folder. `python -m playfellow_coop --help` must print the options; if it does not, step 1 or 2 is missing.
-4. For the Muse brain, set the key in that window only: `$env:MODEL_API_KEY = "<your key>"`. Never paste it into a file in the repository.
+4. For the Muse brain, put the key in the second window only, typed masked as in "Credit day: the first real calls" below (PowerShell 7). The key is never shown, never written to a file, and cleared when you close the window.
 - Close other heavy programs. This PC has little free memory.
 - Start the Practice Arena in the first window: `python -m practice_arena.arena`. If it can be set to borderless or windowed, use that.
 - Do not use a game that is online or has anti-cheat. Use the Practice Arena first; SuperTux (borderless) second.

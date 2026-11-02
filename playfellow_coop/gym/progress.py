@@ -25,6 +25,11 @@ PROGRESS = {
     "tiny_kingdom": lambda p0, p: 0.9 * _frac(p["wave"], p["waves"]) if p["castle"] > 0 else 0.0,
     "top_racer": lambda p0, p: 0.95 * _frac(p["lap"] - p0["lap"], p["laps"]),
     "turn_quest": lambda p0, p: 0.6 * _frac(p["level"] - p0["level"], 4) + (0.2 if p["sword"] else 0.0) + (0.15 if p["enemy"] == "dragon" else 0.0),
+}
+
+# Open-source games played in a browser, scored by the same kind of function but NOT built-in arena games: kept apart so every loop
+# over PROGRESS (the arena bench, the gym, the MCP server) still means "the arena's games".
+OPEN_SOURCE_PROGRESS = {
     "osg_2048": lambda p0, p: _osg_2048(p0, p),  # the open-source 2048 (bench/osg_progress.py): best-tile climb, the score alone earns nothing
 }
 
