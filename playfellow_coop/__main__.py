@@ -90,6 +90,9 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--debrief", choices=("counted", "wonder"), default="counted",
                         help="with --assist: the after-session debrief; 'counted' is the plain line of counted facts, 'wonder' asks Muse Wonder "
                              "(your own key) to word those facts, and refuses any number it did not count")
+    parser.add_argument("--brief", action="store_true",
+                        help="before play, Muse Wonder writes a brief of the game from what it knows (how to get into a level, menus, default "
+                             "keys, what wins); only keys on the controls card survive; cached per game, paid once; needs your key")
     parser.add_argument("--keep", default="", metavar="KEYS",
                         help="split controls: the keys you keep, comma-separated (for example j,k); the buddy never presses or releases them")
     parser.add_argument("--talk-key", default="", help="hold this key (for example f8) to talk to the buddy; needs a Muse key and a microphone")
@@ -136,6 +139,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     cfg = dataclasses.replace(cfg, **{k: v for k, v in overrides.items() if v is not None})
     parts = build_parts(cfg)
     parts.typed = args.typed
+    parts.want_brief = bool(args.brief)
     if args.assist is not None:
         from playfellow_coop.assist import Assist, DoneSpotter, VerifiedDone
         if hasattr(parts.brain, "set_done_flag"):
@@ -219,6 +223,18 @@ def session_debrief(parts, reason: str, cfg, key_loader: Callable | None = None)
     out = Debrief(wonder_brain(key)).write(facts, language)
     parts.debrief = out
     return out["text"]
+
+
+def brief_system(system: str, parts, cfg, key_loader: Callable | None = None, cache_dir: Path | None = None) -> str:
+    """The planner's instructions with the game brief added (only with --brief and a key)."""
+    from playfellow_coop.debrief import wonder_brain
+    from playfellow_coop.game_brief import brief_for, brief_text
+    key = (key_loader or load_muse_key)()
+    if not key:
+        return system
+    brief = brief_for(wonder_brain(key), cfg.game_window, parts.card, cache_dir=cache_dir or Path.home() / ".playfellow-coop" / "briefs")
+    parts.brief = brief
+    return system + "\n\n" + brief_text(brief) if brief else system
 
 
 def assist_system(system: str) -> str:
@@ -339,6 +355,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     play_system = play.system_for(parts, cfg) + (parts.skills.system_text() if getattr(parts, "skills", None) else "")
     if getattr(parts, "assist", None) is not None:
         play_system = assist_system(play_system)
+    if getattr(parts, "want_brief", False):
+        play_system = brief_system(play_system, parts, cfg)
     if overlay is None:
         reason = run_session()
     else:  # the window loop owns this thread; the game session runs on another
