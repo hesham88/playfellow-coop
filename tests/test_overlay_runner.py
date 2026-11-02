@@ -203,3 +203,10 @@ def test_the_see_through_key_steps_the_opacity_on_the_main_thread_and_its_key_st
     runner.finish()
     runner.tick()
     assert extra.stopped == 1 and pump.stopped == 1
+
+
+def test_the_see_through_key_is_read_from_the_command_line():
+    parts, _ = entry.build([], build_parts=lambda cfg: Parts(), key_loader=lambda: None)
+    assert parts.see_through_key == "ctrl+alt+o"
+    parts, _ = entry.build(["--overlay", "--see-through-key", "ctrl+alt+k"], build_parts=lambda cfg: Parts(), key_loader=lambda: None)
+    assert parts.see_through_key == "ctrl+alt+k"

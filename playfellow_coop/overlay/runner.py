@@ -118,6 +118,11 @@ def build_overlay(parts, commands, handover, summon_key: str = "ctrl+alt+p", on_
         ) from error
     runner = OverlayRunner(model, view, handover=handover, safety=parts.safety)
     runner.pump = HotkeyPump(Hotkey(summon_key, card=parts.card), on_press=runner.summon)
+    see_through_key = getattr(parts, "see_through_key", None) or see_through_key  # --see-through-key
     runner.extra_pumps.append(HotkeyPump(Hotkey(see_through_key, card=parts.card, hotkey_id=0x5047), on_press=runner.step_opacity))
     model.set_keys(talk=getattr(parts, "talk_key", "") or None, panel=summon_key, see_through=see_through_key)
+    from playfellow_coop.overlay.hotkey import widget_key_note
+    note = widget_key_note(parts.card, summon_key, see_through_key)
+    if note:
+        model.buddy_says(note)  # in full screen the terminal is hidden: the widget's chat carries the warning too
     return runner

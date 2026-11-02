@@ -172,3 +172,16 @@ def test_the_general_card_lists_every_key_so_it_does_not_block_the_widget_keys_b
         hotkey.Hotkey("ctrl+up", card=CARD, user32=FakeUser32())  # a game's own card still refuses its keys
     with pytest.raises(hotkey.HotkeyError):
         hotkey.Hotkey("ctrl+f9", card=general, user32=FakeUser32())  # the hand-over and stop keys stay reserved for every card
+
+
+def test_on_the_general_card_the_buddy_says_the_widget_keys_may_reach_the_game_and_how_to_change_them():
+    """The general card does not block the widget keys (it lists every key), so the clash is said out loud instead of hidden."""
+    import controls
+
+    from playfellow_coop.overlay.hotkey import widget_key_note
+
+    general = controls.load_card(ENGINE / "controls" / "any_game.yaml")
+    note = widget_key_note(general, "ctrl+alt+p", "ctrl+alt+o")
+    assert "Ctrl+Alt+P" in note and "Ctrl+Alt+O" in note and "--summon-key" in note and "--see-through-key" in note
+    assert widget_key_note(CARD, "ctrl+alt+p", "ctrl+alt+o") == ""  # a game's own card already refused any clash
+

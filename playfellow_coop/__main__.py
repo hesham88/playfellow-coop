@@ -120,6 +120,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parser.add_argument("--max-steps", type=int, default=None, help="a watchdog in the loop: end the session after this many turns")
     parser.add_argument("--max-seconds", type=float, default=None, help="a watchdog in the loop: end the session after this many seconds")
     parser.add_argument("--max-usd", type=float, default=None, help="a watchdog in the loop: end the session when the model calls of this session have cost this many dollars")
+    parser.add_argument("--see-through-key", default="ctrl+alt+o", help="the widget key that steps how see-through it is (refused if the game's card uses it)")
     parser.add_argument("--summon-key", default="ctrl+alt+p", help="the key that opens and closes the command center (refused if the game's card uses it)")
     parser.add_argument("--daily-usd", type=float, default=2.0, help="the Muse brain's daily spending cap in dollars")
     parser.add_argument("--daily-calls", type=int, default=400)
@@ -174,7 +175,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
     parts.talk_key = args.talk_key.lower().strip()
     parts.voice_budget = DailyBudget(args.budget_file.with_name("voice-budget.json"), args.daily_usd, args.daily_calls)
     marks = args.marks or ("sam" if args.brain == "muse" else "off")  # the Muse brain is shown with its marks unless told otherwise
-    parts.overlay, parts.summon_key = args.overlay, args.summon_key
+    parts.overlay, parts.summon_key, parts.see_through_key = args.overlay, args.summon_key, args.see_through_key
     parts.marks_source = marks
     if args.trace:
         parts.trace_plan = {"path": resolve_log_path(args.trace), "trial": args.trial}
@@ -350,6 +351,10 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         except (HotkeyError, OverlayUnavailableError) as error:  # a missing Qt says so in words; no old window opens instead
             say(str(error))
             return 2
+        from playfellow_coop.overlay.hotkey import widget_key_note
+        note = widget_key_note(parts.card, getattr(parts, "summon_key", "ctrl+alt+p"), getattr(parts, "see_through_key", "ctrl+alt+o"))
+        if note:
+            say(note)
     timer = StageTimer()
     listen_stop(lambda: parts.safety.stop("stopped_f12"))
     listen_key("f9", lambda: say(handover.toggle() or taken_line()))

@@ -48,6 +48,19 @@ def refuse_if_game_key(key: str, card) -> None:
         raise HotkeyError(f"{key.upper()} is {RESERVED[key]}; choose another")
 
 
+def widget_key_note(card, *keys: str) -> str:
+    """On the general card the widget keys are not refused (it lists every key a game might use), so the possible clash is said
+    out loud: a game that reads the keyboard directly may also see the letter of Ctrl+Alt+P. "" for a game's own card."""
+    if str(getattr(card, "genre", "")).lower() != "generic":
+        return ""
+    from playfellow_coop.overlay.panel import key_label
+
+    shown = " and ".join(key_label(k) for k in keys if k)
+    return (f"This game has no card of its own, so the widget keys ({shown}) were not checked against it: a game that reads the "
+            "keyboard directly may also see their letter. If one makes the game react, start with --summon-key or "
+            "--see-through-key set to another combination.")
+
+
 class Hotkey:
     """One registered summon key. register() raises if Windows says the combination is already taken."""
 

@@ -39,6 +39,7 @@ Check 2 drives the older Tk panel. The widget that `--overlay` now opens is the 
 1. Start the game full screen. Then, in the second window (environment on, in this repository's folder, key set as in step 4 above), run:
    `python -m playfellow_coop --window "<its window title>" --card any_game --brain muse --overlay --talk-key f8 --assist 4 --brief --input scancode`
    Use the game's own card instead of `any_game` when there is one (`--card rayman_legends`). The title is the one shown in the taskbar.
+   With `any_game`, the widget keys are not checked against the game (that card lists every key): press Ctrl+Alt+P and Ctrl+Alt+O once each and watch whether the game itself reacts. If it does, start again with `--summon-key` or `--see-through-key` set to another combination.
 2. A slim bar must appear at the top centre, over the game, and see-through. The game must keep the focus, so its keys still work.
 3. Press **Ctrl+Alt+P** (or click the arrow if the game shows a mouse). The panel must slide down smoothly; the same key slides it back up. The bar writes every key on itself.
 4. Press **Ctrl+Alt+O** a few times (or drag the slider). The widget steps through four levels of see-through and is still visible at the lowest.
