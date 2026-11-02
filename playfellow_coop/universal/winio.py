@@ -55,6 +55,11 @@ SCANCODES: dict[str, tuple[int, bool]] = {
     "x": (0x2D, False), "c": (0x2E, False), "v": (0x2F, False), "b": (0x30, False), "n": (0x31, False), "m": (0x32, False), "alt": (0x38, False), "space": (0x39, False),
     "f1": (0x3B, False), "f2": (0x3C, False), "f3": (0x3D, False), "f4": (0x3E, False), "f5": (0x3F, False),
     "up": (0x48, True), "left": (0x4B, True), "right": (0x4D, True), "down": (0x50, True), "insert": (0x52, True), "delete": (0x53, True), "home": (0x47, True), "end": (0x4F, True),
+    # the rest of the keys a controls card may name (set 1, US layout), so no card key can crash a session read through scan codes
+    "backspace": (0x0E, False), "pageup": (0x49, True), "pagedown": (0x51, True),
+    "f6": (0x40, False), "f7": (0x41, False), "f8": (0x42, False), "f9": (0x43, False), "f10": (0x44, False), "f11": (0x57, False),
+    ";": (0x27, False), "'": (0x28, False), "`": (0x29, False), "\\": (0x2B, False), ",": (0x33, False), ".": (0x34, False), "/": (0x35, False),
+    "-": (0x0C, False), "=": (0x0D, False), "[": (0x1A, False), "]": (0x1B, False),
 }
 
 

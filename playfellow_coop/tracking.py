@@ -41,8 +41,10 @@ class Track:
 
 
 class Tracker:
-    def __init__(self, min_score: float = 0.7, max_missed: int = 1, refresh_every: int = 12, min_side: int = 4, margin: float = 1.6):
+    def __init__(self, min_score: float = 0.7, max_missed: int = 1, refresh_every: int = 12, min_side: int = 4, margin: float = 1.6,
+                 max_share: float = 0.06):
         self.min_score, self.max_missed, self.refresh_every, self.min_side, self.margin = min_score, max_missed, refresh_every, min_side, margin
+        self.max_share = max_share  # a box over this share of the picture (a background, a big platform) is left to SAM: matching it would need gigabytes
         self.tracks: list[Track] = []
         self._next = 0
         self.local_updates = 0  # how many pictures were handled without asking SAM (the saving, in requests)
@@ -52,7 +54,10 @@ class Tracker:
         grey = _grey(frame)
         old, new = self.tracks, []
         free = list(old)
+        frame_area = float(grey.shape[0] * grey.shape[1]) or 1.0
         for kind, box in found:
+            if (box[2] - box[0]) * (box[3] - box[1]) / frame_area > self.max_share:
+                continue
             best, best_iou = None, 0.25
             for track in free:
                 if track.kind == kind and iou(track.box, box) > best_iou:
