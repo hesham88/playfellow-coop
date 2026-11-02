@@ -1,0 +1,227 @@
+{
+ "rows": [
+  {
+   "clip": "01",
+   "group": "english",
+   "expected": "Grab the coins on the left.",
+   "heard": "grab the coins on the left.",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "02",
+   "group": "english",
+   "expected": "Get me past this jump.",
+   "heard": "get me past this jump.",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "03",
+   "group": "english",
+   "expected": "Take me to the door.",
+   "heard": "Take me to the door.",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "04",
+   "group": "english",
+   "expected": "You take it.",
+   "heard": "You take it.",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "05",
+   "group": "english",
+   "expected": "I've got it.",
+   "heard": "I've got it.",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "06",
+   "group": "english",
+   "expected": "Stop.",
+   "heard": "stop.",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "07",
+   "group": "english",
+   "expected": "Collect the key, then go right.",
+   "heard": "collect the key. then go right.",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "08",
+   "group": "arabic",
+   "expected": "خذ العملات على اليسار.",
+   "heard": "خذ العملات على اليسار",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "09",
+   "group": "arabic",
+   "expected": "عدّيني من النطّة دي.",
+   "heard": "عديني من النقطة دي.",
+   "wer": 0.25,
+   "command_ok": false
+  },
+  {
+   "clip": "10",
+   "group": "arabic",
+   "expected": "وصّلني للباب.",
+   "heard": "وصلني للباب",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "11",
+   "group": "arabic",
+   "expected": "خدها.",
+   "heard": "اخذها",
+   "wer": 1.0,
+   "command_ok": false
+  },
+  {
+   "clip": "12",
+   "group": "arabic",
+   "expected": "أنا هكمل.",
+   "heard": "انا هكمل.",
+   "wer": 0.5,
+   "command_ok": true
+  },
+  {
+   "clip": "13",
+   "group": "arabic",
+   "expected": "وقف.",
+   "heard": "وقف",
+   "wer": 0.0,
+   "command_ok": true
+  },
+  {
+   "clip": "14",
+   "group": "arabic",
+   "expected": "هات المفتاح وبعدين روح يمين.",
+   "heard": "حاتي المفتاح وبعدين روح يمين.",
+   "wer": 0.2,
+   "command_ok": true
+  },
+  {
+   "clip": "15",
+   "group": "mixed",
+   "expected": "خذ الـ coins اللي على الـ left.",
+   "heard": "خد ال coins اللي على الشمال",
+   "wer": 0.4286,
+   "command_ok": false
+  },
+  {
+   "clip": "16",
+   "group": "mixed",
+   "expected": "Get me past the النطّة دي.",
+   "heard": "get me past the node",
+   "wer": 0.3333,
+   "command_ok": false
+  },
+  {
+   "clip": "17",
+   "group": "mixed",
+   "expected": "روح للـ door بسرعة.",
+   "heard": "روح للدور بسرعة",
+   "wer": 0.5,
+   "command_ok": false
+  },
+  {
+   "clip": "18",
+   "group": "mixed",
+   "expected": "Jump مرتين وبعدين يمين.",
+   "heard": "جمب مرتين وبعدين يمين",
+   "wer": 0.25,
+   "command_ok": true
+  },
+  {
+   "clip": "19",
+   "group": "mixed",
+   "expected": "Take it، أنا تعبت.",
+   "heard": "انا تعبت. take it.",
+   "wer": 1.0,
+   "command_ok": true
+  },
+  {
+   "clip": "20",
+   "group": "mixed",
+   "expected": "خلّي الـ buddy يكمّل الـ level.",
+   "heard": "خلي ال body يكمل ال level",
+   "wer": 0.1667,
+   "command_ok": true
+  }
+ ],
+ "summary": {
+  "english": {
+   "clips": 7,
+   "command_match": 7,
+   "command_match_rate": 1.0,
+   "mean_wer": 0.0
+  },
+  "arabic": {
+   "clips": 7,
+   "command_match": 5,
+   "command_match_rate": 0.7143,
+   "mean_wer": 0.2786
+  },
+  "mixed": {
+   "clips": 6,
+   "command_match": 3,
+   "command_match_rate": 0.5,
+   "mean_wer": 0.4464
+  },
+  "all": {
+   "clips": 20,
+   "command_match": 15,
+   "command_match_rate": 0.75,
+   "mean_wer": 0.2314
+  }
+ },
+ "schema": "pf-voice/1",
+ "written": "2026-11-02T23:30:04+02:00",
+ "model": "muse-voice-transcribe-1.0",
+ "speaker": "one adult speaker (the project owner), Egyptian Arabic and English",
+ "honesty": "One speaker, about 20 short clips: a first measurement, not a population result. The clips are not published.",
+ "rescored_offline": {
+  "note": "The same saved transcripts, scored again at $0 after the hand-over word list learned the Egyptian 'خدها' and the written 'اخذها' (no new audio, no new call). The measured summary above is unchanged.",
+  "changed_clips": [
+   "11"
+  ],
+  "summary": {
+   "english": {
+    "clips": 7,
+    "command_match": 7,
+    "command_match_rate": 1.0,
+    "mean_wer": 0.0
+   },
+   "arabic": {
+    "clips": 7,
+    "command_match": 6,
+    "command_match_rate": 0.8571,
+    "mean_wer": 0.2786
+   },
+   "mixed": {
+    "clips": 6,
+    "command_match": 3,
+    "command_match_rate": 0.5,
+    "mean_wer": 0.4464
+   },
+   "all": {
+    "clips": 20,
+    "command_match": 16,
+    "command_match_rate": 0.8,
+    "mean_wer": 0.2314
+   }
+  }
+ }
+}

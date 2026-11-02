@@ -86,3 +86,13 @@ def test_a_control_word_changes_nothing_when_it_does_not_apply():
     q.put("you take it")  # the buddy already has the controls
     session.play_session(parts, cfg, "system", StageTimer(), handover, commands=q, max_turns=1, wait=lambda s: True)
     assert handover.times_taken == 0 and parts.hands.pressed == [MOVE] and json is not None
+
+
+def test_the_egyptian_and_the_written_spellings_of_you_take_it_both_hand_over():
+    """Voice run, 2 Nov: the owner said "خدها" (Egyptian) and Muse Voice wrote "اخذها" (the standard spelling); neither was a
+    hand-over phrase, so the buddy would not have taken the controls."""
+    from playfellow_coop.control_words import BUDDY_TAKES, control_action
+
+    for said in ("خدها", "خدها.", "اخذها", "أخذها", "خذها"):
+        assert control_action(said) == BUDDY_TAKES, said
+    assert control_action("خدها من هنا للباب") is None  # a sentence that merely contains it stays an ordinary command
