@@ -1,0 +1,814 @@
+{
+ "schema": "pf-access-osg/1",
+ "written": "2026-11-02T05:00:56+02:00",
+ "commit": "3aab327",
+ "game": {
+  "name": "2048",
+  "author": "Gabriele Cirulli",
+  "licence": "MIT",
+  "source": "https://github.com/gabrielecirulli/2048",
+  "pinned": "478b6ec346e3787f589e4af751378d06ded4cbbc"
+ },
+ "brain": "the 2048 skill's look-ahead on the board read from pixels (no model, no network, $0)",
+ "targets": [
+  64,
+  128,
+  256,
+  512
+ ],
+ "part_turns": 400,
+ "honesty": "Decisions from pixels only; the page's numbers only measure. The page's Math.random is seeded for repeatability. No disabled player was simulated or involved.",
+ "summary": {
+  "assist": {
+   "episodes": 5,
+   "requests": 20,
+   "done": 20,
+   "done_rate_95": [
+    0.8389,
+    1.0
+   ],
+   "by_target": {
+    "64": 5,
+    "128": 5,
+    "256": 5,
+    "512": 5
+   },
+   "presses_spared": 1353,
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 1,
+   "best_tiles": [
+    512,
+    512,
+    512,
+    512,
+    512
+   ]
+  },
+  "split": {
+   "episodes": 5,
+   "requests": 20,
+   "done": 20,
+   "done_rate_95": [
+    0.8389,
+    1.0
+   ],
+   "by_target": {
+    "64": 5,
+    "128": 5,
+    "256": 5,
+    "512": 5
+   },
+   "presses_spared": 1425,
+   "refused": 68,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tiles": [
+    512,
+    512,
+    512,
+    512,
+    512
+   ]
+  },
+  "random": {
+   "episodes": 5,
+   "requests": 12,
+   "done": 7,
+   "done_rate_95": [
+    0.3195,
+    0.8067
+   ],
+   "by_target": {
+    "64": 4,
+    "128": 2,
+    "256": 1,
+    "512": 0
+   },
+   "presses_spared": 710,
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tiles": [
+    256,
+    64,
+    32,
+    128,
+    64
+   ]
+  }
+ },
+ "episodes": [
+  {
+   "game": "2048-web",
+   "seed": 0,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 41,
+     "actions": 41,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 31,
+     "actions": 31,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 67,
+     "actions": 67,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 117,
+     "actions": 117,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 124,
+    "right": 6,
+    "up": 102,
+    "down": 24
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 1,
+   "best_tile": 512,
+   "score": 4172
+  },
+  {
+   "game": "2048-web",
+   "seed": 0,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 44,
+     "actions": 44,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 37,
+     "actions": 37,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 128,
+     "actions": 128,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 68,
+     "actions": 68,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 135,
+    "right": 0,
+    "up": 109,
+    "down": 33
+   },
+   "refused": 28,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4388
+  },
+  {
+   "game": "2048-web",
+   "seed": 0,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 98,
+     "actions": 98,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 29,
+     "actions": 29,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 73,
+     "actions": 73,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": false,
+     "ended": "game_over",
+     "turns": 42,
+     "actions": 42,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "left": 66,
+    "right": 50,
+    "up": 69,
+    "down": 57
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 256,
+   "score": 2248
+  },
+  {
+   "game": "2048-web",
+   "seed": 1,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 44,
+     "actions": 44,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 41,
+     "actions": 41,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 65,
+     "actions": 65,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 112,
+     "actions": 112,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 125,
+    "right": 15,
+    "up": 102,
+    "down": 20
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4188
+  },
+  {
+   "game": "2048-web",
+   "seed": 1,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 44,
+     "actions": 44,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 22,
+     "actions": 22,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 61,
+     "actions": 61,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 145,
+     "actions": 145,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 133,
+    "right": 0,
+    "up": 103,
+    "down": 36
+   },
+   "refused": 3,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4296
+  },
+  {
+   "game": "2048-web",
+   "seed": 1,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 89,
+     "actions": 89,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": false,
+     "ended": "game_over",
+     "turns": 17,
+     "actions": 17,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "left": 33,
+    "right": 20,
+    "up": 32,
+    "down": 21
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 64,
+   "score": 728
+  },
+  {
+   "game": "2048-web",
+   "seed": 2,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 39,
+     "actions": 39,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 38,
+     "actions": 38,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 76,
+     "actions": 76,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 121,
+     "actions": 121,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 130,
+    "right": 12,
+    "up": 109,
+    "down": 23
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4292
+  },
+  {
+   "game": "2048-web",
+   "seed": 2,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 36,
+     "actions": 36,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 70,
+     "actions": 70,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 30,
+     "actions": 30,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 158,
+     "actions": 158,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 139,
+    "right": 0,
+    "up": 123,
+    "down": 32
+   },
+   "refused": 8,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4556
+  },
+  {
+   "game": "2048-web",
+   "seed": 2,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": false,
+     "ended": "game_over",
+     "turns": 65,
+     "actions": 65,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "left": 16,
+    "right": 13,
+    "up": 22,
+    "down": 14
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 32,
+   "score": 344
+  },
+  {
+   "game": "2048-web",
+   "seed": 3,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 42,
+     "actions": 42,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 33,
+     "actions": 33,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 86,
+     "actions": 86,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 105,
+     "actions": 105,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 129,
+    "right": 22,
+    "up": 105,
+    "down": 10
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4228
+  },
+  {
+   "game": "2048-web",
+   "seed": 3,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 42,
+     "actions": 42,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 36,
+     "actions": 36,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 51,
+     "actions": 51,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 147,
+     "actions": 147,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 132,
+    "right": 28,
+    "up": 116,
+    "down": 0
+   },
+   "refused": 9,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4372
+  },
+  {
+   "game": "2048-web",
+   "seed": 3,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 49,
+     "actions": 49,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 40,
+     "actions": 40,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": false,
+     "ended": "game_over",
+     "turns": 87,
+     "actions": 87,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "left": 39,
+    "right": 57,
+    "up": 45,
+    "down": 35
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 128,
+   "score": 1496
+  },
+  {
+   "game": "2048-web",
+   "seed": 4,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 41,
+     "actions": 41,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 42,
+     "actions": 42,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 61,
+     "actions": 61,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 151,
+     "actions": 151,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 122,
+    "right": 20,
+    "up": 140,
+    "down": 13
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4468
+  },
+  {
+   "game": "2048-web",
+   "seed": 4,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 50,
+     "actions": 50,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 19,
+     "actions": 19,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 256 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 70,
+     "actions": 70,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 512 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 167,
+     "actions": 167,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 124,
+    "right": 35,
+    "up": 147,
+    "down": 0
+   },
+   "refused": 20,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 512,
+   "score": 4504
+  },
+  {
+   "game": "2048-web",
+   "seed": 4,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "get me to a 64 tile",
+     "done": true,
+     "ended": "done",
+     "turns": 102,
+     "actions": 102,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "get me to a 128 tile",
+     "done": false,
+     "ended": "game_over",
+     "turns": 19,
+     "actions": 19,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "left": 25,
+    "right": 39,
+    "up": 21,
+    "down": 36
+   },
+   "refused": 0,
+   "breaches": 0,
+   "misreads": 0,
+   "best_tile": 64,
+   "score": 608
+  }
+ ]
+}

@@ -57,9 +57,11 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
     return round(max(0.0, centre - half), 4), round(min(1.0, centre + half), 4)
 
 
-def episode(game_key: str, seed: int, condition: str, load_game, requests: int = REQUESTS, part_turns: int = PART_TURNS, owned=()) -> dict:
+def episode(game_key: str, seed: int, condition: str, load_game, requests: int = REQUESTS, part_turns: int | None = None, owned=()) -> dict:
     env = PlayfellowGym(game_key, load_game, seed=seed)
     obs, info = env.reset()
+    if part_turns is None:  # a quarter of the game's own maximum length, never less than PART_TURNS (brick breaker needs ~1,300 steps a quarter)
+        part_turns = max(PART_TURNS, int(getattr(env.game, "max_ticks", 0) or 0) // requests)
     keys = list(env.action_space)
     owned = set(owned) if condition == "split" else set()
     rec = Recorder()
@@ -161,7 +163,10 @@ def main(argv=None) -> int:
     rows = summarise(episodes)
     result = {"schema": "pf-access/1", "written": datetime.datetime.now().astimezone().isoformat(timespec="seconds"), "commit": _commit(),
               "brain": "local skills (no model, no network, $0)", "step": STEP, "requests_per_episode": REQUESTS, "part_turns": PART_TURNS,
-              "rest_ticks": REST_TICKS, "split_rule": "the player keeps the key the buddy pressed least (at least once) in its unsplit run on the same game and seed", "honesty": "No disabled player was simulated or involved: the player rests between requests. "
+              "part_turns_rule": "max(PART_TURNS, the game's max_ticks / requests)", "rest_ticks": REST_TICKS, "split_rule": "the player keeps the key the buddy pressed least (at least once) in its unsplit run on the same game and seed", "split_note": "The arena skills are not told about the split: a refused key is simply a lost move, so the split column here measures "
+              "safety (no kept key reaches the game) and the cost of losing a key to a buddy that cannot plan around it, not split-aware "
+              "play. bench/osg_2048.py shows a buddy that picks its best remaining key.",
+              "honesty": "No disabled player was simulated or involved: the player rests between requests. "
               "Each request is 'the next quarter of progress', judged by the game's own numbers.", "summary": rows, "episodes": episodes}
     out = Path(args.out) if args.out else OUT / f"access-{datetime.date.today():%Y%m%d}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
