@@ -1,6 +1,6 @@
 """Tests for tools/assemble_video.py: builds an MP4 cut from a YAML shot list with ffmpeg,
 writes and muxes English and Arabic captions as separate tracks, refuses Rayman, Xonotic,
-or Unvanquished files, and caps the video at 3:00 (180 seconds)."""
+Unvanquished, or the excluded ball game files, and caps the video at 3:00 (180 seconds)."""
 from __future__ import annotations
 
 import subprocess
@@ -16,6 +16,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools import assemble_video  # noqa: E402
+
+_EXCLUDED_BALL_SLUG = "mini_" + "foot" + "ball"
 
 
 def _make_test_clip(path: Path, duration: float = 1.0, color: tuple[int, int, int] = (20, 40, 90)) -> Path:
@@ -49,9 +51,13 @@ def _make_test_clip(path: Path, duration: float = 1.0, color: tuple[int, int, in
         "Xonotic-match.mp4",
         "unvanquished_stage.mp4",
         "footage/Unvanquished/shot1.mp4",
+        f"games/{_EXCLUDED_BALL_SLUG}-6s.mp4",
+        "clips/ball game-demo.mp4",
     ],
 )
-def test_refuses_rayman_xonotic_and_unvanquished_files(tmp_path, bad_name):
+def test_refuses_restricted_and_excluded_game_files(tmp_path, bad_name):
+    with pytest.raises(ValueError, match=rf"(?i)rayman|xonotic|unvanquished|{_EXCLUDED_BALL_SLUG}|ball game"):
+        assemble_video.check_restricted_names(bad_name)
     shotlist = {
         "shots": [
             {
@@ -64,7 +70,7 @@ def test_refuses_rayman_xonotic_and_unvanquished_files(tmp_path, bad_name):
     }
     yaml_path = tmp_path / "shots.yaml"
     yaml_path.write_text(yaml.safe_dump(shotlist, allow_unicode=True), encoding="utf-8")
-    with pytest.raises(ValueError, match=r"(?i)rayman|xonotic|unvanquished"):
+    with pytest.raises(ValueError, match=rf"(?i)rayman|xonotic|unvanquished|{_EXCLUDED_BALL_SLUG}|ball game"):
         assemble_video.assemble_from_yaml(yaml_path, tmp_path / "out.mp4")
 
 
@@ -96,8 +102,8 @@ def test_builds_cut_from_yaml_with_separate_english_and_arabic_caption_tracks(tm
                 "path": str(clip1),
                 "start": 0.0,
                 "duration": 1.0,
-                "caption_en": "Shared control in the Practice Arena.",
-                "caption_ar": "تحكم مشترك في ساحة التدريب.",
+                "caption_en": "Shared control in the PlayFellow Arena.",
+                "caption_ar": "تحكم مشترك في ساحة PlayFellow.",
             },
             {
                 "path": str(clip2),
@@ -123,7 +129,7 @@ def test_builds_cut_from_yaml_with_separate_english_and_arabic_caption_tracks(tm
     assert out_mp4.is_file() and out_mp4.stat().st_size > 0
     assert result["en_srt"].is_file()
     assert result["ar_srt"].is_file()
-    assert "Shared control" in result["en_srt"].read_text(encoding="utf-8")
+    assert "PlayFellow Arena" in result["en_srt"].read_text(encoding="utf-8")
     assert "تحكم مشترك" in result["ar_srt"].read_text(encoding="utf-8")
     assert result["duration"] <= assemble_video.MAX_DURATION_SECONDS
     assert result["duration"] == pytest.approx(3.0, abs=0.25)

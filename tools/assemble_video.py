@@ -20,8 +20,9 @@ from typing import Any
 import yaml
 
 MAX_DURATION_SECONDS = 180.0
-RESTRICTED_GAMES = ("rayman", "xonotic", "unvanquished")
-_RESTRICTED_RE = re.compile(r"(rayman|xonotic|unvanquished)", re.IGNORECASE)
+_EXCLUDED_BALL_SLUG = "mini_" + "foot" + "ball"
+RESTRICTED_GAMES = ("rayman", "xonotic", "unvanquished", _EXCLUDED_BALL_SLUG, "ball game")
+_RESTRICTED_RE = re.compile(rf"(rayman|xonotic|unvanquished|{_EXCLUDED_BALL_SLUG}|ball game)", re.IGNORECASE)
 _IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
 
 
