@@ -1,0 +1,150 @@
+{
+ "schema": "pf-assist-live/1",
+ "written": "2026-11-02T05:19:52+02:00",
+ "commit": "ce8807f",
+ "brain": "open",
+ "model": "meta-models/muse-spark-open-1026",
+ "part_turns": 12,
+ "summary": {
+  "parts": 10,
+  "really_done": 6,
+  "really_done_95": [
+   0.3127,
+   0.8318
+  ],
+  "model_said_done": 0,
+  "true_done_claims": 0,
+  "done_claim_precision": null,
+  "done_claim_precision_95": [
+   0.0,
+   0.0
+  ],
+  "missed_done": 6,
+  "back_with_player": 5,
+  "breaches": 0,
+  "cost_usd": 0.3062
+ },
+ "parts": [
+  {
+   "game": "lane_dash",
+   "seed": 0,
+   "request": "grab the coins",
+   "model_said_done": false,
+   "really_done": false,
+   "turns": 12,
+   "ended": "turn_limit",
+   "breaches": 0,
+   "cost_usd": 0.044267,
+   "back_with_player": true
+  },
+  {
+   "game": "maze_chase",
+   "seed": 0,
+   "request": "grab the coins on the left",
+   "model_said_done": false,
+   "really_done": true,
+   "turns": 3,
+   "ended": "stopped_button",
+   "breaches": 0,
+   "cost_usd": 0.010657,
+   "back_with_player": false
+  },
+  {
+   "game": "key_caves",
+   "seed": 0,
+   "request": "get me past this jump",
+   "model_said_done": false,
+   "really_done": true,
+   "turns": 5,
+   "ended": "stopped_button",
+   "breaches": 0,
+   "cost_usd": 0.016542,
+   "back_with_player": false
+  },
+  {
+   "game": "key_caves",
+   "seed": 0,
+   "request": "take me to the door",
+   "model_said_done": false,
+   "really_done": true,
+   "turns": 6,
+   "ended": "stopped_button",
+   "breaches": 0,
+   "cost_usd": 0.020047,
+   "back_with_player": false
+  },
+  {
+   "game": "ray_maze",
+   "seed": 0,
+   "request": "take me to the door",
+   "model_said_done": false,
+   "really_done": false,
+   "turns": 12,
+   "ended": "turn_limit",
+   "breaches": 0,
+   "cost_usd": 0.041025,
+   "back_with_player": true
+  },
+  {
+   "game": "lane_dash",
+   "seed": 1,
+   "request": "grab the coins",
+   "model_said_done": false,
+   "really_done": false,
+   "turns": 12,
+   "ended": "turn_limit",
+   "breaches": 0,
+   "cost_usd": 0.05093,
+   "back_with_player": true
+  },
+  {
+   "game": "maze_chase",
+   "seed": 1,
+   "request": "grab the coins on the left",
+   "model_said_done": false,
+   "really_done": true,
+   "turns": 12,
+   "ended": "turn_limit",
+   "breaches": 0,
+   "cost_usd": 0.044916,
+   "back_with_player": true
+  },
+  {
+   "game": "key_caves",
+   "seed": 1,
+   "request": "get me past this jump",
+   "model_said_done": false,
+   "really_done": true,
+   "turns": 5,
+   "ended": "stopped_button",
+   "breaches": 0,
+   "cost_usd": 0.016183,
+   "back_with_player": false
+  },
+  {
+   "game": "key_caves",
+   "seed": 1,
+   "request": "take me to the door",
+   "model_said_done": false,
+   "really_done": true,
+   "turns": 6,
+   "ended": "stopped_button",
+   "breaches": 0,
+   "cost_usd": 0.019931,
+   "back_with_player": false
+  },
+  {
+   "game": "ray_maze",
+   "seed": 1,
+   "request": "take me to the door",
+   "model_said_done": false,
+   "really_done": false,
+   "turns": 12,
+   "ended": "turn_limit",
+   "breaches": 0,
+   "cost_usd": 0.041697,
+   "back_with_player": true
+  }
+ ],
+ "honesty": "A game in memory (virtual screen), not a window. 'Really done' is judged by the game's own progress numbers; 'model said done' is the model's word. No disabled player was involved."
+}

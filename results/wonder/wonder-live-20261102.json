@@ -1,0 +1,312 @@
+{
+ "schema": "pf-wonder-live/1",
+ "written": "2026-11-02T05:19:59+02:00",
+ "commit": "ce8807f",
+ "model": "muse-wonder-1.0",
+ "first_sight": [
+  {
+   "game": "maze_chase",
+   "title": "Maze Chase",
+   "drafted": true,
+   "genre": "maze",
+   "goal": "Collect the coins and key, avoid the red chaser, and escape through the brown exit.",
+   "cost_usd": 0.01614,
+   "drafted_keys": [
+    "a",
+    "d",
+    "down",
+    "left",
+    "right",
+    "s",
+    "up",
+    "w"
+   ],
+   "draft_recall": 1.0,
+   "learned_keys": [
+    "down",
+    "s",
+    "up",
+    "w"
+   ],
+   "recall": 0.5,
+   "probe": {
+    "MOVE_UP": {
+     "keys": [
+      "up",
+      "w"
+     ],
+     "changed_with_key": 0.00592,
+     "changed_doing_nothing": 0.00296,
+     "changed": true
+    },
+    "MOVE_DOWN": {
+     "keys": [
+      "down",
+      "s"
+     ],
+     "changed_with_key": 0.00705,
+     "changed_doing_nothing": 0.00307,
+     "changed": true
+    },
+    "MOVE_LEFT": {
+     "keys": [
+      "left",
+      "a"
+     ],
+     "changed_with_key": 0.0,
+     "changed_doing_nothing": 0.0,
+     "changed": false
+    },
+    "MOVE_RIGHT": {
+     "keys": [
+      "right",
+      "d"
+     ],
+     "changed_with_key": 0.0,
+     "changed_doing_nothing": 0.0,
+     "changed": false
+    }
+   },
+   "invented_keys_dropped": [
+    "a",
+    "d"
+   ],
+   "real_keys": [
+    "down",
+    "left",
+    "right",
+    "up"
+   ]
+  },
+  {
+   "game": "key_caves",
+   "title": "Key Caves",
+   "drafted": true,
+   "genre": "platformer",
+   "goal": "Explore three cave rooms, find the boots and key, and unlock the exit door.",
+   "cost_usd": 0.014152,
+   "drafted_keys": [
+    "a",
+    "d",
+    "e",
+    "enter",
+    "left",
+    "right",
+    "space",
+    "up",
+    "w"
+   ],
+   "draft_recall": 0.75,
+   "learned_keys": [
+    "a",
+    "d",
+    "left",
+    "right",
+    "space",
+    "up",
+    "w"
+   ],
+   "recall": 0.75,
+   "probe": {
+    "MOVE_LEFT": {
+     "keys": [
+      "left",
+      "a"
+     ],
+     "changed_with_key": 0.00181,
+     "changed_doing_nothing": 0.0,
+     "changed": true
+    },
+    "MOVE_RIGHT": {
+     "keys": [
+      "right",
+      "d"
+     ],
+     "changed_with_key": 0.00544,
+     "changed_doing_nothing": 0.0,
+     "changed": true
+    },
+    "JUMP": {
+     "keys": [
+      "space",
+      "up",
+      "w"
+     ],
+     "changed_with_key": 0.00544,
+     "changed_doing_nothing": 0.0,
+     "changed": true
+    },
+    "INTERACT": {
+     "keys": [
+      "enter",
+      "e"
+     ],
+     "changed_with_key": 0.0,
+     "changed_doing_nothing": 0.0,
+     "changed": false
+    }
+   },
+   "invented_keys_dropped": [
+    "e",
+    "enter"
+   ],
+   "real_keys": [
+    "left",
+    "right",
+    "space",
+    "z"
+   ]
+  },
+  {
+   "game": "top_racer",
+   "title": "Top Racer",
+   "drafted": true,
+   "genre": "racing",
+   "goal": "Race around the track for 3 laps, overtaking rivals to finish in first place.",
+   "cost_usd": 0.016068,
+   "drafted_keys": [
+    "a",
+    "d",
+    "down",
+    "left",
+    "right",
+    "s",
+    "space",
+    "up",
+    "w"
+   ],
+   "draft_recall": 1.0,
+   "learned_keys": [
+    "a",
+    "d",
+    "down",
+    "left",
+    "right",
+    "s",
+    "up",
+    "w"
+   ],
+   "recall": 0.8,
+   "probe": {
+    "ACCELERATE": {
+     "keys": [
+      "up",
+      "w"
+     ],
+     "changed_with_key": 0.00496,
+     "changed_doing_nothing": 0.00247,
+     "changed": true
+    },
+    "BRAKE": {
+     "keys": [
+      "down",
+      "s"
+     ],
+     "changed_with_key": 0.00372,
+     "changed_doing_nothing": 0.00248,
+     "changed": true
+    },
+    "STEER_LEFT": {
+     "keys": [
+      "left",
+      "a"
+     ],
+     "changed_with_key": 0.00398,
+     "changed_doing_nothing": 0.00279,
+     "changed": true
+    },
+    "STEER_RIGHT": {
+     "keys": [
+      "right",
+      "d"
+     ],
+     "changed_with_key": 0.00425,
+     "changed_doing_nothing": 0.00217,
+     "changed": true
+    },
+    "BOOST": {
+     "keys": [
+      "space"
+     ],
+     "changed_with_key": 0.003,
+     "changed_doing_nothing": 0.00279,
+     "changed": false
+    }
+   },
+   "invented_keys_dropped": [],
+   "real_keys": [
+    "down",
+    "left",
+    "right",
+    "space",
+    "up"
+   ]
+  }
+ ],
+ "first_sight_mean_recall": 0.6833,
+ "debriefs": [
+  {
+   "language": "english",
+   "source": "muse-wonder",
+   "text": "Thanks for playing together today. You asked for help with 2 parts, and plainly, 0 parts were done and 2 parts were not done.",
+   "cost_usd": 0.008984
+  },
+  {
+   "language": "arabic",
+   "source": "muse-wonder",
+   "text": "شكرًا لانضمامك إلينا في هذه الجلسة، فقد سررنا باللعب معك. طلبت 2 من الأجزاء، ولم يتم إنجاز 2 منها.",
+   "cost_usd": 0.014284
+  },
+  {
+   "language": "english",
+   "source": "muse-wonder",
+   "text": "Thanks for spending this play session with me, it was lovely having you here. Of the 2 parts you asked about, 0 were done and 2 were not done over 18 turns.",
+   "cost_usd": 0.010304
+  },
+  {
+   "language": "arabic",
+   "source": "muse-wonder",
+   "text": "شكرًا للعبك معنا اليوم، سعدنا بمرافقتك في هذه الجلسة. طلبت المساعدة في 2 من الأجزاء، وأنجزنا 0 منها، وبقي 2 غير منجز.",
+   "cost_usd": 0.012644
+  },
+  {
+   "language": "english",
+   "source": "muse-wonder",
+   "text": "Thanks for playing today, it was lovely to share the game with you. You asked about 2 parts, and 2 parts were not done.",
+   "cost_usd": 0.011964
+  },
+  {
+   "language": "arabic",
+   "source": "muse-wonder",
+   "text": "شكرًا لك على اللعب اليوم، سررت بمرافقتك في هذه الجلسة. طلبت المساعدة في 2 من الأجزاء، ولم يتم إنجاز 2 منها.",
+   "cost_usd": 0.009164
+  },
+  {
+   "language": "english",
+   "source": "muse-wonder",
+   "text": "Thanks for playing together today. Of the 2 parts you asked about, 0 were done and 2 were not done. I appreciated spending those 24 turns with you.",
+   "cost_usd": 0.010224
+  },
+  {
+   "language": "arabic",
+   "source": "muse-wonder",
+   "text": "شكرًا على اللعب معي، سعدت بمرافقتك في هذه الجلسة. طلبت 2 من الأجزاء، ولم يُنجز 2 منها، و0 من الأجزاء أُنجزت.",
+   "cost_usd": 0.012464
+  },
+  {
+   "language": "english",
+   "source": "muse-wonder",
+   "text": "Thanks for playing with me in this session. You asked for help with 2 parts, but 0 parts were done and 2 parts were not done.",
+   "cost_usd": 0.011164
+  },
+  {
+   "language": "arabic",
+   "source": "muse-wonder",
+   "text": "شكرًا لك على اللعب معي، كانت جلسة لطيفة برفقتك. كانت هناك 2 من الأجزاء التي طُلبت المساعدة فيها، ولم يتم إنجاز 2 منها.",
+   "cost_usd": 0.015244
+  }
+ ],
+ "debriefs_passed_number_check": 10,
+ "cost_usd": 0.1628,
+ "honesty": "First sight is scored against the games' real cards, which the model never saw. Our own simple games."
+}
