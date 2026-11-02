@@ -41,6 +41,8 @@ LINE = (68, 84, 152)
 ASSISTED_LABEL = "assisted (skills play, the model picks)"
 MODEL_ALONE_LABEL = "model alone"
 HARNESS_CHECK_LABEL = "harness check"
+SCRIPTED_NO_MODEL_LABEL = "harness check: scripted chooser, no model"
+LOCAL_FLOOR_NO_MODEL_LABEL = "no model (local floor)"
 
 _NUM_RE = re.compile(r"(?<![A-Za-z_])[-+]?\d+(?:,\d{3})*(?:\.\d+)?(?![A-Za-z_])")
 
@@ -164,12 +166,17 @@ def mode_label(row: dict[str, Any], arena_lookup: dict[str, dict[str, Any]] | No
         name = Path(row["file"]).name
         if name in arena_lookup:
             source = arena_lookup[name]
+    brain = str(source.get("brain") or "").strip().lower()
+    model = str(source.get("model") or "").strip().lower()
+    if brain == "scripted" or "scripted" in model:
+        return SCRIPTED_NO_MODEL_LABEL
+    if brain in {"builtin", "random", "none"} or model == "none" or "builtin" in model:
+        return LOCAL_FLOOR_NO_MODEL_LABEL
+    if is_harness_check(source):
+        return f"{HARNESS_CHECK_LABEL}: fake server, no model"
     overall = source.get("overall", source)
     helped = int(overall.get("local_help_episodes") or 0) > 0 or "skills=true" in str(source.get("note") or "").lower()
-    base = ASSISTED_LABEL if helped else MODEL_ALONE_LABEL
-    if is_harness_check(source):
-        return f"{HARNESS_CHECK_LABEL} · {base}"
-    return base
+    return ASSISTED_LABEL if helped else MODEL_ALONE_LABEL
 
 
 def _collect_json_numbers(obj: Any, raw_values: set[float], formatted: set[str]) -> None:

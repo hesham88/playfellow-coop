@@ -1,7 +1,7 @@
 """Tests for tools/make_charts.py: every chart is built from committed results/**/*.json files only,
-every chart states whether a row is 'assisted (skills play, the model picks)' or 'model alone',
-fake/scripted runs are drawn as 'harness check' (never as a model score), every SVG has a matching
-PNG copy for the video, and no chart displays a number that does not trace to a result file."""
+every chart states whether a model row is 'assisted (skills play, the model picks)' or 'model alone',
+non-model runs are labelled 'harness check: scripted chooser, no model' or 'no model (local floor)',
+every SVG has a matching PNG copy for the video, and no chart displays a number that does not trace to a result file."""
 from __future__ import annotations
 
 import json
@@ -58,33 +58,25 @@ def test_number_provenance_check_fails_when_a_chart_shows_an_invented_number(tmp
     assert "84.73" in make_charts.unmatched_numbers(tampered, allowed)
 
 
-def test_fake_server_and_scripted_results_are_drawn_as_harness_check_never_model_score(tmp_path):
-    fake_results = tmp_path / "results"
-    (fake_results / "glass").mkdir(parents=True)
-    (fake_results / "cache").mkdir(parents=True)
-    sample = json.loads((ROOT / "results" / "glass" / "muse-skills-20261029.json").read_text(encoding="utf-8"))
-    fake_run = dict(sample, brain="fake", model="fake-server", condition="fake-none", note="fake server pipeline check")
-    (fake_results / "glass" / "muse-skills-20261029.json").write_text(json.dumps(sample), encoding="utf-8")
-    (fake_results / "glass" / "fake-run.json").write_text(json.dumps(fake_run), encoding="utf-8")
-    (fake_results / "glass" / "scripted-20261029.json").write_text(
-        (ROOT / "results" / "glass" / "scripted-20261029.json").read_text(encoding="utf-8"), encoding="utf-8"
-    )
-    (fake_results / "unseen").mkdir(parents=True)
-    for name in ("muse-raw-20261027.json", "open-raw-20261027.json"):
-        (fake_results / "unseen" / name).write_text(
-            (ROOT / "results" / "unseen" / name).read_text(encoding="utf-8"), encoding="utf-8"
-        )
-    (fake_results / "cache" / "cache-ratio-20261030.json").write_text(
-        (ROOT / "results" / "cache" / "cache-ratio-20261030.json").read_text(encoding="utf-8"), encoding="utf-8"
-    )
-    out = tmp_path / "charts"
-    written = make_charts.build_all(results_dir=fake_results, out_dir=out, committed_only=False)
-    arena_text = make_charts.visible_text(written["arena-wins-and-cost"]["svg"]).lower()
-    assert "harness check" in arena_text
-    assert "model score" not in arena_text
-    for line in make_charts.visible_lines(written["arena-wins-and-cost"]["svg"]):
+def test_non_model_rows_use_honesty_ladder_labels_and_never_claim_a_model(tmp_path):
+    scripted = json.loads((ROOT / "results" / "glass" / "scripted-20261029.json").read_text(encoding="utf-8"))
+    builtin = json.loads((ROOT / "results" / "glass" / "builtin-20261029.json").read_text(encoding="utf-8"))
+    rnd = json.loads((ROOT / "results" / "glass" / "random-20261029.json").read_text(encoding="utf-8"))
+
+    assert make_charts.mode_label(scripted) == "harness check: scripted chooser, no model"
+    assert make_charts.mode_label(builtin) == "no model (local floor)"
+    assert make_charts.mode_label(rnd) == "no model (local floor)"
+
+    for row in (scripted, builtin, rnd, {"brain": "none", "model": "none", "overall": {}}):
+        label = make_charts.mode_label(row).lower()
+        assert "model" not in label.replace("no model", ""), label
+
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    arena_svg = written["arena-wins-and-cost"]["svg"]
+    arena_text = make_charts.visible_text(arena_svg).lower()
+    assert "harness check: scripted chooser, no model" in arena_text
+    assert "no model (local floor)" in arena_text
+    for line in make_charts.visible_lines(arena_svg):
         low = line.lower()
-        if "fake" in low or "scripted" in low:
-            assert "harness check" in low, line
-        if "muse-spark" in low:
-            assert "harness check" not in low, line
+        if any(tag in low for tag in ("scripted-chooser", "builtin-nav", "none (random)")):
+            assert "model" not in low.replace("no model", ""), line

@@ -34,7 +34,7 @@
   <text x="1470" y="472" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 439,805</text>
   <rect x="84" y="496" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
   <text x="104" y="532" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">scripted-chooser (scripted) — harness check</text>
-  <text x="104" y="566" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · assisted (skills play, the model picks)</text>
+  <text x="104" y="566" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model</text>
   <rect x="740" y="514" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <rect x="740" y="514" width="430" height="32" fill="#ffcc4d" rx="8" ry="8"/>
   <text x="1188" y="538" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">15 / 15 (100.0%)</text>
@@ -43,7 +43,7 @@
   <text x="1470" y="568" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Per win: $0.00000</text>
   <rect x="84" y="592" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
   <text x="104" y="628" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">builtin-nav (builtin) — harness check</text>
-  <text x="104" y="662" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · model alone</text>
+  <text x="104" y="662" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">no model (local floor)</text>
   <rect x="740" y="610" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="1188" y="634" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 25 (0.0%)</text>
   <text x="740" y="666" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 7.9%   Mean turns: 17.92</text>
@@ -51,7 +51,7 @@
   <text x="1470" y="664" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
   <rect x="84" y="688" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
   <text x="104" y="724" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">none (random) — harness check</text>
-  <text x="104" y="758" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · model alone</text>
+  <text x="104" y="758" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">no model (local floor)</text>
   <rect x="740" y="706" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="1188" y="730" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 25 (0.0%)</text>
   <text x="740" y="762" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 7.9%   Mean turns: 17.72</text>
@@ -59,7 +59,7 @@
   <text x="1470" y="760" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
   <rect x="84" y="784" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
   <text x="104" y="820" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">builtin-nav (builtin) — harness check</text>
-  <text x="104" y="854" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · model alone</text>
+  <text x="104" y="854" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">no model (local floor)</text>
   <rect x="740" y="802" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="1188" y="826" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 15 (0.0%)</text>
   <text x="740" y="858" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 17.4%   Mean turns: 151.6</text>
@@ -67,7 +67,7 @@
   <text x="1470" y="856" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Tokens in: 0</text>
   <rect x="84" y="880" width="1752" height="82" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
   <text x="104" y="916" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="bold" text-anchor="start">none (random) — harness check</text>
-  <text x="104" y="950" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">harness check · model alone</text>
+  <text x="104" y="950" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="start">no model (local floor)</text>
   <rect x="740" y="898" width="430" height="32" fill="#04061a" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="1188" y="922" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="21" font-weight="bold" text-anchor="start">0 / 40 (0.0%)</text>
   <text x="740" y="954" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="normal" text-anchor="start">Mean progress: 11.7%   Mean turns: 31.52</text>
