@@ -64,7 +64,7 @@ Each game group shows the same rungs. A row is filled only from a committed resu
 
 ![Every rung, game by game](docs/img/charts/ladder-per-game.png)
 
-The $0 harness check (a scripted chooser, no model) wins 36 of 42 episodes (12 of 14 games) with the 14 pixel skills. The two mouse games, Mini Chess and Tiny Kingdom, score 0 of 3: their skills win in the gym, but the runner has no mouse path yet (`results/rung4/scripted-20261102.json`). The model-written skills reach progress 0.58 on maze_chase and 0.33 on key_caves, with 0 wins so far.
+The $0 harness check (a scripted chooser, no model) wins 36 of 42 episodes (12 of 14 games) with the 14 pixel skills. The two mouse games, Mini Chess and Tiny Kingdom, score 0 of 3: their skills win in the gym, but the runner has no mouse path yet (`results/rung4/scripted-20261102.json`). The model-written skills reach progress 0.58 on maze_chase and 0.33 on key_caves, with 0 wins so far. On the open-source 2048, which nobody wrote a skill for, progress counts tile doublings from the first board's 2 to the 2048 tile, so it is not a share of a win: the skills' best tiles on the 2 unseen boards were 256 and 64 (Muse) and 256 and 128 (open weights), 0 wins so far (`results/skillsmith/skillsmith-muse-2048-20261103.json`, `results/skillsmith/skillsmith-open-2048-20261103.json`).
 
 ![Model-written skill, round by round](docs/img/charts/learning-curve.png)
 
@@ -78,8 +78,8 @@ The five games with human-written skills (snake, box_push, slide_2048, lane_dash
 | 1–2 Model alone, Muse Spark Open (same cap) | 0 of 15 | 0.141 | `results/unseen/open-raw-20261027.json` |
 | 2+ Model alone, fair budget + action chunks (F2) | pending: run after the owner's yes | — | no file yet |
 | 2+ Model alone + SAM 3.1 marks (20-call cap; 14 games) | 0 of 28 | 0.217 | `results/fifteen/muse-sam-20261102.json` |
-| 3 Model-written skills (SkillSmith, F1), Muse Spark 1.3 writes | 0 of 4 | 0.457 | `results/skillsmith/skillsmith-muse-room-20261102.json` |
-| 3 Model-written skills (SkillSmith, F1), Muse Spark Open writes | 0 of 4 | 0.457 | `results/skillsmith/skillsmith-open-20261102.json` |
+| 3 Model-written skills (SkillSmith, F1), Muse Spark 1.3 writes | 0 of 6 | 0.504 | `results/skillsmith/skillsmith-muse-room-20261102.json`, `results/skillsmith/skillsmith-muse-2048-20261103.json` |
+| 3 Model-written skills (SkillSmith, F1), Muse Spark Open writes | 0 of 6 | 0.521 | `results/skillsmith/skillsmith-open-20261102.json`, `results/skillsmith/skillsmith-open-2048-20261103.json` |
 | 4 Model picks + human skill, Muse Spark 1.3 | 15 of 15 | 1.0 | `results/k-lane/muse-skills-pt1.json` |
 | 4 Model picks + human skill, Muse Spark Open | 14 of 15 (snake 2 of 3) | 0.933 | `results/k-lane/baseten-skills.json` |
 
@@ -90,6 +90,7 @@ The SkillSmith games (no human skill exists for them):
 | maze_chase | muse: promoted; held-out 0 of 2 wins, progress IQM 0.58, play $0; writing $0.146; open: promoted; held-out 0 of 2 wins, progress IQM 0.58, play $0; writing $0.136 | `results/skillsmith/skillsmith-muse-room-20261102.json`, `results/skillsmith/skillsmith-open-20261102.json` |
 | key_caves | muse: promoted; held-out 0 of 2 wins, progress IQM 0.3333, play $0; writing $0.189; open: promoted; held-out 0 of 2 wins, progress IQM 0.3333, play $0; writing $0.196 | `results/skillsmith/skillsmith-muse-room-20261102.json`, `results/skillsmith/skillsmith-open-20261102.json` |
 | action_quest | muse: no skill promoted (no candidate strictly beats the current skill on validation); writing $0.263; open: no skill promoted (no candidate strictly beats the current skill on validation); writing $0.280 | `results/skillsmith/skillsmith-muse-room-20261102.json`, `results/skillsmith/skillsmith-open-20261102.json` |
+| osg_2048 | muse: promoted; held-out 0 of 2 wins, progress IQM 0.6, play $0; writing $0.042; open: promoted; held-out 0 of 2 wins, progress IQM 0.65, play $0; writing $0.040 | `results/skillsmith/skillsmith-muse-2048-20261103.json`, `results/skillsmith/skillsmith-open-2048-20261103.json` |
 
 Speed and cost per rung (stage times, dollars and tokens per win, cache share, local step against a model call) are in `results/speed/speed-cost-20261102.json`, built only from the files above by `bench/speed_cost_table.py`. The Rust fast path's public figure is 17–24x, the bracket of the measured medians in that table's source file.
 

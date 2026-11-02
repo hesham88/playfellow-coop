@@ -126,6 +126,8 @@ python -m bench.skillsmith_run --replay latest
 | maze_chase (muse) | 0 wins, IQM 0.58 | `results/skillsmith/skillsmith-muse-room-20261102.json` |
 | key_caves (muse) | 0 wins, IQM 0.3333 | `results/skillsmith/skillsmith-muse-room-20261102.json` |
 | action_quest (muse) | not played (nothing promoted) | `results/skillsmith/skillsmith-muse-room-20261102.json` |
+| osg_2048 (muse) | 0 wins, IQM 0.6 | `results/skillsmith/skillsmith-muse-2048-20261103.json` |
 | maze_chase (open) | 0 wins, IQM 0.58 | `results/skillsmith/skillsmith-open-20261102.json` |
 | key_caves (open) | 0 wins, IQM 0.3333 | `results/skillsmith/skillsmith-open-20261102.json` |
 | action_quest (open) | not played (nothing promoted) | `results/skillsmith/skillsmith-open-20261102.json` |
+| osg_2048 (open) | 0 wins, IQM 0.65 | `results/skillsmith/skillsmith-open-2048-20261103.json` |

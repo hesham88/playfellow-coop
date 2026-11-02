@@ -19,20 +19,28 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-GAMES = ("maze_chase", "key_caves", "action_quest")
+GAMES = ("maze_chase", "key_caves", "action_quest", "osg_2048")  # osg_2048: the open-source 2048, which nobody wrote a skill for
 BRAINS = {"muse": "Muse Spark 1.3 writes", "open": "Muse Spark Open writes"}
 PENDING_RUNG = "| 3 Model-written skills (SkillSmith, F1) | pending: run after the owner's yes | — | harness `bench/skillsmith_run.py`; offline fake round only |"
 JUDGES_HEADING = "## 5. Watch a model-written skill play, no key"
 
 
-def live_files(root: Path) -> dict[str, Path]:
-    """The newest live SkillSmith file per brain, or {} while none is committed."""
+def live_files(root: Path) -> dict[str, dict[str, Path]]:
+    """For each brain, the newest live file that ran each game ({brain: {game: file}}), or {} while none is committed.
+
+    Newest is by the file's own "written" time (the file name breaks ties and covers files without one), per game: a later run on one
+    game never hides an earlier run on the others, and a name that sorts last is never taken for the newest."""
     folder = root / "results" / "skillsmith"
-    found: dict[str, Path] = {}
+    found: dict[str, dict[str, Path]] = {}
     for brain in BRAINS:
         files = sorted(folder.glob(f"skillsmith-{brain}-*.json")) if folder.is_dir() else []
-        if files:
-            found[brain] = files[-1]
+        dated = []
+        for path in files:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            dated.append((str(doc.get("written") or ""), path.name, path, doc))
+        for _written, _name, path, doc in sorted(dated, key=lambda item: (item[0], item[1])):
+            for game in doc.get("games", {}):
+                found.setdefault(brain, {})[game] = path  # later in time order replaces earlier
     return found
 
 
@@ -52,28 +60,31 @@ def f1_rows(root: Path) -> tuple[list[str], list[str], list[str]]:
     files = live_files(root)
     if not files:
         games = [f"| {g} | pending: run after the owner's yes | no file yet |" for g in GAMES]
-        games[-1] = "| action_quest | the gym has no progress score for it yet, so it cannot be scored | no file yet |"
+        games[GAMES.index("action_quest")] = "| action_quest | the gym has no progress score for it yet, so it cannot be scored | no file yet |"
         return [PENDING_RUNG], games, ["| — | pending: run after the owner's yes | no live file yet |"]
     rung, games_by_name, judges = [], {}, []
-    for brain, path in files.items():
-        doc = json.loads(path.read_text(encoding="utf-8"))
-        rel = f"results/skillsmith/{path.name}"
-        played = [g for g in doc["games"].values() if (g.get("held_out") or {}).get("played")]
-        episodes = [e for g in played for e in g["held_out"]["episodes"]]
+    docs: dict[Path, dict] = {}
+    for brain, by_game in files.items():
+        rows = []
+        for name, path in by_game.items():
+            doc = docs.setdefault(path, json.loads(path.read_text(encoding="utf-8")))
+            rows.append((name, doc["games"][name], f"results/skillsmith/{path.name}"))
+        played = [row for _, row, _ in rows if (row.get("held_out") or {}).get("played")]
+        episodes = [e for row in played for e in row["held_out"]["episodes"]]
         wins = sum(1 for e in episodes if e["won"])
-        iqms = [g["held_out"]["progress_iqm"] for g in played if g["held_out"].get("progress_iqm") is not None]
+        iqms = [row["held_out"]["progress_iqm"] for row in played if row["held_out"].get("progress_iqm") is not None]
         mean = round(sum(iqms) / len(iqms), 3) if iqms else "—"
-        rung.append(f"| 3 Model-written skills (SkillSmith, F1), {BRAINS[brain]} | {wins} of {len(episodes)} | {mean} | `{rel}` |")
-        for name, row in doc["games"].items():
+        rels = ", ".join(f"`{rel}`" for rel in dict.fromkeys(rel for _, _, rel in rows))
+        rung.append(f"| 3 Model-written skills (SkillSmith, F1), {BRAINS[brain]} | {wins} of {len(episodes)} | {mean} | {rels} |")
+        for name, row, rel in rows:
             games_by_name.setdefault(name, []).append(f"{brain}: {_game_state(row)}")
             held = row.get("held_out") or {}
             saved = f"{held.get('wins')} wins, IQM {held.get('progress_iqm')}" if held.get("played") else "not played (nothing promoted)"
             judges.append(f"| {name} ({brain}) | {saved} | `{rel}` |")
-    # per-game file cell: name every live file that ran the game
+    # per-game file cell: name each brain's file for that game
     games = []
     for g in GAMES:
-        names = ", ".join(f"`results/skillsmith/{p.name}`" for p in files.values()
-                          if g in json.loads(p.read_text(encoding="utf-8"))["games"])
+        names = ", ".join(dict.fromkeys(f"`results/skillsmith/{by_game[g].name}`" for by_game in files.values() if g in by_game))
         games.append(f"| {g} | {'; '.join(games_by_name.get(g, ['no live run yet']))} | {names or 'no file yet'} |")
     return rung, games, judges
 
@@ -93,6 +104,12 @@ def update_readme(text: str, rung: list[str], games: list[str]) -> str:
             games_done.add(game)
             continue
         out.append(line)
+    for game in GAMES:  # a game added later (osg_2048) gets its row once, right after the last game row already there
+        if game not in games_done:
+            last = max((i for i, line in enumerate(out) if any(line.startswith(f"| {g} |") for g in GAMES)), default=None)
+            if last is not None:
+                out.insert(last + 1, next(r for r in games if r.startswith(f"| {game} |")))
+                games_done.add(game)
     return "\n".join(out) + "\n"
 
 

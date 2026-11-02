@@ -1,0 +1,254 @@
+{
+ "schema": "pf-arena-run/1",
+ "written": "2026-11-03T00:37:14+02:00",
+ "condition": "skillsmith-open",
+ "brain": "open",
+ "model": "meta-models/muse-spark-open-1026",
+ "rung": {
+  "key": "model_skills",
+  "number": 3,
+  "title": "System with model-written skills"
+ },
+ "label": "[Assisted: Model-Written Skill]",
+ "note": "Writing cost is the model's; play after promotion is local (0 calls, $0). A refused candidate plays no held-out seed. Fake-brain files are wiring checks, not model results.",
+ "games": {
+  "osg_2048": {
+   "game": "osg_2048",
+   "supported": true,
+   "goal": "slide the tiles, join equals, and reach the 2048 tile",
+   "step_limit": 2000,
+   "validation_seeds": [
+    0,
+    1
+   ],
+   "test_seeds": [
+    100,
+    101
+   ],
+   "current": "idle",
+   "promoted": "cand2_4352",
+   "selector_reason": "no candidate strictly beats the current skill on validation",
+   "gate_verdicts": {
+    "cand2_4352": {
+     "mean_progress": 0.6,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 800
+    },
+    "cand1_5062": {
+     "mean_progress": 0.0,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 2,
+     "steps": 800
+    },
+    "cand2_4938": {
+     "mean_progress": 0.6,
+     "wins": 0,
+     "episodes": 2,
+     "faults": 0,
+     "steps": 381
+    }
+   },
+   "curve": [
+    {
+     "round": 0,
+     "validation_seeds": [
+      0,
+      1
+     ],
+     "current": "idle",
+     "current_progress": 0.0,
+     "best_candidate": "cand2_4352",
+     "best_progress": 0.5222,
+     "promoted": "cand2_4352",
+     "reason": "cand2_4352 scored 0.522 against 0.000",
+     "trace_shown": 60,
+     "lessons_shown": 0,
+     "lessons": [],
+     "proposals": 2
+    },
+    {
+     "round": 1,
+     "validation_seeds": [
+      1000,
+      1001
+     ],
+     "current": "cand2_4352",
+     "current_progress": 0.55,
+     "best_candidate": "cand1_7404",
+     "best_progress": 0.55,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 60,
+     "lessons_shown": 1,
+     "lessons": [
+      "- [osg_2048] promoted cand2_4352 over idle (evidence: validation progress 0.522 vs 0.000; sha d128b8dab013)"
+     ],
+     "proposals": 2
+    },
+    {
+     "round": 2,
+     "validation_seeds": [
+      2000,
+      2001
+     ],
+     "current": "cand2_4352",
+     "current_progress": 0.6,
+     "best_candidate": "cand2_4938",
+     "best_progress": 0.6,
+     "promoted": null,
+     "reason": "no candidate strictly beats the current skill on validation",
+     "trace_shown": 60,
+     "lessons_shown": 2,
+     "lessons": [
+      "- [osg_2048] promoted cand2_4352 over idle (evidence: validation progress 0.522 vs 0.000; sha d128b8dab013)",
+      "- [osg_2048] kept cand2_4352 (evidence: no candidate strictly beats the current skill on validation; scores cand2_4352 0.550, cand1_7404 0.550, cand2_0576 0.550)"
+     ],
+     "proposals": 2
+    }
+   ],
+   "proposals": [
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1117,
+     "trace_shown": 60,
+     "lessons_shown": 0
+    },
+    {
+     "round": 0,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 987,
+     "trace_shown": 60,
+     "lessons_shown": 0
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 665,
+     "trace_shown": 60,
+     "lessons_shown": 1
+    },
+    {
+     "round": 1,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 1075,
+     "trace_shown": 60,
+     "lessons_shown": 1
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 744,
+     "trace_shown": 60,
+     "lessons_shown": 2
+    },
+    {
+     "round": 2,
+     "outcome": "answered",
+     "extracted": true,
+     "gate_passed": true,
+     "detail": "ok",
+     "answer_chars": 856,
+     "trace_shown": 60,
+     "lessons_shown": 2
+    }
+   ],
+   "skill_source": "import math\n\nclass GeneratedArenaSkill:\n    def __init__(self):\n        self.t = 0\n        self.seq = 0\n        self.cooldown = 0\n\n    def compute_action(self, obs):\n        self.t += 1\n        if self.cooldown > 0:\n            self.cooldown -= 1\n            return {\"move\": [0.0, 0.0], \"buttons\": [], \"hold_ms\": 0}\n        # 2048 corner strategy: prioritize down, right, up, left\n        # cycle pattern that keeps large tiles in corner: left, down, right, down etc\n        # but with no board observation we must keep sliding\n        # classic blind pattern: right, down, left, down repeating, with occasional up\n        moves = [[1.0, 0.0], [0.0, 1.0], [-1.0, 0.0], [0.0, 1.0], [1.0, 0.0], [0.0, -1.0]]\n        idx = self.seq % 6\n        mv = moves[idx]\n        self.seq += 1\n        # small pause between slides to let animation settle (about 4 frames at 60Hz)\n        self.cooldown = 4\n        return {\"move\": [float(mv[0]), float(mv[1])], \"buttons\": [], \"hold_ms\": 0}\n",
+   "skill_sha256": "d128b8dab01387f6e1749293f63f69d74e8bf22e72e63bd7c3515ce0a99950a5",
+   "current_sha256": "29db3b23a9f19731041c59efc701cf1c19278abfe0a4462d53c51cbda6cf145b",
+   "keys": [
+    "left",
+    "right",
+    "up",
+    "down"
+   ],
+   "example_game": "box_push",
+   "example_sha256": "476b8e987c00166ce20ae943a1206737099e3537b680a8be09ee562591ba4b4e",
+   "held_out_steps": 2000,
+   "safety_checks": {
+    "static_gate": {
+     "passed": true,
+     "detail": "ok"
+    },
+    "sandbox": {
+     "passed": true,
+     "detail": "answered one step inside the sandbox",
+     "containment": "low-integrity+job"
+    },
+    "held_out_promote": {
+     "promoted": "cand2_4352",
+     "detail": "no candidate strictly beats the current skill on validation"
+    }
+   },
+   "writing": {
+    "calls": 6,
+    "cost_usd": 0.04041,
+    "tokens_in": 19018,
+    "tokens_out": 3914
+   },
+   "held_out": {
+    "played": true,
+    "episodes": [
+     {
+      "seed": 100,
+      "won": false,
+      "progress": 0.7,
+      "steps": 1116,
+      "faulted": false
+     },
+     {
+      "seed": 101,
+      "won": false,
+      "progress": 0.6,
+      "steps": 751,
+      "faulted": false
+     }
+    ],
+    "wins": 0,
+    "win_rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.658
+    ],
+    "progress_iqm": 0.65,
+    "progress_iqm_95": [
+     0.6,
+     0.7
+    ],
+    "local_step_ms": {
+     "n": 1867,
+     "p50_ms": 0.229,
+     "mean_ms": 0.254
+    },
+    "play_calls": 0,
+    "play_cost_usd": 0.0
+   },
+   "sandbox": "skillsmith SandboxedSkill: static gate, separate worker on the real python.exe, osjail containment on Windows"
+  }
+ },
+ "held_out_overall": {
+  "episodes": 2,
+  "wins": 0
+ },
+ "run_id": "skillsmith-open-2048-20261103",
+ "cap_usd": 0.4,
+ "spend_ledger": "f1-2048-open-ledger.jsonl"
+}
