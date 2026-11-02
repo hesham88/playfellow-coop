@@ -4,18 +4,18 @@
  "condition": "open-none",
  "brain": "open",
  "model": "meta-models/muse-spark-open-1026",
- "note": "R1 Baseten Muse Spark Open alone, 15 games, owner yes 2 Nov 04:55 marks=none; skills=False; effort=minimal; turns<= 20; the engine's public arena pack (unskinned).",
+ "note": "R1 Baseten Muse Spark Open alone, 15 games, owner yes 2 Nov 04:55 marks=none; skills=False; effort=minimal; turns<= 20; the engine's public arena pack (unskinned). | 2 Nov: the engine's 15th arena game (a ball game) is left out of this public repository under the event's topic rules; its 2 episodes were removed from this file and the summary recomputed from the remaining episodes.",
  "overall": {
-  "episodes": 30,
+  "episodes": 28,
   "wins": 0,
   "win_rate": 0.0,
   "wilson95": [
    0.0,
-   0.114
+   0.121
   ],
-  "mean_progress": 0.116,
-  "mean_turns": 5.5,
-  "mean_seconds": 56.06,
+  "mean_progress": 0.125,
+  "mean_turns": 5.89,
+  "mean_seconds": 59.27,
   "invalid_plan_rate": 0.212,
   "tokens_in": 299542,
   "tokens_cached": 140928,
@@ -258,27 +258,6 @@
    "local_help_episodes": 0,
    "skill_steps_total": 0
   },
-  "mini_football": {
-   "episodes": 2,
-   "wins": 0,
-   "win_rate": 0.0,
-   "wilson95": [
-    0.0,
-    0.658
-   ],
-   "mean_progress": 0.0,
-   "mean_turns": 0.0,
-   "mean_seconds": 11.11,
-   "invalid_plan_rate": 0.0,
-   "tokens_in": 0,
-   "tokens_cached": 0,
-   "tokens_out": 0,
-   "cost_usd": 0.0,
-   "tokens_per_win": null,
-   "usd_per_win": null,
-   "local_help_episodes": 0,
-   "skill_steps_total": 0
-  },
   "ray_maze": {
    "episodes": 2,
    "wins": 0,
@@ -358,10 +337,10 @@
    "fallback": 0.0
   },
   "progress_iqm": {
-   "estimate": 0.0145,
+   "estimate": 0.0179,
    "ci95": [
-    0.0059,
-    0.0354
+    0.0084,
+    0.0478
    ]
   }
  },
@@ -784,46 +763,6 @@
    "tokens_out": 0,
    "cost_usd": 0.0,
    "seconds": 11.1,
-   "invalid_plans": 0,
-   "ended": "error:BrainError",
-   "extra": {
-    "error": "offline"
-   }
-  },
-  {
-   "game": "mini_football",
-   "seed": 0,
-   "won": false,
-   "lost": false,
-   "progress": 0.0,
-   "turns": 0,
-   "ticks": 0,
-   "calls": 0,
-   "tokens_in": 0,
-   "tokens_cached": 0,
-   "tokens_out": 0,
-   "cost_usd": 0.0,
-   "seconds": 11.1,
-   "invalid_plans": 0,
-   "ended": "error:BrainError",
-   "extra": {
-    "error": "offline"
-   }
-  },
-  {
-   "game": "mini_football",
-   "seed": 1,
-   "won": false,
-   "lost": false,
-   "progress": 0.0,
-   "turns": 0,
-   "ticks": 0,
-   "calls": 0,
-   "tokens_in": 0,
-   "tokens_cached": 0,
-   "tokens_out": 0,
-   "cost_usd": 0.0,
-   "seconds": 11.11,
    "invalid_plans": 0,
    "ended": "error:BrainError",
    "extra": {

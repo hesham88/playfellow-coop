@@ -1,6 +1,6 @@
 """Muse Voice accuracy on real recordings: English, Arabic, and both mixed in one sentence (the application: "English/Arabic code-switching").
 
-    python -m bench.voice_accuracy --clips F:/PlayFellow/data/voice-clips-2026-11-02      # writes results/voice/voice-<date>.json
+    python -m bench.voice_accuracy --clips <folder with NN.* clips and RECORD-THESE.md>      # writes results/voice/voice-<date>.json
 
 The clips stay outside the repository (a person's voice); only the scores are published. Each clip NN.* is matched to line NN of
 RECORD-THESE.md in the same folder. Any audio format is converted to the WAV Muse Voice wants (mono, 16-bit, 16 kHz) with ffmpeg.

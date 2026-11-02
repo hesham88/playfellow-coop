@@ -27,7 +27,7 @@ GAMES = {  # arena pack key -> (module, class); the engine owns the games, this 
     "lane_dash": ("arena_pack.lane_dash", "LaneDash"), "maze_chase": ("arena_pack.maze_chase", "MazeChase"), "key_caves": ("arena_pack.key_caves", "KeyCaves"),
     "turn_quest": ("arena_pack.turn_quest", "TurnQuest"), "brick_breaker": ("arena_pack.brick_breaker", "BrickBreaker"), "mini_chess": ("arena_pack.mini_chess", "MiniChess"),
     "action_quest": ("arena_pack.action_quest", "ActionQuest"), "mini_fighter": ("arena_pack.mini_fighter", "MiniFighter"),
-    "mini_football": ("arena_pack.mini_football", "MiniFootball"), "ray_maze": ("arena_pack.ray_maze", "RayMaze"),
+    "ray_maze": ("arena_pack.ray_maze", "RayMaze"),
     "tiny_kingdom": ("arena_pack.tiny_kingdom", "TinyKingdom"), "top_racer": ("arena_pack.top_racer", "TopRacer"),
 }
 

@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import functools
+import os
 import http.server
 import json
 import random
@@ -37,7 +38,7 @@ def choose(board, keys) -> str | None:
     scored = [(value(move(board, k), 2), k) for k in keys if move(board, k) != board]
     return max(scored)[1] if scored else None
 
-GAME_DIR = Path(r"F:\PlayFellow\dev\cache\osg\2048")
+GAME_DIR = Path(os.environ.get("PLAYFELLOW_OSG_DIR") or str(Path.home() / ".cache" / "playfellow-osg")) / "2048"
 PINNED = "478b6ec346e3787f589e4af751378d06ded4cbbc"
 OUT = Path(__file__).resolve().parents[1] / "results" / "access"
 TARGETS = (64, 128, 256, 512)
@@ -291,7 +292,7 @@ def main_model(argv=None) -> int:
         brain = MuseBrain(DEFAULT_MODEL, os.environ["MODEL_API_KEY"], cache_key=None)
     else:
         from bench.open_weights_brain import OpenWeightsBrain
-        brain = OpenWeightsBrain(os.environ.get("OPEN_BRAIN_API_KEY") or os.environ["BASETEN_API_KEY"])
+        brain = OpenWeightsBrain(os.environ["OPEN_BRAIN_API_KEY"])
     server, base = serve(Path(args.game_dir))
     episodes, spent = [], 0.0
     with sync_playwright() as p:

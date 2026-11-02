@@ -1,0 +1,3020 @@
+{
+ "schema": "pf-access/1",
+ "written": "2026-11-02T06:26:33+02:00",
+ "commit": "e7c5dcc",
+ "brain": "local skills (no model, no network, $0)",
+ "step": 0.25,
+ "requests_per_episode": 4,
+ "part_turns": 600,
+ "part_turns_rule": "max(PART_TURNS, the game's max_ticks / requests)",
+ "rest_ticks": 10,
+ "split_rule": "the player keeps the key the buddy pressed least (at least once) in its unsplit run on the same game and seed",
+ "split_note": "The arena skills are not told about the split: a refused key is simply a lost move, so the split column here measures safety (no kept key reaches the game) and the cost of losing a key to a buddy that cannot plan around it, not split-aware play. bench/osg_2048.py shows a buddy that picks its best remaining key.",
+ "honesty": "No disabled player was simulated or involved: the player rests between requests. Each request is 'the next quarter of progress', judged by the game's own numbers.",
+ "summary": {
+  "assist/box_push": {
+   "condition": "assist",
+   "game": "box_push",
+   "episodes": 5,
+   "requests": 15,
+   "done": 15,
+   "done_rate": 1.0,
+   "done_rate_95": [
+    0.7961,
+    1.0
+   ],
+   "mean_steps_when_done": 13.0,
+   "presses_spared": 195,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 5
+  },
+  "assist/brick_breaker": {
+   "condition": "assist",
+   "game": "brick_breaker",
+   "episodes": 5,
+   "requests": 20,
+   "done": 19,
+   "done_rate": 0.95,
+   "done_rate_95": [
+    0.7639,
+    0.9911
+   ],
+   "mean_steps_when_done": 1861.3,
+   "presses_spared": 19916,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 4
+  },
+  "assist/lane_dash": {
+   "condition": "assist",
+   "game": "lane_dash",
+   "episodes": 5,
+   "requests": 8,
+   "done": 8,
+   "done_rate": 1.0,
+   "done_rate_95": [
+    0.6756,
+    1.0
+   ],
+   "mean_steps_when_done": 48.4,
+   "presses_spared": 80,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "assist/slide_2048": {
+   "condition": "assist",
+   "game": "slide_2048",
+   "episodes": 5,
+   "requests": 18,
+   "done": 18,
+   "done_rate": 1.0,
+   "done_rate_95": [
+    0.8241,
+    1.0
+   ],
+   "mean_steps_when_done": 39.4,
+   "presses_spared": 710,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 5
+  },
+  "assist/snake": {
+   "condition": "assist",
+   "game": "snake",
+   "episodes": 5,
+   "requests": 5,
+   "done": 5,
+   "done_rate": 1.0,
+   "done_rate_95": [
+    0.5655,
+    1.0
+   ],
+   "mean_steps_when_done": 33.0,
+   "presses_spared": 165,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "assist/ALL": {
+   "condition": "assist",
+   "game": "ALL",
+   "episodes": 25,
+   "requests": 66,
+   "done": 65,
+   "done_rate": 0.9848,
+   "done_rate_95": [
+    0.919,
+    0.9973
+   ],
+   "mean_steps_when_done": 566.5,
+   "presses_spared": 21066,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 14
+  },
+  "split/box_push": {
+   "condition": "split",
+   "game": "box_push",
+   "episodes": 5,
+   "requests": 10,
+   "done": 5,
+   "done_rate": 0.5,
+   "done_rate_95": [
+    0.2366,
+    0.7634
+   ],
+   "mean_steps_when_done": 5.0,
+   "presses_spared": 2630,
+   "refused": 320,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "split/brick_breaker": {
+   "condition": "split",
+   "game": "brick_breaker",
+   "episodes": 5,
+   "requests": 20,
+   "done": 0,
+   "done_rate": 0.0,
+   "done_rate_95": [
+    0.0,
+    0.1611
+   ],
+   "mean_steps_when_done": null,
+   "presses_spared": 0,
+   "refused": 74845,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "split/lane_dash": {
+   "condition": "split",
+   "game": "lane_dash",
+   "episodes": 5,
+   "requests": 5,
+   "done": 0,
+   "done_rate": 0.0,
+   "done_rate_95": [
+    0.0,
+    0.4345
+   ],
+   "mean_steps_when_done": null,
+   "presses_spared": 7,
+   "refused": 6,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "split/slide_2048": {
+   "condition": "split",
+   "game": "slide_2048",
+   "episodes": 5,
+   "requests": 20,
+   "done": 5,
+   "done_rate": 0.25,
+   "done_rate_95": [
+    0.1119,
+    0.4687
+   ],
+   "mean_steps_when_done": 12.6,
+   "presses_spared": 125,
+   "refused": 8508,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "split/snake": {
+   "condition": "split",
+   "game": "snake",
+   "episodes": 5,
+   "requests": 5,
+   "done": 0,
+   "done_rate": 0.0,
+   "done_rate_95": [
+    0.0,
+    0.4345
+   ],
+   "mean_steps_when_done": null,
+   "presses_spared": 26,
+   "refused": 17,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "split/ALL": {
+   "condition": "split",
+   "game": "ALL",
+   "episodes": 25,
+   "requests": 60,
+   "done": 10,
+   "done_rate": 0.1667,
+   "done_rate_95": [
+    0.0931,
+    0.2803
+   ],
+   "mean_steps_when_done": 8.8,
+   "presses_spared": 2788,
+   "refused": 83696,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "random/box_push": {
+   "condition": "random",
+   "game": "box_push",
+   "episodes": 5,
+   "requests": 5,
+   "done": 0,
+   "done_rate": 0.0,
+   "done_rate_95": [
+    0.0,
+    0.4345
+   ],
+   "mean_steps_when_done": null,
+   "presses_spared": 3000,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "random/brick_breaker": {
+   "condition": "random",
+   "game": "brick_breaker",
+   "episodes": 5,
+   "requests": 5,
+   "done": 0,
+   "done_rate": 0.0,
+   "done_rate_95": [
+    0.0,
+    0.4345
+   ],
+   "mean_steps_when_done": null,
+   "presses_spared": 2311,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "random/lane_dash": {
+   "condition": "random",
+   "game": "lane_dash",
+   "episodes": 5,
+   "requests": 5,
+   "done": 0,
+   "done_rate": 0.0,
+   "done_rate_95": [
+    0.0,
+    0.4345
+   ],
+   "mean_steps_when_done": null,
+   "presses_spared": 105,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "random/slide_2048": {
+   "condition": "random",
+   "game": "slide_2048",
+   "episodes": 5,
+   "requests": 16,
+   "done": 11,
+   "done_rate": 0.6875,
+   "done_rate_95": [
+    0.444,
+    0.8584
+   ],
+   "mean_steps_when_done": 26.5,
+   "presses_spared": 612,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "random/snake": {
+   "condition": "random",
+   "game": "snake",
+   "episodes": 5,
+   "requests": 5,
+   "done": 0,
+   "done_rate": 0.0,
+   "done_rate_95": [
+    0.0,
+    0.4345
+   ],
+   "mean_steps_when_done": null,
+   "presses_spared": 56,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 0
+  },
+  "random/ALL": {
+   "condition": "random",
+   "game": "ALL",
+   "episodes": 25,
+   "requests": 36,
+   "done": 11,
+   "done_rate": 0.3056,
+   "done_rate_95": [
+    0.18,
+    0.4686
+   ],
+   "mean_steps_when_done": 26.5,
+   "presses_spared": 6084,
+   "refused": 0,
+   "breaches": 0,
+   "games_won": 0
+  }
+ },
+ "episodes": [
+  {
+   "game": "snake",
+   "seed": 0,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 33,
+     "actions": 33,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 6,
+    "down": 8,
+    "left": 11,
+    "right": 8
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.2941
+  },
+  {
+   "game": "snake",
+   "seed": 0,
+   "condition": "split",
+   "owned": [
+    "up"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 5,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 0,
+    "down": 0,
+    "left": 0,
+    "right": 0
+   },
+   "refused": 5,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "snake",
+   "seed": 0,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 11,
+     "actions": 11,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 2,
+    "down": 2,
+    "left": 4,
+    "right": 3
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "snake",
+   "seed": 1,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 34,
+     "actions": 34,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 12,
+    "down": 9,
+    "left": 9,
+    "right": 4
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.2941
+  },
+  {
+   "game": "snake",
+   "seed": 1,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 6,
+     "actions": 4,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 4,
+    "down": 0,
+    "left": 0,
+    "right": 0
+   },
+   "refused": 2,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "snake",
+   "seed": 1,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 9,
+     "actions": 9,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 1,
+    "down": 3,
+    "left": 0,
+    "right": 5
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "snake",
+   "seed": 2,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 24,
+     "actions": 24,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 8,
+    "down": 5,
+    "left": 6,
+    "right": 5
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.2941
+  },
+  {
+   "game": "snake",
+   "seed": 2,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 10,
+     "actions": 7,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 5,
+    "down": 0,
+    "left": 0,
+    "right": 2
+   },
+   "refused": 3,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0588
+  },
+  {
+   "game": "snake",
+   "seed": 2,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 9,
+     "actions": 9,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 4,
+    "down": 0,
+    "left": 1,
+    "right": 4
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "snake",
+   "seed": 3,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 35,
+     "actions": 35,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 8,
+    "down": 8,
+    "left": 10,
+    "right": 9
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.2941
+  },
+  {
+   "game": "snake",
+   "seed": 3,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 8,
+     "actions": 7,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 2,
+    "down": 0,
+    "left": 5,
+    "right": 0
+   },
+   "refused": 1,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0588
+  },
+  {
+   "game": "snake",
+   "seed": 3,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 9,
+     "actions": 9,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 2,
+    "down": 2,
+    "left": 3,
+    "right": 2
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "snake",
+   "seed": 4,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 39,
+     "actions": 39,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 9,
+    "down": 9,
+    "left": 13,
+    "right": 8
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.2941
+  },
+  {
+   "game": "snake",
+   "seed": 4,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 14,
+     "actions": 8,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 2,
+    "down": 1,
+    "left": 5,
+    "right": 0
+   },
+   "refused": 6,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0588
+  },
+  {
+   "game": "snake",
+   "seed": 4,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 18,
+     "actions": 18,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 5,
+    "down": 5,
+    "left": 7,
+    "right": 1
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0588
+  },
+  {
+   "game": "box_push",
+   "seed": 0,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 16,
+     "actions": 16,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 18,
+     "actions": 18,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 9,
+    "down": 5,
+    "left": 11,
+    "right": 14,
+    "r": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "box_push",
+   "seed": 0,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 585,
+     "actions": 521,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 3,
+    "down": 0,
+    "left": 262,
+    "right": 261,
+    "r": 0
+   },
+   "refused": 64,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5
+  },
+  {
+   "game": "box_push",
+   "seed": 0,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 600,
+     "actions": 600,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 117,
+    "down": 114,
+    "left": 128,
+    "right": 121,
+    "r": 120
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "box_push",
+   "seed": 1,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 16,
+     "actions": 16,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 18,
+     "actions": 18,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 9,
+    "down": 5,
+    "left": 11,
+    "right": 14,
+    "r": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "box_push",
+   "seed": 1,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 585,
+     "actions": 521,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 3,
+    "down": 0,
+    "left": 262,
+    "right": 261,
+    "r": 0
+   },
+   "refused": 64,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5
+  },
+  {
+   "game": "box_push",
+   "seed": 1,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 600,
+     "actions": 600,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 111,
+    "down": 121,
+    "left": 125,
+    "right": 132,
+    "r": 111
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "box_push",
+   "seed": 2,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 16,
+     "actions": 16,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 18,
+     "actions": 18,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 9,
+    "down": 5,
+    "left": 11,
+    "right": 14,
+    "r": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "box_push",
+   "seed": 2,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 585,
+     "actions": 521,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 3,
+    "down": 0,
+    "left": 262,
+    "right": 261,
+    "r": 0
+   },
+   "refused": 64,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5
+  },
+  {
+   "game": "box_push",
+   "seed": 2,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 600,
+     "actions": 600,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 134,
+    "down": 117,
+    "left": 119,
+    "right": 120,
+    "r": 110
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "box_push",
+   "seed": 3,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 16,
+     "actions": 16,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 18,
+     "actions": 18,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 9,
+    "down": 5,
+    "left": 11,
+    "right": 14,
+    "r": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "box_push",
+   "seed": 3,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 585,
+     "actions": 521,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 3,
+    "down": 0,
+    "left": 262,
+    "right": 261,
+    "r": 0
+   },
+   "refused": 64,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5
+  },
+  {
+   "game": "box_push",
+   "seed": 3,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 600,
+     "actions": 600,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 129,
+    "down": 129,
+    "left": 111,
+    "right": 114,
+    "r": 117
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "box_push",
+   "seed": 4,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 16,
+     "actions": 16,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 18,
+     "actions": 18,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 9,
+    "down": 5,
+    "left": 11,
+    "right": 14,
+    "r": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "box_push",
+   "seed": 4,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 585,
+     "actions": 521,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 3,
+    "down": 0,
+    "left": 262,
+    "right": 261,
+    "r": 0
+   },
+   "refused": 64,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5
+  },
+  {
+   "game": "box_push",
+   "seed": 4,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 600,
+     "actions": 600,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 114,
+    "down": 139,
+    "left": 110,
+    "right": 109,
+    "r": 128
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "slide_2048",
+   "seed": 0,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 11,
+     "actions": 11,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 33,
+     "actions": 33,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 108,
+     "actions": 108,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 70,
+    "down": 7,
+    "left": 70,
+    "right": 5
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "slide_2048",
+   "seed": 0,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 11,
+     "actions": 11,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 33,
+     "actions": 33,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 8,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "up": 23,
+    "down": 1,
+    "left": 28,
+    "right": 0
+   },
+   "refused": 1192,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.6667
+  },
+  {
+   "game": "slide_2048",
+   "seed": 0,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 21,
+     "actions": 21,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 42,
+     "actions": 42,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 110,
+     "actions": 110,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 46,
+    "down": 40,
+    "left": 48,
+    "right": 39
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.8333
+  },
+  {
+   "game": "slide_2048",
+   "seed": 1,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 15,
+     "actions": 15,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 62,
+     "actions": 62,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 58,
+     "actions": 58,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 63,
+    "down": 12,
+    "left": 62,
+    "right": 3
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "slide_2048",
+   "seed": 1,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 5,
+     "actions": 5,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 6,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "up": 7,
+    "down": 0,
+    "left": 4,
+    "right": 0
+   },
+   "refused": 1794,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.4286
+  },
+  {
+   "game": "slide_2048",
+   "seed": 1,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 4,
+     "actions": 4,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 37,
+     "actions": 37,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 57,
+     "actions": 57,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 24,
+    "down": 24,
+    "left": 21,
+    "right": 29
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.7143
+  },
+  {
+   "game": "slide_2048",
+   "seed": 2,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 11,
+     "actions": 11,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 33,
+     "actions": 33,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 99,
+     "actions": 99,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 54,
+    "down": 9,
+    "left": 69,
+    "right": 11
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "slide_2048",
+   "seed": 2,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 11,
+     "actions": 11,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 30,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "up": 19,
+    "down": 0,
+    "left": 19,
+    "right": 3
+   },
+   "refused": 1770,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5
+  },
+  {
+   "game": "slide_2048",
+   "seed": 2,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 21,
+     "actions": 21,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 47,
+     "actions": 47,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 83,
+     "actions": 83,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 45,
+    "down": 31,
+    "left": 37,
+    "right": 38
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.8333
+  },
+  {
+   "game": "slide_2048",
+   "seed": 3,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 4,
+     "actions": 4,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 16,
+     "actions": 16,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 48,
+     "actions": 48,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 70,
+     "actions": 70,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 57,
+    "down": 6,
+    "left": 61,
+    "right": 14
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "slide_2048",
+   "seed": 3,
+   "condition": "split",
+   "owned": [
+    "down"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 2,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 170,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 0,
+    "down": 0,
+    "left": 2,
+    "right": 0
+   },
+   "refused": 1968,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.1429
+  },
+  {
+   "game": "slide_2048",
+   "seed": 3,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 4,
+     "actions": 4,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 24,
+     "actions": 24,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 72,
+     "actions": 72,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 35,
+     "actions": 35,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 35,
+    "down": 27,
+    "left": 31,
+    "right": 42
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.8571
+  },
+  {
+   "game": "slide_2048",
+   "seed": 4,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 3,
+     "actions": 3,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 22,
+     "actions": 22,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 50,
+     "actions": 50,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 62,
+     "actions": 62,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 60,
+    "down": 7,
+    "left": 65,
+    "right": 5
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "slide_2048",
+   "seed": 4,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 3,
+     "actions": 3,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 16,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 600,
+     "actions": 0,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "up": 10,
+    "down": 1,
+    "left": 8,
+    "right": 0
+   },
+   "refused": 1784,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.4286
+  },
+  {
+   "game": "slide_2048",
+   "seed": 4,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 6,
+     "actions": 6,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 13,
+     "actions": 13,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 36,
+     "actions": 36,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "up": 11,
+    "down": 17,
+    "left": 18,
+    "right": 9
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5714
+  },
+  {
+   "game": "lane_dash",
+   "seed": 0,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 54,
+     "actions": 8,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 44,
+     "actions": 13,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 11,
+    "right": 10,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5667
+  },
+  {
+   "game": "lane_dash",
+   "seed": 0,
+   "condition": "split",
+   "owned": [
+    "right"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 21,
+     "actions": 1,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 1,
+    "right": 0,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 1,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0667
+  },
+  {
+   "game": "lane_dash",
+   "seed": 0,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 15,
+     "actions": 15,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 2,
+    "right": 3,
+    "up": 6,
+    "down": 4
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "lane_dash",
+   "seed": 1,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 60,
+     "actions": 8,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 4,
+    "right": 4,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.3
+  },
+  {
+   "game": "lane_dash",
+   "seed": 1,
+   "condition": "split",
+   "owned": [
+    "left"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 18,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 0,
+    "right": 0,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 1,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "lane_dash",
+   "seed": 1,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 15,
+     "actions": 15,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 4,
+    "right": 4,
+    "up": 2,
+    "down": 5
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "lane_dash",
+   "seed": 2,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 60,
+     "actions": 10,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 35,
+     "actions": 6,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 8,
+    "right": 8,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.6333
+  },
+  {
+   "game": "lane_dash",
+   "seed": 2,
+   "condition": "split",
+   "owned": [
+    "left"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 18,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 0,
+    "right": 0,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 1,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "lane_dash",
+   "seed": 2,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 27,
+     "actions": 27,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 8,
+    "right": 4,
+    "up": 6,
+    "down": 9
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0667
+  },
+  {
+   "game": "lane_dash",
+   "seed": 3,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 45,
+     "actions": 10,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 38,
+     "actions": 13,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 11,
+    "right": 12,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.5333
+  },
+  {
+   "game": "lane_dash",
+   "seed": 3,
+   "condition": "split",
+   "owned": [
+    "left"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 21,
+     "actions": 1,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 0,
+    "right": 1,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 2,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0333
+  },
+  {
+   "game": "lane_dash",
+   "seed": 3,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 15,
+     "actions": 15,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 3,
+    "right": 5,
+    "up": 3,
+    "down": 4
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "lane_dash",
+   "seed": 4,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 51,
+     "actions": 12,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 5,
+    "right": 5,
+    "up": 2,
+    "down": 0
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.2667
+  },
+  {
+   "game": "lane_dash",
+   "seed": 4,
+   "condition": "split",
+   "owned": [
+    "up"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 33,
+     "actions": 5,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 2,
+    "right": 3,
+    "up": 0,
+    "down": 0
+   },
+   "refused": 1,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.1333
+  },
+  {
+   "game": "lane_dash",
+   "seed": 4,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 33,
+     "actions": 33,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 7,
+    "right": 7,
+    "up": 12,
+    "down": 7
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0333
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 0,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1312,
+     "actions": 732,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1529,
+     "actions": 815,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1522,
+     "actions": 644,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1611,
+     "actions": 956,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 1557,
+    "right": 1588,
+    "space": 2
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 0,
+   "condition": "split",
+   "owned": [
+    "space"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 3720,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 0,
+    "right": 0,
+    "space": 0
+   },
+   "refused": 14969,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 0,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 449,
+     "actions": 449,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 145,
+    "right": 164,
+    "space": 140
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0781
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 1,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1080,
+     "actions": 648,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 2858,
+     "actions": 1388,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 888,
+     "actions": 410,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 3170,
+     "actions": 1686,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 2217,
+    "right": 1913,
+    "space": 2
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 1,
+   "condition": "split",
+   "owned": [
+    "space"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 3720,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 0,
+    "right": 0,
+    "space": 0
+   },
+   "refused": 14969,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 1,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 282,
+     "actions": 282,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 94,
+    "right": 96,
+    "space": 92
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0469
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 2,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1217,
+     "actions": 380,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1729,
+     "actions": 952,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1211,
+     "actions": 632,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 3704,
+     "actions": 1757,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 1899,
+    "right": 1820,
+    "space": 2
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 2,
+   "condition": "split",
+   "owned": [
+    "space"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 3720,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 0,
+    "right": 0,
+    "space": 0
+   },
+   "refused": 14969,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 2,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 309,
+     "actions": 309,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 101,
+    "right": 110,
+    "space": 98
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0625
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 3,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 894,
+     "actions": 407,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 2074,
+     "actions": 1156,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1824,
+     "actions": 943,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 3285,
+     "actions": 1875,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 2191,
+    "right": 2188,
+    "space": 2
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": true,
+   "progress": 1.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 3,
+   "condition": "split",
+   "owned": [
+    "space"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 3720,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 0,
+    "right": 0,
+    "space": 0
+   },
+   "refused": 14969,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 3,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 664,
+     "actions": 664,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 234,
+    "right": 208,
+    "space": 222
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.1094
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 4,
+   "condition": "assist",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1173,
+     "actions": 601,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 2446,
+     "actions": 1086,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": true,
+     "ended": "done",
+     "turns": 1837,
+     "actions": 918,
+     "done_by": "game_progress"
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 1930,
+     "done_by": ""
+    }
+   ],
+   "key_use": {
+    "left": 2285,
+    "right": 2248,
+    "space": 2
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.9688
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 4,
+   "condition": "split",
+   "owned": [
+    "space"
+   ],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (2/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (3/4)",
+     "done": false,
+     "ended": "turn_limit",
+     "turns": 3750,
+     "actions": 0,
+     "done_by": ""
+    },
+    {
+     "request": "make the next quarter of progress (4/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 3720,
+     "actions": 0,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 0,
+    "right": 0,
+    "space": 0
+   },
+   "refused": 14969,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.0
+  },
+  {
+   "game": "brick_breaker",
+   "seed": 4,
+   "condition": "random",
+   "owned": [],
+   "parts": [
+    {
+     "request": "make the next quarter of progress (1/4)",
+     "done": false,
+     "ended": "done",
+     "turns": 607,
+     "actions": 607,
+     "done_by": "game_progress"
+    }
+   ],
+   "key_use": {
+    "left": 206,
+    "right": 188,
+    "space": 213
+   },
+   "refused": 0,
+   "breaches": 0,
+   "won": false,
+   "progress": 0.125
+  }
+ ]
+}

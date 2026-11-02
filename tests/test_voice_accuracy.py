@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import os
 import shutil
 import wave
 from pathlib import Path
@@ -10,7 +11,7 @@ import pytest
 
 from bench import voice_accuracy as va
 
-CLIPS_MD = Path(r"F:\PlayFellow\data\voice-clips-2026-11-02\RECORD-THESE.md")
+CLIPS_MD = Path(os.environ.get("PLAYFELLOW_VOICE_CLIPS", "missing")) / "RECORD-THESE.md"
 
 
 def test_the_recording_list_has_twenty_lines_in_three_groups():

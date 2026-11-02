@@ -108,7 +108,7 @@ def main(argv=None) -> int:
         brain, model = MuseBrain(DEFAULT_MODEL, os.environ["MODEL_API_KEY"]), DEFAULT_MODEL
     else:
         from bench.open_weights_brain import OPEN_MODEL, OpenWeightsBrain
-        brain, model = OpenWeightsBrain(os.environ.get("OPEN_BRAIN_API_KEY") or os.environ["BASETEN_API_KEY"]), OPEN_MODEL
+        brain, model = OpenWeightsBrain(os.environ["OPEN_BRAIN_API_KEY"]), OPEN_MODEL
     rows, spent = [], 0.0
     for seed in range(args.seeds):
         for game_key, request, truth in TASKS:

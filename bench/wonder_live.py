@@ -19,7 +19,7 @@ from bench.access_bench import _commit
 
 ROOT = Path(__file__).resolve().parents[1]
 TITLES = {"maze_chase": "Maze Chase", "key_caves": "Key Caves", "top_racer": "Top Racer", "action_quest": "Action Quest",
-          "ray_maze": "Ray Maze", "mini_football": "Mini Football", "tiny_kingdom": "Tiny Kingdom"}
+          "ray_maze": "Ray Maze", "tiny_kingdom": "Tiny Kingdom"}
 
 
 def first_sight_game(brain, game_key: str, engine: Path) -> dict:

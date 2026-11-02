@@ -4,23 +4,23 @@
  "condition": "muse-none",
  "brain": "muse",
  "model": "muse-spark-1.3",
- "note": "R1 Muse Spark alone, 15 games, owner yes 2 Nov 04:55 marks=none; skills=False; effort=minimal; turns<= 20; the engine's public arena pack (unskinned).",
+ "note": "R1 Muse Spark alone, 15 games, owner yes 2 Nov 04:55 marks=none; skills=False; effort=minimal; turns<= 20; the engine's public arena pack (unskinned). | 2 Nov: the engine's 15th arena game (a ball game) is left out of this public repository under the event's topic rules; its 2 episodes were removed from this file and the summary recomputed from the remaining episodes.",
  "overall": {
-  "episodes": 30,
+  "episodes": 28,
   "wins": 0,
   "win_rate": 0.0,
   "wilson95": [
    0.0,
-   0.114
+   0.121
   ],
-  "mean_progress": 0.172,
-  "mean_turns": 14.83,
-  "mean_seconds": 53.0,
-  "invalid_plan_rate": 0.101,
-  "tokens_in": 800950,
-  "tokens_cached": 431664,
-  "tokens_out": 164381,
-  "cost_usd": 1.69981,
+  "mean_progress": 0.185,
+  "mean_turns": 14.46,
+  "mean_seconds": 51.17,
+  "invalid_plan_rate": 0.104,
+  "tokens_in": 734298,
+  "tokens_cached": 392057,
+  "tokens_out": 148049,
+  "cost_usd": 1.54708,
   "tokens_per_win": null,
   "usd_per_win": null,
   "local_help_episodes": 0,
@@ -258,27 +258,6 @@
    "local_help_episodes": 0,
    "skill_steps_total": 0
   },
-  "mini_football": {
-   "episodes": 2,
-   "wins": 0,
-   "win_rate": 0.0,
-   "wilson95": [
-    0.0,
-    0.658
-   ],
-   "mean_progress": 0.0,
-   "mean_turns": 20.0,
-   "mean_seconds": 78.65,
-   "invalid_plan_rate": 0.075,
-   "tokens_in": 66652,
-   "tokens_cached": 39607,
-   "tokens_out": 16332,
-   "cost_usd": 0.15273,
-   "tokens_per_win": null,
-   "usd_per_win": null,
-   "local_help_episodes": 0,
-   "skill_steps_total": 0
-  },
   "ray_maze": {
    "episodes": 2,
    "wins": 0,
@@ -358,10 +337,10 @@
    "fallback": 0.0
   },
   "progress_iqm": {
-   "estimate": 0.0848,
+   "estimate": 0.1015,
    "ci95": [
-    0.0702,
-    0.0993
+    0.086,
+    0.1171
    ]
   }
  },
@@ -761,42 +740,6 @@
    "cost_usd": 0.06149175000000001,
    "seconds": 45.26,
    "invalid_plans": 0,
-   "ended": "turn_cap",
-   "extra": {}
-  },
-  {
-   "game": "mini_football",
-   "seed": 0,
-   "won": false,
-   "lost": false,
-   "progress": 0.0,
-   "turns": 20,
-   "ticks": 35,
-   "calls": 20,
-   "tokens_in": 33415,
-   "tokens_cached": 19171,
-   "tokens_out": 8140,
-   "cost_usd": 0.07636375,
-   "seconds": 73.4,
-   "invalid_plans": 1,
-   "ended": "turn_cap",
-   "extra": {}
-  },
-  {
-   "game": "mini_football",
-   "seed": 1,
-   "won": false,
-   "lost": false,
-   "progress": 0.0,
-   "turns": 20,
-   "ticks": 39,
-   "calls": 20,
-   "tokens_in": 33237,
-   "tokens_cached": 20436,
-   "tokens_out": 8192,
-   "cost_usd": 0.07636225000000002,
-   "seconds": 83.89,
-   "invalid_plans": 2,
    "ended": "turn_cap",
    "extra": {}
   },

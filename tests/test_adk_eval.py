@@ -48,7 +48,7 @@ def test_adks_rows_are_read_one_per_case_and_metric():
 
 def _has_adk() -> bool:
     try:
-        return importlib.util.find_spec("google.adk") is not None
+        return importlib.util.find_spec("google.adk") is not None and importlib.util.find_spec("vertexai") is not None  # the eval extras too
     except ModuleNotFoundError:
         return False
 

@@ -25,7 +25,7 @@ MODEL = "muse-wonder-1.0"
 USD_IN, USD_OUT = 4e-6, 20e-6
 CHANGE = 2.0  # mean absolute pixel change (0-255) above which a key "did something"
 SYSTEM = ("You see the first frames of a computer game you have never seen, and its window title. Plan how a player would control it. "
-          "Answer ONLY with JSON: {\"genre\": one of platformer, racing, puzzle, shooter, sports, rpg, strategy, maze, fighting, other, "
+          "Answer ONLY with JSON: {\"genre\": one of platformer, racing, puzzle, shooter, rpg, strategy, maze, fighting, other, "
           "\"goal\": one sentence, \"actions\": [{\"name\": UPPER_CASE_NAME, \"keys\": key or list of keys, \"says\": a few words}]}. "
           "Use keyboard key names such as up, down, left, right, space, enter, esc, a to z, 0 to 9. Never use f9 or f12. "
           "List only actions a player of this kind of game needs.")

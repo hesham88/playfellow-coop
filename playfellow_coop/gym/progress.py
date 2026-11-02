@@ -21,7 +21,6 @@ PROGRESS = {
     # the other seven built-in games (2 Nov): each stays below 1.0 until the game's own win; the gym adds the rest at the win
     "action_quest": lambda p0, p: min(0.99, _frac(p0["boss_hp"] - p["boss_hp"], p0["boss_hp"])),
     "mini_fighter": lambda p0, p: min(0.99, 0.5 * p["rounds"][0] + 0.45 * _frac(p0["cpu_hp"] - p["cpu_hp"], p0["cpu_hp"])),
-    "mini_football": lambda p0, p: min(0.99, _frac(p["you"] - p["computer"], 2)),
     "ray_maze": lambda p0, p: 0.8 * _frac(p["hits"], p["targets"]),
     "tiny_kingdom": lambda p0, p: 0.9 * _frac(p["wave"], p["waves"]) if p["castle"] > 0 else 0.0,
     "top_racer": lambda p0, p: 0.95 * _frac(p["lap"] - p0["lap"], p["laps"]),

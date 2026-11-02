@@ -1,11 +1,12 @@
 """Fetch the open-source games the benchmarks play, each at a pinned commit, into a cache folder outside the repository (nothing is committed).
 
-    python bench/fetch_osg.py [--dir F:/PlayFellow/dev/cache/osg]
+    python bench/fetch_osg.py [--dir <folder>]   (default: $PLAYFELLOW_OSG_DIR or ~/.cache/playfellow-osg)
 
 2048 by Gabriele Cirulli, MIT licence: https://github.com/gabrielecirulli/2048"""
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 from pathlib import Path
 
@@ -14,7 +15,7 @@ GAMES = {"2048": ("https://github.com/gabrielecirulli/2048.git", "478b6ec346e378
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--dir", default=r"F:\PlayFellow\dev\cache\osg")
+    ap.add_argument("--dir", default=os.environ.get("PLAYFELLOW_OSG_DIR") or str(Path.home() / ".cache" / "playfellow-osg"))
     args = ap.parse_args(argv)
     root = Path(args.dir)
     root.mkdir(parents=True, exist_ok=True)
