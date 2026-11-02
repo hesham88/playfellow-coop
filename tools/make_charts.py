@@ -267,6 +267,16 @@ def unmatched_numbers(svg_path: Path, allowed: set[str]) -> list[str]:
     return bad
 
 
+def unaccompanied_saved_lines(svg_path: Path) -> list[str]:
+    """Return any visible text lines that contain the word 'saved' without 'computed'."""
+    bad: list[str] = []
+    for line in visible_lines(svg_path):
+        low = line.lower()
+        if "saved" in low and "computed" not in low:
+            bad.append(line)
+    return bad
+
+
 def _build_arena_wins_and_cost(arena_rows: list[tuple[str, dict[str, Any]]], out_dir: Path) -> dict[str, Path]:
     c = Canvas()
     c.rect(48, 36, W - 96, H - 72, BG_1, stroke=LINE, radius=18, stroke_width=2)
@@ -357,11 +367,11 @@ def _build_arena_wins_and_cost(arena_rows: list[tuple[str, dict[str, Any]]], out
 def _build_prompt_cache_savings(cache_data: dict[str, Any], arena_lookup: dict[str, dict[str, Any]], out_dir: Path) -> dict[str, Path]:
     c = Canvas()
     c.rect(48, 36, W - 96, H - 72, BG_1, stroke=LINE, radius=18, stroke_width=2)
-    c.text(96, 98, "Prompt Cache Reuse and Spend Reduction Across Paid Runs", size=38, fill=INK, bold=True)
+    c.text(96, 98, "Prompt Cache Reuse and Computed vs Recorded Spend Across Paid Runs", size=38, fill=INK, bold=True)
     c.text(
         96,
         142,
-        f"Measured from saved result files ({ASSISTED_LABEL} vs {MODEL_ALONE_LABEL}).",
+        f"Measured from committed result files ({ASSISTED_LABEL} vs {MODEL_ALONE_LABEL}).",
         size=22,
         fill=INK_2,
     )
@@ -417,15 +427,15 @@ def _build_prompt_cache_savings(cache_data: dict[str, Any], arena_lookup: dict[s
             c.text(
                 bar_x,
                 y + 144,
-                f"Documented price: ${charged:.6f} charged vs ${without_cache:.6f} uncached",
-                size=20,
+                f"at documented prices, caching would charge ${charged:.4f} instead of ${without_cache:.4f} (computed); the run's own ledger recorded ${recorded_usd:.4f}",
+                size=17,
                 fill=INK,
             )
             c.text(
                 bar_x,
                 y + 180,
-                f"Saved by prompt cache: ${saved:.6f}   (budget cap ledger: ${recorded_usd:.6f})",
-                size=20,
+                f"Computed difference at documented prices: ${saved:.6f} (${charged:.6f} vs ${without_cache:.6f}, computed)",
+                size=18,
                 fill=LIME,
                 bold=True,
             )
@@ -433,8 +443,8 @@ def _build_prompt_cache_savings(cache_data: dict[str, Any], arena_lookup: dict[s
             c.text(
                 bar_x,
                 y + 156,
-                f"Recorded spend in budget ledger: ${recorded_usd:.5f}",
-                size=20,
+                f"price for cached tokens not published; the run's own ledger recorded ${recorded_usd:.5f}",
+                size=19,
                 fill=INK,
             )
 

@@ -98,3 +98,19 @@ def test_every_arena_row_names_its_test_set_and_result_file(tmp_path):
         "random-20261027.json",
     ):
         assert fname in arena_text, fname
+
+
+def test_cache_chart_states_computed_documented_prices_and_rejects_saved_without_computed(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    cache_svg = written["prompt-cache-savings"]["svg"]
+    cache_text = make_charts.visible_text(cache_svg)
+    assert "at documented prices, caching would charge $0.8737 instead of $1.1877 (computed); the run's own ledger recorded $1.1877" in cache_text
+    assert "price for cached tokens not published" in cache_text
+    for stem, paths in written.items():
+        assert make_charts.unaccompanied_saved_lines(paths["svg"]) == [], stem
+    tampered = tmp_path / "bad_cache.svg"
+    tampered.write_text(
+        cache_svg.read_text(encoding="utf-8").replace("</svg>", "<text x='10' y='10'>Saved by prompt cache: $0.314</text></svg>"),
+        encoding="utf-8",
+    )
+    assert make_charts.unaccompanied_saved_lines(tampered) != []
