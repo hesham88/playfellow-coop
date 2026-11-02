@@ -4,6 +4,8 @@ Each user message names an arena game and a seed ("Play snake, seed 3."). The ag
 tool-trajectory score reads), plays that skill to the end on the gym from pixels, returns the tool's result (won, steps), and answers in one sentence ("I won
 snake." or "I lost snake."). The chooser is the game's own skill (the scripted chooser of our benchmark rows); PF_ADK_CHOOSER=random picks among all five
 skills instead, a control that must score lower. Imported only by ADK's evaluator in the ADK environment (AD1), never by the app; no model, no network.
+
+Known limit: on the private skinned engine the snake skill loses through the gym, because the oracle does not pass the calibrated looks.
 """
 from __future__ import annotations
 
@@ -38,6 +40,8 @@ def play(game: str, seed: int, skill_name: str) -> dict:
     try:
         card = run_oracle(env, by_name[skill_name](), MAX_STEPS)
         return {"won": bool(card.won), "steps": int(card.steps)}
+    except ImportError:
+        raise  # no engine installed is a setup failure, never a lost game: the evaluator must say so, not "I lost snake."
     except Exception as error:  # noqa: BLE001 (a wrong skill may break on a game it does not know: that is a loss, not a crash)
         return {"won": False, "steps": 0, "error": type(error).__name__}
 

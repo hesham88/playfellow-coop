@@ -54,6 +54,21 @@ def _has_adk() -> bool:
 
 
 @pytest.mark.skipif(not _has_adk(), reason="ADK lives in its own environment (AD1): run with the python of `tools/adk_env.py --venv <folder>`")
+def test_a_missing_engine_raises_instead_of_reporting_a_loss(monkeypatch):
+    import playfellow_coop.gym.oracle as oracle
+
+    from playfellow_coop.adk_app.arena_eval.agent import play
+    from playfellow_coop.skills.registry import SKILLS
+
+    def no_engine(env, skill, steps):
+        raise ModuleNotFoundError("No module named 'practice_arena'")
+
+    monkeypatch.setattr(oracle, "run_oracle", no_engine)
+    with pytest.raises(ModuleNotFoundError):
+        play("snake", 0, SKILLS["snake"].name)  # a setup failure must never come back as "I lost snake."
+
+
+@pytest.mark.skipif(not _has_adk(), reason="ADK lives in its own environment (AD1): run with the python of `tools/adk_env.py --venv <folder>`")
 @pytest.mark.filterwarnings("ignore:.*EXPERIMENTAL.*:UserWarning")  # ADK announces its evaluator's user simulator as experimental
 @pytest.mark.filterwarnings("ignore:The `plugins` argument is deprecated:DeprecationWarning")  # ADK's evaluator passes it to ADK's own runner; nothing else is ignored
 def test_adks_evaluator_scores_a_real_case_from_our_export(tmp_path):

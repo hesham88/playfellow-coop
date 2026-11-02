@@ -111,3 +111,5 @@ Output:
 ```
 
 Every win in this repo's result files is labelled **assisted** (a local skill helped) or **model alone**; nothing here claims a level above L0 on the Practice Arena.
+
+The ADK evaluator (`playfellow_coop/adk_app/arena_eval/run.py`, run in the pinned ADK environment from `tools/adk_env.py`) also needs the engine installed, exactly as in the README install step: clone the engine at the `pre-hackathon` tag beside this repo and `pip install -e playfellow`, or set `PLAYFELLOW_ENGINE` to its `software` folder. Without an engine it now stops as a setup failure; it never reports a lost game.
