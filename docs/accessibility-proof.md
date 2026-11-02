@@ -97,9 +97,10 @@ File: `results/access/osg-2048-20261102.json`.
 | Built-in (no model) | 0/28 | 0.073 | $0 |
 | Muse Spark 1.3 alone | 0/28 | 0.185 | $1.55 |
 | Muse Spark Open alone (Baseten) | 0/28 | 0.125 | $0.75 |
+| Muse Spark 1.3 + SAM 3.1 marks | 0/28 | 0.217 | $5.98 |
 
 14 games, 2 seeds, 20 turns per game. The engine has 15 built-in games; the 15th, a ball game, is left out of this repository under the
-event's topic rules. Files: `results/fifteen/*.json`. With a local skill on the 5 games that have one, the same model wins 15/15
+event's topic rules. With SAM 3.1 marks (generic phrases: the player, coins or items, enemies, a door or exit) Muse made more progress on 6 games, less on 4 and the same on 4: slightly higher on average, mixed per game, and with 2 seeds not a significant difference. Files: `results/fifteen/*.json`. With a local skill on the 5 games that have one, the same model wins 15/15
 (assisted): `results/k-lane/muse-skills-pt1.json` ($0.04), and Baseten 14/15 (`results/k-lane/baseten-skills.json`).
 
 ## Not measured, and not claimed
@@ -107,4 +108,4 @@ event's topic rules. Files: `results/fifteen/*.json`. With a local skill on the 
 - No disabled player has used this build; impact is argued from the design and the measures above, not from a study.
 - Voice accuracy waits for real recordings.
 - The model's "done" was right 3 of 3 times in the strict live runs: too few claims to call it reliable.
-- One run with SAM marks on all 15 games was lost to a network outage on 2 Nov and is not reported.
+- A first SAM run was lost to a network outage on 2 Nov and discarded; the run above is the repeat.
