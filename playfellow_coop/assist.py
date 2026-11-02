@@ -122,6 +122,50 @@ def model_said_done(request: str, parts) -> str | bool:
     return "model_said" if getattr(getattr(parts, "brain", None), "said_done", False) is True else False
 
 
+VERIFY_SYSTEM = ("A player asked their AI game buddy to do one part of the game for them. You see two pictures of the game: the first from "
+                 "when they asked, the second from now. Decide only whether that part is finished now. Answer in the usual JSON with no "
+                 "actions and \"done\": true only if the second picture clearly shows the part finished; otherwise \"done\": false.")
+
+
+class VerifiedDone:
+    """The live check with a second look: a "done" from the planner counts only when one more question, with the picture from when the
+    player asked and the picture now, also says the part is finished. One extra call per claim, none without a claim. Recorded as
+    "model_verified"; every claim that was not confirmed is counted in `refused` and the part goes on."""
+
+    def __init__(self, grab: Callable[[], Any]):
+        self.grab = grab
+        self.start = None
+        self.refused = 0
+        self.confirmed = 0
+
+    def on_begin(self, parts) -> None:
+        try:
+            self.start = self.grab()
+        except Exception:
+            self.start = None
+
+    def __call__(self, request: str, parts):
+        brain = getattr(parts, "brain", None)
+        if getattr(brain, "said_done", False) is not True:
+            return False
+        now = self.grab()
+        pictures = [p for p in (self.start, now) if p is not None]
+        try:
+            raw = brain.ask(VERIFY_SYSTEM, f"The player asked: {request}. Is that part finished in the second picture?", pictures)
+        except Exception:  # no answer is not a yes
+            raw = ""
+        from reply import extract_json
+        data = extract_json(raw) if isinstance(raw, str) else None
+        if isinstance(data, dict) and data.get("done") is True:
+            self.confirmed += 1
+            return "model_verified"
+        self.refused += 1
+        forget = getattr(brain, "forget_done", None)
+        if callable(forget):
+            forget()
+        return False
+
+
 class Assist:
     """One request at a time: begin, count each buddy turn, finish when done or out of turns."""
 
@@ -143,6 +187,9 @@ class Assist:
         forget = getattr(getattr(parts, "brain", None), "forget_done", None)
         if callable(forget):
             forget()  # an old "done" belongs to the last part, not this one
+        on_begin = getattr(self._done, "on_begin", None)
+        if callable(on_begin) and parts is not None:
+            on_begin(parts)  # the second look keeps the picture from when the player asked
         self.request = " ".join(str(request).split())[:300]
         self._turns = self._actions = 0
         self._since = self._clock()

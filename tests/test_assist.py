@@ -264,10 +264,16 @@ def test_a_done_flag_from_before_the_request_does_not_end_the_next_part():
 
 def test_the_command_line_assist_tells_the_planner_the_done_rule_and_wraps_the_brain():
     from playfellow_coop import __main__ as entry
-    from playfellow_coop.assist import DONE_RULE, DoneSpotter, model_said_done
+    from playfellow_coop.assist import DONE_RULE, DoneSpotter, VerifiedDone
     from tests.test_main import Parts
-    parts, _ = entry.build(["--assist"], build_parts=lambda cfg: Parts(), key_loader=lambda: None)
-    assert isinstance(parts.brain, DoneSpotter) and parts.assist._done is model_said_done
+
+    def builder(cfg):
+        p = Parts()
+        p.screen = type("S", (), {"find": lambda self, t: None, "grab": lambda self, b: None})()
+        return p
+
+    parts, _ = entry.build(["--assist"], build_parts=builder, key_loader=lambda: None)
+    assert isinstance(parts.brain, DoneSpotter) and isinstance(parts.assist._done, VerifiedDone)
     assert entry.assist_system("base") == "base\n\n" + DONE_RULE and "done" in DONE_RULE
 
 
@@ -317,3 +323,45 @@ def test_the_command_line_assist_asks_the_brain_for_the_done_flag():
 
     parts, _ = entry.build(["--assist"], build_parts=builder, key_loader=lambda: None)
     assert parts.brain.flag is True
+
+
+# ---- a second look before "done" counts: two pictures, when the player asked and now ------------------------------------------------------
+def test_a_done_claim_counts_only_when_a_second_look_at_before_and_now_agrees():
+    from playfellow_coop.assist import DoneSpotter, VerifiedDone
+    parts, cfg = make()
+    asked = []
+
+    def ask(system, text, images):
+        asked.append((system, text, len(images)))
+        if "finished" in system:  # the second look: says no the first time, yes the second
+            return json.dumps({"thought": "", "say": "", "actions": [], "done": sum("finished" in s for s, _, _ in asked) >= 2})
+        return json.dumps({"thought": "", "say": "", "actions": [MOVE], "done": True})  # the planner claims done every turn
+
+    parts.brain.ask = ask
+    parts.brain = DoneSpotter(parts.brain)
+    check = VerifiedDone(grab=lambda: parts.screen.grab(parts.screen.find("")))
+    handover = HandOver(parts.hands, parts.safety)
+    parts.assist = Assist(max_turns=8, done=check)
+    queue, ticks = CommandQueue(), {"n": 0}
+
+    def wait(seconds):
+        ticks["n"] += 1
+        if ticks["n"] == 1:
+            queue.put("take me to the door")
+        return ticks["n"] >= 12
+
+    session.play_session(parts, cfg, "system", StageTimer(), handover, wait=wait, commands=queue)
+    record = parts.assist.log[-1]
+    assert record["done"] is True and record["done_by"] == "model_verified" and record["turns"] == 2
+    looks = [a for a in asked if "finished" in a[0]]
+    assert len(looks) == 2 and all(n == 2 for _, _, n in looks)  # two pictures each time: when asked, and now
+    assert all("take me to the door" in text for _, text, _ in looks)
+    assert check.refused == 1  # the first claim was not confirmed and the part went on
+
+
+def test_without_a_claim_no_second_look_is_spent():
+    from playfellow_coop.assist import VerifiedDone
+    calls = []
+    parts = type("P", (), {"brain": type("B", (), {"said_done": False, "ask": lambda self, *a: calls.append(a)})()})()
+    check = VerifiedDone(grab=lambda: None)
+    assert check("x", parts) is False and calls == []

@@ -43,7 +43,7 @@ def part(game_key: str, request: str, truth, seed: int, brain, engine_dir: Path,
 
     from playfellow_coop import session
     from playfellow_coop.__main__ import assist_system
-    from playfellow_coop.assist import Assist, DoneSpotter, model_said_done
+    from playfellow_coop.assist import Assist, DoneSpotter, VerifiedDone
     from playfellow_coop.handover import HandOver
     from playfellow_coop.stage_timer import StageTimer
     from playfellow_coop.voice import CommandQueue
@@ -60,7 +60,8 @@ def part(game_key: str, request: str, truth, seed: int, brain, engine_dir: Path,
     parts.card, parts.screen, parts.hands = card, ar.VirtualScreen(game), ar.VirtualHands(game, card)
     parts.safety, parts.memory = Safety(60, part_turns + 5), Memory(cfg.memory_steps)
     handover = HandOver(parts.hands, parts.safety)
-    parts.assist = Assist(max_turns=part_turns, done=model_said_done)
+    check = VerifiedDone(grab=game.render)  # as the command line does: a claim counts after a second look at before and now
+    parts.assist = Assist(max_turns=part_turns, done=check)
     queue, state = CommandQueue(), {"tick": 0, "p0": None}
 
     def wait(_seconds):
@@ -76,7 +77,8 @@ def part(game_key: str, request: str, truth, seed: int, brain, engine_dir: Path,
     record = dict(parts.assist.log[-1]) if parts.assist.log else {"request": request, "done": False, "ended": "never_started", "turns": 0}
     real = bool(state["p0"] is not None and truth(state["p0"], game.progress()))
     keys = {k for a in card.actions.values() for k in a.keys}
-    return {"game": game_key, "seed": seed, "request": request, "model_said_done": record.get("done_by") == "model_said",
+    return {"game": game_key, "seed": seed, "request": request, "model_said_done": record.get("done_by") in ("model_said", "model_verified"),
+            "claims_not_confirmed": check.refused,
             "really_done": real, "turns": record.get("turns", 0), "ended": record.get("ended"),
             "breaches": sum(1 for k in parts.hands.pressed if k not in keys), "cost_usd": round(float(getattr(parts, "_spent", 0.0) or 0.0) - usage_before, 6),
             "back_with_player": handover.human_has_controls}
@@ -92,7 +94,8 @@ def summarise(rows: list[dict]) -> dict:
             "done_claim_precision": round(len(true_claims) / len(said), 4) if said else None,
             "done_claim_precision_95": wilson(len(true_claims), len(said)),
             "missed_done": len(missed), "back_with_player": sum(r["back_with_player"] for r in rows),
-            "breaches": sum(r["breaches"] for r in rows), "cost_usd": round(sum(r["cost_usd"] for r in rows), 4)}
+            "breaches": sum(r["breaches"] for r in rows), "cost_usd": round(sum(r["cost_usd"] for r in rows), 4),
+            "claims_not_confirmed_by_the_second_look": sum(r.get("claims_not_confirmed", 0) for r in rows)}
 
 
 def main(argv=None) -> int:
