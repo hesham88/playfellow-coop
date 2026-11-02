@@ -169,10 +169,11 @@ class VerifiedDone:
 class Assist:
     """One request at a time: begin, count each buddy turn, finish when done or out of turns."""
 
-    def __init__(self, max_turns: int = 12, done: Callable[[str, Any], bool] | None = None, clock: Callable[[], float] = time.monotonic):
+    def __init__(self, max_turns: int = 12, done: Callable[[str, Any], bool] | None = None, clock: Callable[[], float] = time.monotonic, min_words: int = 1):
         if max_turns < 1:
             raise AssistError(tr("An assisted part needs at least one turn.", "الجزء المساعَد يحتاج دورة واحدة على الأقل."))
         self.max_turns, self._done, self._clock = max_turns, done, clock
+        self.min_words = max(1, int(min_words))  # a stray voice fragment ("click") shorter than this does not start a part
         self.request: str | None = None
         self.log: list[dict] = []
         self._turns = self._actions = 0

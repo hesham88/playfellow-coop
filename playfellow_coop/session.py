@@ -293,6 +293,9 @@ def play_session(parts, settings, system: str, timer: StageTimer, handover: Hand
                 if assist.active:  # the player took the controls back (F9 or "I've got it") before the part was over
                     assist.end("player_took", safety.calls)
                 words = commands.drain() if commands is not None else []
+                if words and len(" ".join(words).split()) < assist.min_words:  # a stray fragment: say so, do not take the controls
+                    on_event("status", tr(f"Too short to act on: \"{' '.join(words)}\". Say the whole request.", f"قصير جدًا: «{' '.join(words)}». قل الطلب كاملًا."))
+                    words = []
                 if words:  # a request: the buddy takes this one part, and the planner hears the words as the player's own
                     for line in words:
                         commands.put(line)

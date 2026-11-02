@@ -142,7 +142,7 @@ def build(argv: list[str] | None = None, build_parts: Callable = play.build_part
             parts.brain.set_done_flag(True)  # a strict answer schema must have room for "done", or the model can never say it
         parts.brain = DoneSpotter(parts.brain)  # the live "is the part done" check: the planner says so, as the JSON value true
         check = VerifiedDone(grab=lambda: parts.screen.grab(parts.screen.find(cfg.game_window)))  # a "done" counts only after a second look at before and now
-        parts.assist = Assist(max_turns=args.assist, done=check)
+        parts.assist = Assist(max_turns=args.assist, done=check, min_words=2 if getattr(args, "talk_key", "") else 1)  # by voice, a one-word fragment does not start a part
         parts.debrief_mode = args.debrief
     if args.dry_run:
         from playfellow_coop.dry_run import DryRunHands

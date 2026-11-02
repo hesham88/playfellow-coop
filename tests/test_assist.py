@@ -365,3 +365,22 @@ def test_without_a_claim_no_second_look_is_spent():
     parts = type("P", (), {"brain": type("B", (), {"said_done": False, "ask": lambda self, *a: calls.append(a)})()})()
     check = VerifiedDone(grab=lambda: None)
     assert check("x", parts) is False and calls == []
+
+
+def test_a_one_word_fragment_does_not_start_a_part_but_a_real_request_does():
+    parts, cfg = make()
+    handover = HandOver(parts.hands, parts.safety)
+    parts.assist = Assist(max_turns=2, min_words=2)
+    queue, ticks, said = CommandQueue(), {"n": 0}, []
+
+    def wait(seconds):
+        ticks["n"] += 1
+        if ticks["n"] == 1:
+            queue.put("click")
+        if ticks["n"] == 4:
+            queue.put("run right and jump")
+        return ticks["n"] >= 12
+
+    session.play_session(parts, cfg, "system", StageTimer(), handover, wait=wait, commands=queue, on_event=lambda k, d: said.append((k, d)))
+    assert [r["request"] for r in parts.assist.log] == ["run right and jump"]
+    assert any("click" in str(d) for k, d in said if k == "status")  # the player is told it was too short to act on
