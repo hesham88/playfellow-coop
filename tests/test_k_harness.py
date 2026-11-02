@@ -102,6 +102,27 @@ def test_the_guardrails_see_keys_already_held_across_turns():
     assert plan.steps == [] and any("already held" in n for n in plan.notes)
 
 
+# ---------- K-lane result honesty: a paid run that reached no model is void ----------
+
+PAID_BRAINS = frozenset({"muse", "open"})  # brains whose calls are billed; the free ones (builtin, random, scripted) read 0 tokens honestly
+
+
+def test_a_paid_result_with_no_tokens_must_say_it_is_void():
+    import json
+    from pathlib import Path
+
+    offenders = []
+    for path in sorted((Path(__file__).resolve().parents[1] / "results").rglob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            continue
+        overall = data.get("overall") or {}
+        if data.get("brain") in PAID_BRAINS and (overall.get("episodes") or 0) > 0 and (overall.get("tokens_in") or 0) == 0 and not data.get("void"):
+            offenders.append(path.name)
+    assert not offenders, f"paid result files with episodes but no tokens and no void mark: {offenders}"
+
+
 # ---------- S2: card steps through the guardrails, one grid mapper ----------
 
 @dataclass
