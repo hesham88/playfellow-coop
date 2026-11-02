@@ -63,3 +63,44 @@ def evaluate(marker, games, source: str) -> dict:
             "latency_p50_s": latencies[max(0, math.ceil(0.5 * len(latencies)) - 1)] if latencies else "not measured",
             "note": ("this run checks the harness only: the answers came from a fake server built from the arena's own truth, "
                      "so the scores say nothing about SAM") if "fake" in source else "measured against the arena's own truth"}
+
+
+# ---- stable IDs across frames ---------------------------------------------------------------------------------------------------------
+def arena_objects(game) -> dict[str, tuple[str, tuple[int, int, int, int]]]:
+    """Every real thing on screen under a name that stays the same from frame to frame: name -> (mark kind, pixel box)."""
+    out = {"me": ("me", tile_box(game.player)), "door": ("door", tile_box(game.door))}
+    for cell in sorted(game.coins):
+        out[f"coin@{cell[0]},{cell[1]}"] = ("reward", tile_box(cell))
+    if game.key:
+        out[f"key@{game.key[0]},{game.key[1]}"] = ("reward", tile_box(game.key))
+    return out
+
+
+def _centre(box) -> tuple[float, float]:
+    return (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+
+
+def id_stability(marker, frames, source: str, tolerance_px: float = 40.0) -> dict:
+    """Run the marker (with its tracker) over consecutive frames. For each real thing seen in two frames in a row, check that the nearest
+    track of its kind carries the same number in both. `frames` = [(picture, arena_objects(game))]."""
+    seen_ids: list[dict[str, int]] = []
+    for picture, objects in frames:
+        marker(picture)
+        tracks = list(getattr(marker.tracker, "tracks", []) or [])
+        ids = {}
+        for name, (kind, box) in objects.items():
+            cx, cy = _centre(box)
+            near = min((t for t in tracks if t.kind == kind), key=lambda t: math.hypot(_centre(t.box)[0] - cx, _centre(t.box)[1] - cy), default=None)
+            if near is not None and math.hypot(_centre(near.box)[0] - cx, _centre(near.box)[1] - cy) <= tolerance_px:
+                ids[name] = near.id
+        seen_ids.append(ids)
+    pairs = stable = 0
+    for before, after in zip(seen_ids, seen_ids[1:]):
+        for name in before.keys() & after.keys():
+            pairs += 1
+            stable += before[name] == after[name]
+    return {"source": source, "frames": len(frames), "pairs": pairs, "stable": stable,
+            "stable_rate": round(stable / pairs, 4) if pairs else None,
+            "sam_requests": getattr(marker, "calls", None), "tracked_pictures": getattr(marker, "tracked_pictures", None),
+            "note": ("this run checks the harness only: the answers came from a fake server built from the arena's own truth, "
+                     "so it says nothing about SAM") if "fake" in source else "measured against the arena's own truth"}
