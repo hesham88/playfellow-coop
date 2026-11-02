@@ -19,7 +19,28 @@ STATES = {"ready": ("ready", "جاهز"), "listening": ("listening", "أستمع
           "player": ("you have the controls", "التحكم معك"), "stopped": ("stopped", "متوقف")}
 CHIPS = (("Collect the coins", "اجمع العملات"), ("Take me to the door", "وصّلني للباب"), ("You take it", "خذها"))
 MAX_LINES = 6
-OPACITY_RANGE = (0.3, 1.0)
+OPACITY_RANGE = (0.3, 1.0)  # the lowest point of the slider is still visible: the widget is never invisible
+DEFAULT_OPACITY = 0.55  # see-through by default, over the game
+DOCK_TOP = 6  # pixels from the top edge of the screen
+
+
+def dock_rect(screen_left: int, screen_top: int, screen_width: int, width: int, height: int) -> tuple[int, int, int, int]:
+    """Where the widget sits: centred at the top of the screen the game is on."""
+    return screen_left + (screen_width - width) // 2, screen_top + DOCK_TOP, width, height
+
+
+def slide_heights(start: int, end: int, ms: int = 220, fps: int = 60) -> list[int]:
+    """The heights of a slide from start to end, eased out (fast first, gentle at the end), ending exactly on `end`."""
+    if start == end:
+        return [end]
+    frames = max(2, round(ms * fps / 1000))
+    out = []
+    for i in range(1, frames + 1):
+        t = i / frames
+        eased = 1 - (1 - t) ** 3
+        out.append(round(start + (end - start) * eased))
+    out[-1] = end
+    return out
 
 
 @dataclass(frozen=True)
@@ -35,7 +56,8 @@ class PanelModel:
         self.visible = False
         self.state = "ready"
         self.lines: deque[Line] = deque(maxlen=MAX_LINES)
-        self.opacity = 0.9
+        self.opacity = DEFAULT_OPACITY
+        self.collapsed = True  # a slim bar at the top centre until the player opens it
         self.heard_partial = ""
 
     # ---- what a view needs -------------------------------------------------------------------------------------
@@ -87,6 +109,12 @@ class PanelModel:
         if self.visible:
             self.visible = False
             self._changed()
+
+    def toggle_collapsed(self) -> bool:
+        """Open or close the widget (the bar's own button, or the summon key). Returns the new collapsed state."""
+        self.collapsed = not self.collapsed
+        self._changed()
+        return self.collapsed
 
     def set_opacity(self, value: float) -> float:
         low, high = OPACITY_RANGE
