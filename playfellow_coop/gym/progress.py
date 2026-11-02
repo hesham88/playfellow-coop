@@ -18,4 +18,12 @@ PROGRESS = {
     "key_caves": lambda p0, p: _frac((p["room"] - 1) + (0.5 if p["has_key"] else 0) + (0.25 if p["has_boots"] else 0), p["rooms"]),
     "brick_breaker": lambda p0, p: _frac((p["level"] - 1) + 1 - _frac(p["bricks_left"], p0["bricks_left"]), p["levels"]),
     "mini_chess": lambda p0, p: _frac(p["moves"], p["survive"]),
+    # the other seven built-in games (2 Nov): each stays below 1.0 until the game's own win; the gym adds the rest at the win
+    "action_quest": lambda p0, p: min(0.99, _frac(p0["boss_hp"] - p["boss_hp"], p0["boss_hp"])),
+    "mini_fighter": lambda p0, p: min(0.99, 0.5 * p["rounds"][0] + 0.45 * _frac(p0["cpu_hp"] - p["cpu_hp"], p0["cpu_hp"])),
+    "mini_football": lambda p0, p: min(0.99, _frac(p["you"] - p["computer"], 2)),
+    "ray_maze": lambda p0, p: 0.8 * _frac(p["hits"], p["targets"]),
+    "tiny_kingdom": lambda p0, p: 0.9 * _frac(p["wave"], p["waves"]) if p["castle"] > 0 else 0.0,
+    "top_racer": lambda p0, p: 0.95 * _frac(p["lap"] - p0["lap"], p["laps"]),
+    "turn_quest": lambda p0, p: 0.6 * _frac(p["level"] - p0["level"], 4) + (0.2 if p["sword"] else 0.0) + (0.15 if p["enemy"] == "dragon" else 0.0),
 }
