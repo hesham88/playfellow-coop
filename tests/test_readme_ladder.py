@@ -16,7 +16,9 @@ def test_the_ladder_fills_only_from_committed_files_and_keeps_the_frontier_pendi
     ladder = _ladder()
     for name in ("muse-skills-pt1.json", "base" + "ten-skills.json", "muse-raw-20261027.json", "speed-cost-20261102.json"):
         assert name in ladder and (ROOT / "results" / ("k-lane" if "skills" in name else "unseen" if "raw" in name else "speed") / name).is_file(), name
-    assert ladder.count("pending: run after the owner's yes") >= 2  # the F1 and F2 rows stay pending until their files exist
+    for marker in ("fair budget", "Model-written skills", "maze_chase", "key_caves"):
+        line = next(row for row in ladder.splitlines() if marker in row)
+        assert "pending: run after the owner's yes" in line, marker  # F1/F2 rows stay pending until their files exist
     assert "15 of 15" in ladder and "14 of 15" in ladder and "0 of 15" in ladder
 
 
