@@ -29,7 +29,8 @@ def play(game_key, seed, limit=None):
 
 
 def test_every_listed_game_has_exactly_one_skill_and_it_is_described_for_the_model():
-    assert set(SKILLS) == {"snake", "box_push", "slide_2048", "lane_dash", "brick_breaker"}
+    from bench.arena_run import GAMES  # the 14 games the runner measures (the ball game is left out under the event's topic rules)
+    assert set(SKILLS) == set(GAMES)  # every measured game has exactly one pixel skill, and no skill exists for a game we do not run
     for key in SKILLS:
         skill = skill_for_game(key)
         assert re.fullmatch(r"[a-z_]+", skill.name) and len(skill.about) > 30 and skill.max_steps >= 30
@@ -120,7 +121,7 @@ def test_the_book_tells_the_model_the_skill_and_the_answer_format_and_refuses_un
     assert book.names == ("chase_food", NONE)
     assert book.run("teleport", parts=None, box=None, stop=lambda: False) is None
     with pytest.raises(KeyError):
-        SkillBook("maze_chase")
+        SkillBook("no_such_game")  # every arena game has a skill now; a name with none must still be refused
 
 
 def test_the_brain_schema_allows_exactly_the_skills_it_was_told_and_nothing_else():
