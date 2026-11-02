@@ -20,16 +20,34 @@ F9 takes the controls at any time, "I've got it" too; F12 or the mouse in the to
 | Promise | Code | Tests | Measured |
 |---|---|---|---|
 | You start with the controls; a request hands the buddy that one part | `playfellow_coop/assist.py`, `session.play_session` | `tests/test_assist.py` | all runs below |
-| It does that part | `bench/access_bench.py`, `bench/osg_2048.py` | `tests/test_access_bench.py` | 2048 (open source): **20/20** requests done, assisted; 5 arena games: see the table below |
+| It does that part | `bench/access_bench.py`, `bench/osg_2048.py` | `tests/test_access_bench.py` | 5 arena games, assisted: **65/66** requests done; 2048 (open source): **20/20**; tables below |
 | With the same keys you would press, only in your window | controls card + `in_front` checks (engine) | `tests/test_session_and_handover.py` | **0 breaches** in every run on this page |
 | Then hands control back, by itself | `Assist.after_turn` | `tests/test_assist.py` | live runs: the controls were back with the player at the end of **15 of 20** parts; in the other 5 the session ended first (the harness does not yet record why) |
 | ...and says what happened, from counted facts | `playfellow_coop/debrief.py` | `tests/test_debrief.py` | Muse Wonder debriefs: **10/10** passed the check that refuses any number the session did not count (EN and AR) |
 | Split controls ("you block, I heal") | `assist.buddy_card`, `assist.OwnedKeys` | `tests/test_assist.py` (every arena game) | 2048: **20/20** with the player keeping one arrow; **68** presses of the kept key refused, **0** reached the game |
 | In plain English or Arabic | `voice.py`, `realtime_voice.py` | `tests/test_voice*.py`, `tests/test_voice_accuracy.py` | waiting for the owner's 20 recordings (English, Arabic, mixed): `bench/voice_accuracy.py` |
 | SAM 3.1 marks with stable IDs | `sam_marks.py`, `tracking.py`, `sam_eval.py` | `tests/test_sam_*.py` | Practice Arena, real SAM 3.1: IDs kept in **129/129** frame pairs; player and door precision and recall **1.0**; coins and key precision **1.0**, recall **0.82** (the key is missed) |
-| Muse Spark plans as JSON | `muse_brain.py` | `tests/test_muse_brain.py` | 15 built-in games, model alone, 20 turns: mean progress **0.172** (random 0.069) |
+| Muse Spark plans as JSON | `muse_brain.py` | `tests/test_muse_brain.py` | 14 built-in games, model alone, 20 turns: mean progress **0.185** (random 0.074) |
 | Muse Wonder plans how to learn a new game's controls | `playfellow_coop/first_sight.py` | `tests/test_first_sight.py` | 3 games it never saw: genre right 3/3; real keys found after the probe **0.5 / 0.75 / 0.8** |
-| Baseten (Muse Spark Open) | `bench/open_weights_brain.py` | `tests/test_open_weights_brain.py` | 15 games alone: mean progress **0.116**; live assist below |
+| Baseten (Muse Spark Open) | `bench/open_weights_brain.py` | `tests/test_open_weights_brain.py` | 14 games alone: mean progress **0.125**; live assist below |
+
+## The assist on 5 arena games, from pixels ($0, local skills)
+
+`bench/access_bench.py`: each request is "the next quarter of this game's progress", judged by the game's own numbers; 5 seeds; between
+requests the player rests and nothing is pressed. The real `Assist` and `OwnedKeys` code runs every key.
+
+| Game | Assisted: requests done | Random keys: requests done |
+|---|---|---|
+| Box push | 15/15 | 0/5 |
+| Brick breaker | 19/20 | 0/5 |
+| Lane dash | 8/8 | 0/5 |
+| 2048 (our arena version) | 18/18 | 11/16 |
+| Snake | 5/5 | 0/5 |
+| **All** | **65/66 (95%: 0.92-1.00)** | **11/36** |
+
+0 breaches in every condition. Split controls here: the player keeps the key the buddy used least, and these skills cannot plan around a
+missing key, so a refused key is a lost move: 10/60 done, **83,696** presses of the kept key refused, **0** reached the game. That column
+is safety evidence; split-aware play is the 2048 table below. File: `results/access/access-20261102.json`.
 
 ## The live assist: the application's own requests, with a real model
 
@@ -62,16 +80,17 @@ Requests: "get me to a 64 tile", then 128, 256, 512; 5 seeds.
 
 File: `results/access/osg-2048-20261102.json`.
 
-## 15 built-in games, model alone
+## The built-in games, model alone
 
 | Brain | Wins | Mean progress (0-1) | Cost |
 |---|---|---|---|
-| Random keys | 0/30 | 0.069 | $0 |
-| Built-in (no model) | 0/30 | 0.068 | $0 |
-| Muse Spark 1.3 alone | 0/30 | 0.172 | $1.70 |
-| Muse Spark Open alone (Baseten) | 0/30 | 0.116 | $0.75 |
+| Random keys | 0/28 | 0.074 | $0 |
+| Built-in (no model) | 0/28 | 0.073 | $0 |
+| Muse Spark 1.3 alone | 0/28 | 0.185 | $1.55 |
+| Muse Spark Open alone (Baseten) | 0/28 | 0.125 | $0.75 |
 
-2 seeds, 20 turns per game. Files: `results/fifteen/*.json`. With a local skill on the 5 games that have one, the same model wins 15/15
+14 games, 2 seeds, 20 turns per game. The engine has 15 built-in games; the 15th, a ball game, is left out of this repository under the
+event's topic rules. Files: `results/fifteen/*.json`. With a local skill on the 5 games that have one, the same model wins 15/15
 (assisted): `results/k-lane/muse-skills-pt1.json` ($0.04), and Baseten 14/15 (`results/k-lane/baseten-skills.json`).
 
 ## Not measured, and not claimed
