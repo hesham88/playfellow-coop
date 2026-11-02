@@ -36,7 +36,10 @@ def test_every_chart_labels_assisted_or_model_alone(tmp_path):
     written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
     for stem, paths in written.items():
         text = make_charts.visible_text(paths["svg"]).lower()
-        assert "assisted (skills play, the model picks)" in text or "model alone" in text, stem
+        if stem == "learning-curve":
+            assert "assisted: model-written skill" in text or "harness check: fake model" in text or "pending" in text, stem
+        else:
+            assert "assisted (skills play, the model picks)" in text or "model alone" in text, stem
 
 
 def test_every_number_in_every_chart_traces_to_committed_result_files(tmp_path):
@@ -224,3 +227,72 @@ def test_learning_curve_chart_labels_and_modes(tmp_path):
         assert res_live is not None
         text_live = make_charts.visible_text(res_live["svg"]).lower()
         assert "assisted: model-written skill" in text_live
+
+
+def test_mouse_games_specify_click_routing_in_oracle_file():
+    doc = json.loads((ROOT / "results" / "fifteen" / "oracle-steps-20261102.json").read_text(encoding="utf-8"))
+    for game in ("mini_chess", "tiny_kingdom"):
+        entry = doc[game]
+        route = entry.get("oracle_route") or entry.get("click_path")
+        assert route, f"{game} in oracle-steps-20261102.json must specify oracle_route / click_path"
+        assert "playfellowgym.step" in route.lower()
+        assert "mouse" in route.lower() or "click" in route.lower()
+        assert "bench/arena_run" in route.lower() or "runner" in route.lower()
+
+
+def test_game_with_zero_sweep_wins_can_never_render_as_won_and_mouse_games_labelled(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    ladder_lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    ladder_text = "\n".join(ladder_lines)
+
+    # 1. Mini Chess and Tiny Kingdom must show the exact mouse runner explanation
+    expected_mouse_status = "pixel skill wins in the gym (mouse); the runner has no mouse path yet: 0/3"
+    assert expected_mouse_status in ladder_text
+
+    # 2. Sweep total must be stated as 36 of 42 (12 of 14 games)
+    assert "The sweep total is 36 of 42 (12 of 14 games)" in ladder_text
+    assert "all 14 games won" not in ladder_text.lower()
+    assert "14 of 14 games" not in ladder_text.lower()
+
+    # 3. A game with 0 sweep wins can never render as won
+    for line in ladder_lines:
+        if "mini_chess" in line or "tiny_kingdom" in line:
+            assert " 3/3" not in line
+            assert "won" not in line.lower() or "0/3" in line
+
+
+def test_sweep_rows_read_scripted_no_model_label_and_never_rung_4(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    ladder_lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    ladder_text = "\n".join(ladder_lines)
+
+    # Sweep rows must use SCRIPTED_NO_MODEL_LABEL without Rung 4 prefix
+    assert "harness check: scripted chooser, no model: 3/3" in ladder_text
+    assert "Rung 4 harness check: scripted chooser" not in ladder_text
+
+    # Unrun games must show Rung 4 as pending
+    unrun_r4 = [ln for ln in ladder_lines if "Rung 4: pending" in ln or "Rung 4 (model picks): pending" in ln]
+    assert len(unrun_r4) >= 7
+
+
+def test_ladder_chart_shows_model_written_held_out_numbers_on_maze_chase_and_key_caves(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    ladder_lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    ladder_text = "\n".join(ladder_lines)
+
+    assert "Rung 3 model-written: progress 0.58, 0 wins" in ladder_text
+    assert "Rung 3 model-written: progress 0.33, 0 wins" in ladder_text
+
+    # Neither maze_chase nor key_caves should have Rung 3 marked pending
+    for line in ladder_lines:
+        if "maze_chase" in line or "key_caves" in line:
+            assert "Rung 3 model-written skills: pending" not in line
+
+
+def test_learning_curve_subtitle_has_only_model_written_label_and_no_skills_play_model_picks(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    curve_text = make_charts.visible_text(written["learning-curve"]["svg"])
+
+    assert "assisted (skills play, the model picks)" not in curve_text
+    assert "Rung 3, assisted: model-written skill" in curve_text
+

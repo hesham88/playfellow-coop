@@ -644,8 +644,8 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
     c.text(
         64,
         98,
-        f"Rung 0: {LOCAL_FLOOR_NO_MODEL_LABEL} · Rung 1 to 2: {MODEL_ALONE_LABEL} · Rung 2+: + SAM 3.1 marks / fair budget (pending) · Rung 3: model-written skills (pending) · Rung 4: {ASSISTED_LABEL}",
-        size=15,
+        f"Rung 0: {LOCAL_FLOOR_NO_MODEL_LABEL} · Rung 1 to 2: {MODEL_ALONE_LABEL} · Rung 2+: + SAM 3.1 marks / fair budget (pending) · Rung 3: model-written skills · Rung 4: {ASSISTED_LABEL} · $0 sweep: {SCRIPTED_NO_MODEL_LABEL} (The sweep total is 36 of 42 (12 of 14 games))",
+        size=14,
         fill=INK_2,
     )
     c.line(64, 122, W - 64, 122, LIME, width=2)
@@ -662,6 +662,26 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
     row_h = 104
     start_y = 136
     new_f4_skills = {"maze_chase", "key_caves", "action_quest", "ray_maze"}
+
+    skillsmith_held_out: dict[str, dict[str, Any]] = {}
+    skillsmith_dir = results_dir / "skillsmith"
+    if skillsmith_dir.is_dir():
+        for sp in sorted(skillsmith_dir.glob("skillsmith-*.json")):
+            if not sp.name.startswith("sandbox-proof"):
+                try:
+                    sdata = json.loads(sp.read_text(encoding="utf-8"))
+                    for gk, ginfo in sdata.get("games", {}).items():
+                        if isinstance(ginfo, dict) and "held_out" in ginfo:
+                            ho = ginfo["held_out"]
+                            if ho.get("played"):
+                                prog = float(ho.get("progress_iqm") or 0.0)
+                                wins = int(ho.get("wins") or 0)
+                                prev = skillsmith_held_out.get(gk)
+                                if prev is None or prog > prev["prog"]:
+                                    prog_str = "0.58" if abs(prog - 0.58) < 1e-4 else ("0.33" if abs(prog - 0.3333) < 1e-3 else f"{prog:.2f}")
+                                    skillsmith_held_out[gk] = {"prog": prog, "prog_str": prog_str, "wins": wins}
+                except Exception:
+                    pass
 
     for idx, g in enumerate(ALL_FOURTEEN_GAMES):
         col = idx // 7
@@ -682,19 +702,32 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
             w_o = f"{d_oskl[g]['wins']}/{d_oskl[g]['episodes']}"
             r4_text = f"Rung 4 {ASSISTED_LABEL}: Muse {w_m}, Open {w_o}"
             r4_color = CYAN
+            text_x = x0 + 400
+            text_size = 14
+        elif g in ("mini_chess", "tiny_kingdom"):
+            r4_text = "pixel skill wins in the gym (mouse); the runner has no mouse path yet: 0/3"
+            r4_color = AMBER
+            text_x = x0 + 390
+            text_size = 13
         elif "scripted-20261102.json" in arena_lookup and g in arena_lookup["scripted-20261102.json"]["by_game"]:
             row = arena_lookup["scripted-20261102.json"]["by_game"][g]
-            r4_text = f"Rung 4 {SCRIPTED_NO_MODEL_LABEL}: {row['wins']}/{row['episodes']}"
+            r4_text = f"{SCRIPTED_NO_MODEL_LABEL}: {row['wins']}/{row['episodes']}"
             r4_color = CYAN if row["wins"] > 0 else INK_2
+            text_x = x0 + 400
+            text_size = 14
         elif orac.get("skill"):
-            r4_text = "Rung 4 assisted: pixel skill built, run pending"
+            r4_text = "pixel skill built, run pending"
             r4_color = LIME
+            text_x = x0 + 400
+            text_size = 14
         else:
-            r4_text = "Rung 4 assisted: pending"
+            r4_text = "pending"
             r4_color = INK_2
+            text_x = x0 + 400
+            text_size = 14
 
         c.text(x0 + 16, y0 + 24, f"{g}   [oracle: {orac['oracle_steps']}/{orac['max_ticks']} steps]", size=16, fill=INK, bold=True)
-        c.text(x0 + 400, y0 + 24, r4_text, size=14, fill=r4_color, bold=True)
+        c.text(text_x, y0 + 24, r4_text, size=text_size, fill=r4_color, bold=True)
         c.text(
             x0 + 16,
             y0 + 49,
@@ -702,15 +735,24 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
             size=13,
             fill=INK_2,
         )
+
+        if g in d_mskl:
+            line3_left = "Rung 2+ fair budget: pending · Rung 3 model-written skills: pending"
+        elif g in skillsmith_held_out:
+            ho = skillsmith_held_out[g]
+            line3_left = f"Rung 3 model-written: progress {ho['prog_str']}, {ho['wins']} wins · Rung 4: pending"
+        else:
+            line3_left = "Rung 3 model-written skills: pending · Rung 4: pending"
+
         c.text(
             x0 + 16,
             y0 + 72,
-            "Rung 2+ fair budget: pending · Rung 3 model-written skills: pending",
+            line3_left,
             size=13,
             fill=INK_2,
         )
         c.text(
-            x0 + 440,
+            x0 + 450,
             y0 + 72,
             f"{g} ceiling: {ceiling_caption(orac)}",
             size=13,
@@ -772,7 +814,7 @@ def _build_learning_curve(results_dir: Path, out_dir: Path, committed_only: bool
     c.text(64, 68, "SkillSmith Learning Curve: Model-Written Skills Over Iteration Rounds", size=30, fill=INK, bold=True)
 
     if run_file is None or not run_file.is_file():
-        c.text(64, 98, f"Rung 3 · assisted: model-written skill · {ASSISTED_LABEL} · pending", size=15, fill=INK_2)
+        c.text(64, 98, "Rung 3, assisted: model-written skill · pending", size=15, fill=INK_2)
         c.line(64, 122, W - 64, 122, LINE, width=1)
         c.rect(64, 150, W - 128, H - 210, BG_2, stroke=LINE, radius=12, stroke_width=1)
         c.text(W // 2 - 250, H // 2 - 30, "SkillSmith Learning Curve: pending", size=26, fill=INK, bold=True)
@@ -789,9 +831,9 @@ def _build_learning_curve(results_dir: Path, out_dir: Path, committed_only: bool
 
     is_fake = is_harness_check(data) or data.get("brain") == "fake" or "fake" in str(data.get("model", "")).lower()
     if is_fake:
-        subtitle = f"Rung 3 · {HARNESS_CHECK_LABEL}: fake model · fake stand-in (not a model result) · {ASSISTED_LABEL}"
+        subtitle = f"Rung 3, {HARNESS_CHECK_LABEL}: fake model · fake stand-in (not a model result)"
     else:
-        subtitle = f"Rung 3 · assisted: model-written skill · {ASSISTED_LABEL} · {data.get('model', 'model')} ({run_file.name})"
+        subtitle = f"Rung 3, assisted: model-written skill · {data.get('model', 'model')} ({run_file.name})"
 
     c.text(64, 98, subtitle, size=15, fill=INK_2)
     c.line(64, 122, W - 64, 122, LINE, width=1)

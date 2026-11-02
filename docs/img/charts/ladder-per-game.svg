@@ -2,7 +2,7 @@
   <rect x="0" y="0" width="1920" height="1080" fill="#04061a"/>
   <rect x="32" y="24" width="1856" height="1032" fill="#0a1030" rx="16" ry="16" stroke="#445498" stroke-width="2"/>
   <text x="64" y="68" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="bold" text-anchor="start">Full-System Ladder Across All 14 Games, Co-op Assist, and 2048</text>
-  <text x="64" y="98" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="start">Rung 0: no model (local floor) · Rung 1 to 2: model alone · Rung 2+: + SAM 3.1 marks / fair budget (pending) · Rung 3: model-written skills (pending) · Rung 4: assisted (skills play, the model picks)</text>
+  <text x="64" y="98" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="normal" text-anchor="start">Rung 0: no model (local floor) · Rung 1 to 2: model alone · Rung 2+: + SAM 3.1 marks / fair budget (pending) · Rung 3: model-written skills · Rung 4: assisted (skills play, the model picks) · $0 sweep: harness check: scripted chooser, no model (The sweep total is 36 of 42 (12 of 14 games))</text>
   <line x1="64" y1="122" x2="1856" y2="122" stroke="#b6f23d" stroke-width="2"/>
   <text x="64" y="116" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="start">Ceiling line (100%): oracle: our skill reading pixels (skill games) or engine oracle: reads the game&#x27;s own state, not pixels (engine oracles) — from oracle-steps-20261102.json</text>
   <rect x="64" y="136" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
@@ -10,98 +10,98 @@
   <text x="464" y="160" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted (skills play, the model picks): Muse 1/3, Open 3/3</text>
   <text x="80" y="185" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 17.6%, Open 5.9% · +SAM 3.1: 14.7%</text>
   <text x="80" y="208" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="504" y="208" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">snake ceiling: oracle: our skill reading pixels</text>
+  <text x="514" y="208" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">snake ceiling: oracle: our skill reading pixels</text>
   <line x1="932" y1="144" x2="932" y2="224" stroke="#b6f23d" stroke-width="3"/>
   <rect x="64" y="240" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="80" y="264" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">box_push   [oracle: 39/600 steps]</text>
   <text x="464" y="264" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted (skills play, the model picks): Muse 3/3, Open 3/3</text>
   <text x="80" y="289" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 0.0%, Open 0.0% · +SAM 3.1: 16.7%</text>
   <text x="80" y="312" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="504" y="312" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">box_push ceiling: oracle: our skill reading pixels</text>
+  <text x="514" y="312" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">box_push ceiling: oracle: our skill reading pixels</text>
   <line x1="932" y1="248" x2="932" y2="328" stroke="#b6f23d" stroke-width="3"/>
   <rect x="64" y="344" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="80" y="368" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">slide_2048   [oracle: 152/2000 steps]</text>
   <text x="464" y="368" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted (skills play, the model picks): Muse 3/3, Open 3/3</text>
   <text x="80" y="393" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 38.1%, builtin 38.1% · Rung 1 to 2 model alone: Muse 46.4%, Open 7.1% · +SAM 3.1: 53.6%</text>
   <text x="80" y="416" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="504" y="416" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">slide_2048 ceiling: oracle: our skill reading pixels</text>
+  <text x="514" y="416" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">slide_2048 ceiling: oracle: our skill reading pixels</text>
   <line x1="932" y1="352" x2="932" y2="432" stroke="#b6f23d" stroke-width="3"/>
   <rect x="64" y="448" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="80" y="472" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">lane_dash   [oracle: 600/610 steps]</text>
   <text x="464" y="472" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted (skills play, the model picks): Muse 3/3, Open 3/3</text>
   <text x="80" y="497" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 5.0% · Rung 1 to 2 model alone: Muse 6.7%, Open 6.7% · +SAM 3.1: 5.0%</text>
   <text x="80" y="520" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="504" y="520" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">lane_dash ceiling: oracle: our skill reading pixels</text>
+  <text x="514" y="520" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">lane_dash ceiling: oracle: our skill reading pixels</text>
   <line x1="932" y1="456" x2="932" y2="536" stroke="#b6f23d" stroke-width="3"/>
   <rect x="64" y="552" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="80" y="576" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">maze_chase   [oracle: 42/800 steps]</text>
-  <text x="464" y="576" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="464" y="576" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model: 3/3</text>
   <text x="80" y="601" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 28.0% · Rung 1 to 2 model alone: Muse 72.0%, Open 57.0% · +SAM 3.1: 71.0%</text>
-  <text x="80" y="624" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="504" y="624" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">maze_chase ceiling: oracle: our skill reading pixels</text>
+  <text x="80" y="624" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written: progress 0.58, 0 wins · Rung 4: pending</text>
+  <text x="514" y="624" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">maze_chase ceiling: oracle: our skill reading pixels</text>
   <line x1="932" y1="560" x2="932" y2="640" stroke="#b6f23d" stroke-width="3"/>
   <rect x="64" y="656" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="80" y="680" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">key_caves   [oracle: 84/1500 steps]</text>
-  <text x="464" y="680" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="464" y="680" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model: 3/3</text>
   <text x="80" y="705" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 54.2%, Open 54.2% · +SAM 3.1: 33.3%</text>
-  <text x="80" y="728" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="504" y="728" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">key_caves ceiling: oracle: our skill reading pixels</text>
+  <text x="80" y="728" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written: progress 0.33, 0 wins · Rung 4: pending</text>
+  <text x="514" y="728" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">key_caves ceiling: oracle: our skill reading pixels</text>
   <line x1="932" y1="664" x2="932" y2="744" stroke="#b6f23d" stroke-width="3"/>
   <rect x="64" y="760" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="80" y="784" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">turn_quest   [oracle: 53/3000 steps]</text>
-  <text x="464" y="784" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="464" y="784" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model: 3/3</text>
   <text x="80" y="809" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 15.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 30.0%, Open 30.0% · +SAM 3.1: 30.0%</text>
-  <text x="80" y="832" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="504" y="832" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">turn_quest ceiling: oracle: our skill reading pixels</text>
+  <text x="80" y="832" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written skills: pending · Rung 4: pending</text>
+  <text x="514" y="832" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">turn_quest ceiling: oracle: our skill reading pixels</text>
   <line x1="932" y1="768" x2="932" y2="848" stroke="#b6f23d" stroke-width="3"/>
   <rect x="972" y="136" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="988" y="160" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">brick_breaker   [oracle: 5994/15000 steps]</text>
   <text x="1372" y="160" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted (skills play, the model picks): Muse 3/3, Open 3/3</text>
   <text x="988" y="185" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 0.0%, Open 0.0% · +SAM 3.1: 0.0%</text>
   <text x="988" y="208" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="1412" y="208" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">brick_breaker ceiling: oracle: our skill reading pixels</text>
+  <text x="1422" y="208" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">brick_breaker ceiling: oracle: our skill reading pixels</text>
   <line x1="1840" y1="144" x2="1840" y2="224" stroke="#b6f23d" stroke-width="3"/>
   <rect x="972" y="240" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="988" y="264" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">mini_chess   [oracle: 46/400 steps]</text>
-  <text x="1372" y="264" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="1362" y="264" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start">pixel skill wins in the gym (mouse); the runner has no mouse path yet: 0/3</text>
   <text x="988" y="289" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 0.0%, Open 0.0% · +SAM 3.1: 0.0%</text>
-  <text x="988" y="312" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="1412" y="312" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">mini_chess ceiling: oracle: our skill reading pixels</text>
+  <text x="988" y="312" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written skills: pending · Rung 4: pending</text>
+  <text x="1422" y="312" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">mini_chess ceiling: oracle: our skill reading pixels</text>
   <line x1="1840" y1="248" x2="1840" y2="328" stroke="#b6f23d" stroke-width="3"/>
   <rect x="972" y="344" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="988" y="368" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">action_quest   [oracle: 78/1500 steps]</text>
-  <text x="1372" y="368" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="1372" y="368" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model: 3/3</text>
   <text x="988" y="393" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 12.5%, builtin 26.2% · Rung 1 to 2 model alone: Muse 25.0%, Open 13.8% · +SAM 3.1: 42.5%</text>
-  <text x="988" y="416" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="1412" y="416" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">action_quest ceiling: oracle: our skill reading pixels</text>
+  <text x="988" y="416" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written skills: pending · Rung 4: pending</text>
+  <text x="1422" y="416" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">action_quest ceiling: oracle: our skill reading pixels</text>
   <line x1="1840" y1="352" x2="1840" y2="432" stroke="#b6f23d" stroke-width="3"/>
   <rect x="972" y="448" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="988" y="472" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">mini_fighter   [oracle: 131/930 steps]</text>
-  <text x="1372" y="472" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="1372" y="472" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model: 3/3</text>
   <text x="988" y="497" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 1.8%, builtin 5.0% · Rung 1 to 2 model alone: Muse 6.8%, Open 0.0% · +SAM 3.1: 29.5%</text>
-  <text x="988" y="520" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="1412" y="520" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">mini_fighter ceiling: oracle: our skill reading pixels</text>
+  <text x="988" y="520" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written skills: pending · Rung 4: pending</text>
+  <text x="1422" y="520" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">mini_fighter ceiling: oracle: our skill reading pixels</text>
   <line x1="1840" y1="456" x2="1840" y2="536" stroke="#b6f23d" stroke-width="3"/>
   <rect x="972" y="552" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="988" y="576" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">ray_maze   [oracle: 40/800 steps]</text>
-  <text x="1372" y="576" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="1372" y="576" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model: 3/3</text>
   <text x="988" y="601" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 0.0%, Open 0.0% · +SAM 3.1: 8.0%</text>
-  <text x="988" y="624" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="1412" y="624" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">ray_maze ceiling: oracle: our skill reading pixels</text>
+  <text x="988" y="624" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written skills: pending · Rung 4: pending</text>
+  <text x="1422" y="624" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">ray_maze ceiling: oracle: our skill reading pixels</text>
   <line x1="1840" y1="560" x2="1840" y2="640" stroke="#b6f23d" stroke-width="3"/>
   <rect x="972" y="656" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="988" y="680" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">tiny_kingdom   [oracle: 92/1500 steps]</text>
-  <text x="1372" y="680" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="1362" y="680" fill="#ffcc4d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="start">pixel skill wins in the gym (mouse); the runner has no mouse path yet: 0/3</text>
   <text x="988" y="705" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 36.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 0.0%, Open 0.0% · +SAM 3.1: 0.0%</text>
-  <text x="988" y="728" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="1412" y="728" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">tiny_kingdom ceiling: oracle: our skill reading pixels</text>
+  <text x="988" y="728" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written skills: pending · Rung 4: pending</text>
+  <text x="1422" y="728" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">tiny_kingdom ceiling: oracle: our skill reading pixels</text>
   <line x1="1840" y1="664" x2="1840" y2="744" stroke="#b6f23d" stroke-width="3"/>
   <rect x="972" y="760" width="884" height="96" fill="#141c4c" rx="8" ry="8" stroke="#445498" stroke-width="1"/>
   <text x="988" y="784" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="start">top_racer   [oracle: 169/500 steps]</text>
-  <text x="1372" y="784" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">Rung 4 assisted: pixel skill built, run pending</text>
+  <text x="1372" y="784" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="start">harness check: scripted chooser, no model: 3/3</text>
   <text x="988" y="809" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 0 floor: rand 0.0%, builtin 0.0% · Rung 1 to 2 model alone: Muse 0.0%, Open 0.0% · +SAM 3.1: 0.0%</text>
-  <text x="988" y="832" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 2+ fair budget: pending · Rung 3 model-written skills: pending</text>
-  <text x="1412" y="832" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">top_racer ceiling: oracle: our skill reading pixels</text>
+  <text x="988" y="832" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">Rung 3 model-written skills: pending · Rung 4: pending</text>
+  <text x="1422" y="832" fill="#b6f23d" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="normal" text-anchor="start">top_racer ceiling: oracle: our skill reading pixels</text>
   <line x1="1840" y1="768" x2="1840" y2="848" stroke="#b6f23d" stroke-width="3"/>
   <rect x="64" y="872" width="1792" height="164" fill="#141c4c" rx="10" ry="10" stroke="#43e3ff" stroke-width="2"/>
   <text x="88" y="902" fill="#43e3ff" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="start">Co-op Assist &amp; Open-Source 2048 Rows (from results/access/*.json)</text>

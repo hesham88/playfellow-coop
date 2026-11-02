@@ -112,7 +112,8 @@
       "2": 60
     },
     "seconds": 5.3,
-    "source": "pixel skill (chess_bot.py)"
+    "source": "pixel skill (chess_bot.py)",
+    "oracle_route": "PlayfellowGym.step routes mouse click tuples directly to game.step in gym.check_game; runner bench/arena_run.py has no mouse path yet"
   },
   "action_quest": {
     "max_ticks": 1500,
@@ -164,7 +165,8 @@
       "2": 101
     },
     "seconds": 2.4,
-    "source": "pixel skill (kingdom_builder.py)"
+    "source": "pixel skill (kingdom_builder.py)",
+    "oracle_route": "PlayfellowGym.step routes mouse click tuples directly to game.step in gym.check_game; runner bench/arena_run.py has no mouse path yet"
   },
   "top_racer": {
     "max_ticks": 500,

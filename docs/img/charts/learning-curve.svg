@@ -2,7 +2,7 @@
   <rect x="0" y="0" width="1920" height="1080" fill="#04061a"/>
   <rect x="32" y="24" width="1856" height="1032" fill="#0a1030" rx="16" ry="16" stroke="#445498" stroke-width="2"/>
   <text x="64" y="68" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="bold" text-anchor="start">SkillSmith Learning Curve: Model-Written Skills Over Iteration Rounds</text>
-  <text x="64" y="98" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="start">Rung 3 · assisted: model-written skill · assisted (skills play, the model picks) · muse-spark-1.3 (skillsmith-muse-room-20261102.json)</text>
+  <text x="64" y="98" fill="#aab6e6" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="normal" text-anchor="start">Rung 3, assisted: model-written skill · muse-spark-1.3 (skillsmith-muse-room-20261102.json)</text>
   <line x1="64" y1="122" x2="1856" y2="122" stroke="#445498" stroke-width="1"/>
   <rect x="64" y="146" width="581" height="890" fill="#141c4c" rx="12" ry="12" stroke="#445498" stroke-width="1"/>
   <text x="84" y="182" fill="#eaf0ff" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="start">maze_chase</text>
