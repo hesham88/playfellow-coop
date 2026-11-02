@@ -168,3 +168,14 @@ def test_ladder_ceiling_caption_names_its_source_and_a_game_without_skill_never_
     assert "oracle (our skill reading pixels), not the buddy" not in "\n".join(lines)
     assert make_charts.ceiling_caption({"skill": False}) == make_charts.ENGINE_ORACLE_CAPTION
     assert make_charts.ceiling_caption({"skill": True}) == make_charts.PIXEL_ORACLE_CAPTION
+
+
+def test_live_assist_is_labelled_as_the_model_playing_the_part_with_no_local_skill_never_model_alone(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    live = [ln for ln in lines if ln.lower().startswith("live assist")]
+    assert live, lines
+    for ln in live:
+        assert make_charts.LIVE_ASSIST_LABEL in ln, ln
+        assert "model alone" not in ln.lower(), ln
+    assert make_charts.LIVE_ASSIST_LABEL == "live assist: the model plays the part, no local skill"

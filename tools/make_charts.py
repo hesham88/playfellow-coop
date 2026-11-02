@@ -63,6 +63,7 @@ LOCAL_FLOOR_NO_MODEL_LABEL = "no model (local floor)"
 ORACLE_CEILING_LABEL = "oracle (our skill reading pixels), not the buddy"
 PIXEL_ORACLE_CAPTION = "oracle: our skill reading pixels"
 ENGINE_ORACLE_CAPTION = "engine oracle: reads the game's own state, not pixels"
+LIVE_ASSIST_LABEL = "live assist: the model plays the part, no local skill"
 
 
 def ceiling_caption(entry: dict[str, Any]) -> str:
@@ -720,7 +721,7 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
     c.text(
         88,
         by + 94,
-        f"Live Assist ({MODEL_ALONE_LABEL}, strict rule check): Muse {d_live_m['really_done']}/{d_live_m['parts']} done ('done' right {d_live_m['true_done_claims']}/{d_live_m['model_said_done']}, ${d_live_m['cost_usd']:.4f}) · Open {d_live_o['really_done']}/{d_live_o['parts']} done ('done' right {d_live_o['true_done_claims']}/{d_live_o['model_said_done']}, ${d_live_o['cost_usd']:.4f})",
+        f"Live Assist ({LIVE_ASSIST_LABEL}, strict rule check): Muse {d_live_m['really_done']}/{d_live_m['parts']} done ('done' right {d_live_m['true_done_claims']}/{d_live_m['model_said_done']}, ${d_live_m['cost_usd']:.4f}) · Open {d_live_o['really_done']}/{d_live_o['parts']} done ('done' right {d_live_o['true_done_claims']}/{d_live_o['model_said_done']}, ${d_live_o['cost_usd']:.4f})",
         size=15,
         fill=INK,
     )
