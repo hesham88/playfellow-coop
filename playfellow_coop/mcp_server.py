@@ -51,6 +51,14 @@ def _card_path(game: str) -> Path:
     return _engine_dir() / "controls" / f"arena_{game}.yaml"
 
 
+ENGINE_HINT = "engine not found: set PLAYFELLOW_ENGINE or clone the engine beside this repo"
+
+
+def engine_problem(game: str = "snake") -> str | None:
+    """The start-up problem, said once and plainly, or None when the engine's controls cards are where they should be."""
+    return None if _card_path(game).is_file() else ENGINE_HINT
+
+
 def _load_card(game: str):
     import controls
 
@@ -107,6 +115,9 @@ class CoopServer:
     def get_card(self, game: str) -> dict:
         if game not in _game_keys():
             raise ValueError(f"unknown game {game!r}; list_games says what there is")
+        problem = engine_problem(game)
+        if problem is not None:
+            raise ValueError(problem)
         return _card_json(game, _load_card(game))
 
     def status(self) -> dict:
@@ -152,6 +163,9 @@ class CoopServer:
                 self.holder = "player"  # the controls come back by themselves, whatever happened
 
     def _run_part(self, goal: str, turns: int) -> dict:
+        problem = engine_problem(self.game)
+        if problem is not None:
+            raise ValueError(problem)
         from bench.arena_run import VirtualHands, VirtualScreen, load_game
         from memory import Memory
         from safety import Safety
@@ -311,6 +325,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-calls", type=int, default=100, help="AI call cap for the whole server run")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args(argv)
+    problem = engine_problem(args.game)
+    if problem is not None:
+        print(problem, file=sys.stderr)
+        return 2
     MCPServer(CoopServer(game=args.game, cap_usd=args.cap_usd, max_calls=args.max_calls, seed=args.seed)).serve(sys.stdin, sys.stdout)
     return 0
 

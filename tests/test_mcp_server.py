@@ -17,6 +17,9 @@ import pytest
 from playfellow_coop.mcp_server import CoopServer, MCPServer
 
 ROOT = Path(__file__).resolve().parents[1]
+ENGINE = Path(os.environ.get("PLAYFELLOW_ENGINE") or ROOT.parent / "playfellow" / "software")
+ENGINE_HINT = "engine not found: set PLAYFELLOW_ENGINE or clone the engine beside this repo"
+needs_engine = pytest.mark.skipif(not (ENGINE / "controls" / "arena_snake.yaml").is_file(), reason=ENGINE_HINT)
 
 
 class FakeBrain:
@@ -53,6 +56,7 @@ def _payload(result: dict) -> dict:
     return json.loads(result["content"][0]["text"])
 
 
+@needs_engine
 def test_list_games_and_get_card_are_read_only():
     server = MCPServer(_server())
     games = _payload(_call(server, "list_games"))
@@ -72,6 +76,7 @@ def test_status_starts_with_the_player_holding_the_controls():
     assert status["ai_calls"] == 0 and status["spent_usd"] == 0.0 and status["part_active"] is False
 
 
+@needs_engine
 def test_request_part_hands_back_counted_facts_and_the_controls():
     brain = FakeBrain(action="RIGHT", cost_usd=0.01)
     server = _server(brain)
@@ -83,6 +88,7 @@ def test_request_part_hands_back_counted_facts_and_the_controls():
     assert status["holder"] == "player" and status["ai_calls"] == 3 and status["spent_usd"] == 0.03
 
 
+@needs_engine
 def test_an_off_card_action_is_never_pressed():
     brain = FakeBrain(action="FLY")  # not on the snake card: the engine's check drops it, the hands never see it
     server = _server(brain)
@@ -91,6 +97,7 @@ def test_an_off_card_action_is_never_pressed():
     assert server.status()["ai_calls"] == 2  # the calls happened; the key did not
 
 
+@needs_engine
 def test_the_budget_cap_stops_a_part_before_the_call_that_would_pass_it():
     brain = FakeBrain(action="WAIT", cost_usd=0.60)
     server = _server(brain, cap_usd=1.0)
@@ -99,6 +106,7 @@ def test_the_budget_cap_stops_a_part_before_the_call_that_would_pass_it():
     assert server.status()["spent_usd"] <= 1.20
 
 
+@needs_engine
 def test_stop_wins_while_a_part_is_running():
     brain = FakeBrain(action="WAIT", delay=0.05)  # slow enough that the stop lands mid-part, as F12 would
     server = _server(brain)
@@ -120,6 +128,7 @@ def test_stop_wins_while_a_part_is_running():
     assert server.status()["holder"] == "player" and server.status()["stopped"] is True
 
 
+@needs_engine
 def test_no_secret_ever_appears_in_a_response(monkeypatch):
     monkeypatch.setenv("MODEL_API_KEY", "sentinel-secret-value")
     monkeypatch.setenv("BASE" + "TEN_API_KEY", "sentinel-partner-value")  # the partner key's real name, split so this file never carries it
@@ -143,6 +152,27 @@ def test_the_protocol_lists_the_five_tools_and_answers_a_ping():
     assert unknown["error"]["code"] == -32601
 
 
+def test_startup_says_engine_not_found_instead_of_serving_without_one(monkeypatch, tmp_path, capsys):
+    import io
+
+    from playfellow_coop.mcp_server import main
+
+    monkeypatch.setenv("PLAYFELLOW_ENGINE", str(tmp_path))  # an empty folder: no controls cards in it
+    monkeypatch.setattr("sys.stdin", io.StringIO(""))
+    assert main(["--game", "snake"]) == 2
+    assert ENGINE_HINT in capsys.readouterr().err
+
+
+def test_tools_answer_with_the_engine_hint_instead_of_failing_inside_a_call(monkeypatch, tmp_path):
+    monkeypatch.setenv("PLAYFELLOW_ENGINE", str(tmp_path))
+    server = MCPServer(_server(FakeBrain(action="WAIT")))
+    card = _call(server, "get_card", {"game": "snake"})
+    assert card["isError"] is True and ENGINE_HINT in _payload(card)["error"]
+    part = _call(server, "request_part", {"goal": "wait", "turns": 1})
+    assert part["isError"] is True and ENGINE_HINT in _payload(part)["error"]
+
+
+@needs_engine
 def test_the_server_starts_as_a_module_and_speaks_stdio(tmp_path):
     env = dict(os.environ)
     env["PLAYFELLOW_ENGINE"] = env.get("PLAYFELLOW_ENGINE") or str(ROOT.parent / "playfellow" / "software")
