@@ -1,7 +1,9 @@
 """Tests for tools/make_charts.py: every chart is built from committed results/**/*.json files only,
 every chart states whether a model row is 'assisted (skills play, the model picks)' or 'model alone',
 non-model runs are labelled 'harness check: scripted chooser, no model' or 'no model (local floor)',
-every SVG has a matching PNG copy for the video, and no chart displays a number that does not trace to a result file."""
+every SVG has a matching PNG copy for the video, the per-game ladder chart shows all 14 games + Assist + 2048
+with the oracle ceiling line labelled 'oracle (our skill reading pixels), not the buddy' and unrun rungs marked
+'pending', and no chart displays a number that does not trace to a result file."""
 from __future__ import annotations
 
 import json
@@ -9,7 +11,6 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-import pytest
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +22,7 @@ from tools import make_charts  # noqa: E402
 
 def test_make_charts_writes_svg_and_png_pairs_from_committed_results(tmp_path):
     written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
-    assert len(written) >= 3
+    assert len(written) >= 4
     for stem, paths in written.items():
         svg_path, png_path = paths["svg"], paths["png"]
         assert svg_path.is_file() and svg_path.suffix == ".svg"
@@ -52,10 +53,10 @@ def test_number_provenance_check_fails_when_a_chart_shows_an_invented_number(tmp
     first_svg = next(iter(written.values()))["svg"]
     tampered = tmp_path / "tampered.svg"
     tampered.write_text(
-        first_svg.read_text(encoding="utf-8").replace("</svg>", "<text x='10' y='10'>84.73%</text></svg>"),
+        first_svg.read_text(encoding="utf-8").replace("</svg>", "<text x='10' y='10'>84.7391%</text></svg>"),
         encoding="utf-8",
     )
-    assert "84.73" in make_charts.unmatched_numbers(tampered, allowed)
+    assert "84.7391" in make_charts.unmatched_numbers(tampered, allowed)
 
 
 def test_non_model_rows_use_honesty_ladder_labels_and_never_claim_a_model(tmp_path):
@@ -82,13 +83,19 @@ def test_non_model_rows_use_honesty_ladder_labels_and_never_claim_a_model(tmp_pa
             assert "model" not in low.replace("no model", ""), line
 
 
-def test_every_arena_row_names_its_test_set_and_result_file(tmp_path):
+def test_every_arena_row_names_its_test_set_date_and_result_file(tmp_path):
     written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
     arena_text = make_charts.visible_text(written["arena-wins-and-cost"]["svg"])
-    assert "glass look, 5 skill games, 29 Oct" in arena_text
+    assert "glass look, 5 skill games, 29 Oct · muse-skills-20261029.json" in arena_text
+    assert "plain look, 5 skill games, 31 Oct · muse-skills-pt1.json" in arena_text
+    assert "14-game R1, 2 Nov · muse-sam-20261102.json" in arena_text
     assert "unseen games, 27 Oct" in arena_text
     for fname in (
         "muse-skills-20261029.json",
+        "muse-skills-pt1.json",
+        "open-skills-20261102.json",
+        "muse-skills-20261102.json",
+        "muse-sam-20261102.json",
         "scripted-20261029.json",
         "builtin-20261029.json",
         "random-20261029.json",
@@ -114,3 +121,50 @@ def test_cache_chart_states_computed_documented_prices_and_rejects_saved_without
         encoding="utf-8",
     )
     assert make_charts.unaccompanied_saved_lines(tampered) != []
+
+
+def test_per_game_ladder_chart_shows_oracle_ceiling_pending_rungs_r1_assist_and_2048(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    assert "ladder-per-game" in written
+    ladder_svg = written["ladder-per-game"]["svg"]
+    ladder_text = make_charts.visible_text(ladder_svg)
+    assert "oracle: our skill reading pixels" in ladder_text
+    assert "engine oracle: reads the game's own state, not pixels" in ladder_text
+    assert "pending" in ladder_text
+    for game_key in make_charts.ALL_FOURTEEN_GAMES:
+        assert game_key in ladder_text, game_key
+    assert "65/66" in ladder_text
+    assert "4/10" in ladder_text
+    assert "20/20" in ladder_text
+    assert "4/4" in ladder_text
+
+
+def test_oracle_file_names_a_source_per_game_pixel_skill_or_engine_state_oracle():
+    from playfellow_coop.skills import SKILLS
+
+    doc = json.loads((ROOT / "results" / "fifteen" / "oracle-steps-20261102.json").read_text(encoding="utf-8"))
+    for game, entry in doc.items():
+        source = entry["source"]
+        if entry["skill"]:
+            assert game in SKILLS and source.startswith("pixel skill (") and source.endswith(".py)"), (game, source)
+            assert (ROOT / "playfellow_coop" / "skills" / source[len("pixel skill ("):-1]).is_file(), source
+        else:
+            assert source.startswith("engine state oracle (") and "policy_" in source and "pixel" not in source, (game, source)
+
+
+def test_ladder_ceiling_caption_names_its_source_and_a_game_without_skill_never_carries_the_pixel_caption(tmp_path):
+    written = make_charts.build_all(results_dir=ROOT / "results", out_dir=tmp_path)
+    doc = json.loads((ROOT / "results" / "fifteen" / "oracle-steps-20261102.json").read_text(encoding="utf-8"))
+    lines = make_charts.visible_lines(written["ladder-per-game"]["svg"])
+    for game, entry in doc.items():
+        game_lines = [ln for ln in lines if ln.startswith(f"{game} ") or ln.startswith(f"{game}\u00a0")]
+        assert game_lines, game
+        caption = [ln for ln in lines if ln.startswith(f"{game} ceiling:")]
+        assert len(caption) == 1, (game, caption)
+        if entry["skill"]:
+            assert make_charts.PIXEL_ORACLE_CAPTION in caption[0], caption
+        else:
+            assert make_charts.ENGINE_ORACLE_CAPTION in caption[0] and "pixels" not in caption[0].replace("not pixels", ""), caption
+    assert "oracle (our skill reading pixels), not the buddy" not in "\n".join(lines)
+    assert make_charts.ceiling_caption({"skill": False}) == make_charts.ENGINE_ORACLE_CAPTION
+    assert make_charts.ceiling_caption({"skill": True}) == make_charts.PIXEL_ORACLE_CAPTION

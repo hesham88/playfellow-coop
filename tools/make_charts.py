@@ -61,6 +61,13 @@ HARNESS_CHECK_LABEL = "harness check"
 SCRIPTED_NO_MODEL_LABEL = "harness check: scripted chooser, no model"
 LOCAL_FLOOR_NO_MODEL_LABEL = "no model (local floor)"
 ORACLE_CEILING_LABEL = "oracle (our skill reading pixels), not the buddy"
+PIXEL_ORACLE_CAPTION = "oracle: our skill reading pixels"
+ENGINE_ORACLE_CAPTION = "engine oracle: reads the game's own state, not pixels"
+
+
+def ceiling_caption(entry: dict[str, Any]) -> str:
+    """Return the ceiling caption naming the oracle source: pixel skill vs engine state oracle."""
+    return PIXEL_ORACLE_CAPTION if entry.get("skill") else ENGINE_ORACLE_CAPTION
 
 _NUM_RE = re.compile(r"(?<![A-Za-z_])[-+]?\d+(?:,\d{3})*(?:\.\d+)?(?![A-Za-z_])")
 
@@ -636,7 +643,7 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
     c.text(
         64,
         116,
-        f"Ceiling line (100%): {ORACLE_CEILING_LABEL} — steps to win vs tick limit from oracle-steps-20261102.json",
+        f"Ceiling line (100%): {PIXEL_ORACLE_CAPTION} (skill games) or {ENGINE_ORACLE_CAPTION} (engine oracles) — from oracle-steps-20261102.json",
         size=15,
         fill=LIME,
         bold=True,
@@ -685,9 +692,16 @@ def _build_per_game_ladder(results_dir: Path, arena_lookup: dict[str, dict[str, 
         c.text(
             x0 + 16,
             y0 + 72,
-            f"Rung 2+ fair budget: pending · Rung 3 model-written skills: pending · Ceiling: {ORACLE_CEILING_LABEL}",
+            "Rung 2+ fair budget: pending · Rung 3 model-written skills: pending",
             size=13,
             fill=INK_2,
+        )
+        c.text(
+            x0 + 440,
+            y0 + 72,
+            f"{g} ceiling: {ceiling_caption(orac)}",
+            size=13,
+            fill=LIME if orac.get("skill") else INK_2,
         )
         c.line(x0 + col_w - 16, y0 + 8, x0 + col_w - 16, y0 + row_h - 16, LIME, width=3)
 
