@@ -5,9 +5,11 @@ from playfellow_coop.skills.boss_duel import BeatBoss
 from playfellow_coop.skills.box_pusher import PushBoxes
 from playfellow_coop.skills.cave_jumper import UnlockCaves
 from playfellow_coop.skills.grid_chase import ChaseFood
+from playfellow_coop.skills.kingdom_builder import BuildKingdom
 from playfellow_coop.skills.lane_runner import RunLanes
 from playfellow_coop.skills.maze_runner import EscapeMaze
 from playfellow_coop.skills.paddle_track import TrackPaddle
+from playfellow_coop.skills.quest_hero import BattleHero
 from playfellow_coop.skills.ray_walker import ClearRayMaze
 from playfellow_coop.skills.tile_merge import SlideMerge
 
@@ -21,6 +23,8 @@ SKILLS = {
     "key_caves": UnlockCaves,
     "action_quest": BeatBoss,
     "ray_maze": ClearRayMaze,
+    "turn_quest": BattleHero,
+    "tiny_kingdom": BuildKingdom,
 }
 
 
