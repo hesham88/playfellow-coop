@@ -316,7 +316,7 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
     latency = VoiceLatency()
     talk_key = getattr(parts, "talk_key", "")
     talker = None
-    if talk_key:
+    if talk_key or getattr(parts, "overlay", False):  # the widget's mic needs the voice too, with or without a talk key
         key = load_muse_key()
         if not key:
             say(tr("Talking needs a Muse key (MODEL_API_KEY). You can still type commands with --typed.",
@@ -328,7 +328,8 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
 
             talker = PushToTalk(Microphone(), RealtimeTranscriber(key, budget=parts.voice_budget, tracer=tracer),
                                 commands, say, card=parts.card, language=cfg.language, latency=latency)
-            listen_hold(talk_key, talker.key_down, talker.key_up)
+            if talk_key:
+                listen_hold(talk_key, talker.key_down, talker.key_up)
     overlay = None
     if getattr(parts, "overlay", False):
         from playfellow_coop.overlay.hotkey import HotkeyError
