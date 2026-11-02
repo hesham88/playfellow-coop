@@ -251,18 +251,20 @@ def safety_checks(code: str | None, promoted: str | None, reason: str) -> dict:
 WRITING_MAX_TOKENS = 4000
 
 
-def plan_run(games: list[str], brain: str = "muse", candidates: int = 1, max_tokens: int = WRITING_MAX_TOKENS) -> dict:
+def plan_run(games: list[str], brain: str = "muse", candidates: int = 1, max_tokens: int = WRITING_MAX_TOKENS, rounds: int = 1) -> dict:
     """The dry run: the planned calls per game and their dollar estimate, priced before anything is sent (a full answer out)."""
     from playfellow_coop.budget import INPUT_USD_PER_TOKEN, OUTPUT_USD_PER_TOKEN
-    from playfellow_coop.skillsmith.synth import build_prompt, estimate_tokens, example_for, progress_text
+    from playfellow_coop.skillsmith.synth import MAX_PROMPT_TOKENS, build_prompt, estimate_tokens, example_for, progress_text
 
     max_out = int(max_tokens)
     rows, total_calls, total_usd = {}, 0, 0.0
     for game in games:
         prompt = build_prompt(game, GOALS.get(game, "win the game"), [], [], keys=("up", "down", "left", "right"),
                               progress=_osg_progress_text() if game == "osg_2048" else progress_text(game), example=example_for(game))
-        tokens_in = estimate_tokens(prompt)
-        planned = int(candidates) * 2  # one proposal plus its one retry, per candidate
+        # a live prompt carries the recorded trace and grows to the fixed ceiling (F1 on 2 Nov: ~9000 tokens, not the ~700 of an
+        # empty trace), so every call is priced at the ceiling: the plan may overcount, never undercount
+        tokens_in = max(estimate_tokens(prompt), MAX_PROMPT_TOKENS)
+        planned = int(candidates) * 2 * max(1, int(rounds))  # one proposal plus its one retry, per candidate, in every round
         usd = planned * (tokens_in * INPUT_USD_PER_TOKEN + max_out * OUTPUT_USD_PER_TOKEN)
         rows[game] = {"planned_calls": planned, "tokens_in_est_per_call": tokens_in, "tokens_out_est_per_call": max_out,
                       "estimated_usd": round(usd, 5)}
@@ -655,7 +657,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.dry_run:
         if not args.brain:
             raise SystemExit("--dry-run needs --brain muse or --brain open, so the estimate prices the right model")
-        plan = plan_run(games, brain=args.brain, candidates=args.candidates, max_tokens=args.max_tokens)
+        plan = plan_run(games, brain=args.brain, candidates=args.candidates, max_tokens=args.max_tokens, rounds=args.rounds)
         for game, row in plan["games"].items():
             print(f"{game:12} planned calls {row['planned_calls']} (about {row['tokens_in_est_per_call']} tokens in, "
                   f"up to {row['tokens_out_est_per_call']} out each) ${row['estimated_usd']:.5f}")

@@ -348,3 +348,16 @@ def test_a_skill_writing_answer_has_room_for_the_code_and_the_cap_prices_that_ro
     assert smaller.brain.max_tokens == 1500 and capped.estimate_next_usd("x") > smaller.estimate_next_usd("x")
     plan = plan_run(["maze_chase"], brain="muse", candidates=1)
     assert plan["games"]["maze_chase"]["tokens_out_est_per_call"] == WRITING_MAX_TOKENS
+
+
+def test_the_dry_run_prices_every_round_at_the_prompt_ceiling_so_it_never_undercounts():
+    """F1 (2 Nov): the dry run priced about 700 tokens in per call (an empty trace) and one round; real calls carried about 9000
+    tokens of trace in each of 3 rounds. The plan now prices each call at the fixed prompt ceiling, for every round."""
+    from bench.skillsmith_run import WRITING_MAX_TOKENS, plan_run
+    from playfellow_coop.skillsmith.synth import MAX_PROMPT_TOKENS
+
+    one = plan_run(["maze_chase"], brain="muse", candidates=2, rounds=1)["games"]["maze_chase"]
+    three = plan_run(["maze_chase"], brain="muse", candidates=2, rounds=3)["games"]["maze_chase"]
+    assert one["tokens_in_est_per_call"] == MAX_PROMPT_TOKENS and one["tokens_out_est_per_call"] == WRITING_MAX_TOKENS
+    assert three["planned_calls"] == 3 * one["planned_calls"] == 12
+    assert abs(three["estimated_usd"] - 3 * one["estimated_usd"]) < 1e-4
