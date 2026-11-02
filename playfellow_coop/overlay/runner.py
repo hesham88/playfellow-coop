@@ -13,6 +13,7 @@ from playfellow_coop.overlay.panel import PanelModel
 
 POLL_MS = 60
 SUMMON = "summon"
+SEE_THROUGH = "see_through"
 DONE = "__done__"
 
 
@@ -22,6 +23,7 @@ class OverlayRunner:
         self._events: queue.SimpleQueue = queue.SimpleQueue()
         self._closed = False
         self.closes = 0
+        self.extra_pumps: list = []  # more widget keys (the see-through key), started and stopped with the window
 
     # ---- from any thread -----------------------------------------------------------------------------------------
     def event(self, kind: str, data) -> None:
@@ -32,6 +34,10 @@ class OverlayRunner:
         """The summon hotkey's press (it arrives on the hotkey thread)."""
         self._events.put((SUMMON, None))
 
+    def step_opacity(self) -> None:
+        """The see-through key's press (it arrives on its hotkey thread)."""
+        self._events.put((SEE_THROUGH, None))
+
     def finish(self) -> None:
         """The session ended: close the window (the main thread does it)."""
         self._events.put((DONE, None))
@@ -40,6 +46,8 @@ class OverlayRunner:
     def _apply(self, kind: str, data) -> None:
         if kind == SUMMON:
             self.model.toggle()
+        elif kind == SEE_THROUGH:
+            self.model.step_opacity()
         elif kind in ("say", "status") and data:
             self.model.buddy_says(str(data))
         elif kind == DONE:
@@ -70,15 +78,17 @@ class OverlayRunner:
             return
         self._closed = True
         self.closes += 1
-        if self.pump is not None:
-            self.pump.stop()
+        for pump in [self.pump, *self.extra_pumps]:
+            if pump is not None:
+                pump.stop()
         self.view.close()
 
     def run(self) -> None:
         """Show the pill, start the summon key, and run the window loop until the session finishes (main thread only)."""
         self.view.start()
-        if self.pump is not None:
-            self.pump.start()
+        for pump in [self.pump, *self.extra_pumps]:
+            if pump is not None:
+                pump.start()
         self.view.root.after(POLL_MS, self.tick)
         self.view.mainloop()
 
@@ -88,7 +98,7 @@ class OverlayUnavailableError(RuntimeError):
 
 
 def build_overlay(parts, commands, handover, summon_key: str = "ctrl+alt+p", on_talk_down: Callable[[], None] = lambda: None,
-                  on_talk_up: Callable[[], None] = lambda: None) -> OverlayRunner:
+                  on_talk_up: Callable[[], None] = lambda: None, see_through_key: str = "ctrl+alt+o") -> OverlayRunner:
     """The real thing: the Qt glass view, the panel model, and the summon
     hotkey (refused if the game's controls card uses that key). The overlay
     is Qt only: when PySide6 is not installed it says so and does not open
@@ -108,4 +118,6 @@ def build_overlay(parts, commands, handover, summon_key: str = "ctrl+alt+p", on_
         ) from error
     runner = OverlayRunner(model, view, handover=handover, safety=parts.safety)
     runner.pump = HotkeyPump(Hotkey(summon_key, card=parts.card), on_press=runner.summon)
+    runner.extra_pumps.append(HotkeyPump(Hotkey(see_through_key, card=parts.card, hotkey_id=0x5047), on_press=runner.step_opacity))
+    model.set_keys(talk=getattr(parts, "talk_key", "") or None, panel=summon_key, see_through=see_through_key)
     return runner

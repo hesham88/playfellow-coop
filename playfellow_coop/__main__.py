@@ -237,6 +237,13 @@ def brief_system(system: str, parts, cfg, key_loader: Callable | None = None, ca
     return system + "\n\n" + brief_text(brief) if brief else system
 
 
+def paced_text(parts, cfg) -> str:
+    """The pace rule for a real-time game (pace.py): a short sequence each turn, and the run skill for open stretches."""
+    from playfellow_coop.pace import pace_rule
+    skills = getattr(parts, "skills", None)
+    return pace_rule(parts.card, int(getattr(cfg, "max_actions_per_step", 1)), tuple(skills.names) if skills is not None else ())
+
+
 def assist_system(system: str) -> str:
     """The planner's instructions with the assist's done rule added (only when --assist is on)."""
     from playfellow_coop.assist import DONE_RULE
@@ -361,6 +368,7 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         return run(parts, cfg, play_system, timer, handover, on_event=on_event, commands=commands, latency=latency)
 
     play_system = play.system_for(parts, cfg) + (parts.skills.system_text() if getattr(parts, "skills", None) else "")
+    play_system += paced_text(parts, cfg)
     if getattr(parts, "assist", None) is not None:
         play_system = assist_system(play_system)
     if getattr(parts, "want_brief", False):

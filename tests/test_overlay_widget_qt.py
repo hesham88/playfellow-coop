@@ -12,7 +12,7 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from playfellow_coop.overlay.panel import BAR_HEIGHT, OPACITY_RANGE, PANEL_HEIGHT, PanelModel  # noqa: E402
+from playfellow_coop.overlay.panel import BAR_HEIGHT, BAR_WIDTH, OPACITY_RANGE, PANEL_HEIGHT, PanelModel  # noqa: E402
 from playfellow_coop.overlay.qt_view import QtOverlay  # noqa: E402
 from playfellow_coop.voice import CommandQueue  # noqa: E402
 
@@ -69,3 +69,25 @@ def test_stay_on_top_is_re_asserted_on_a_timer(app):
     view.top_timer.timeout.connect(view._reassert)
     view.top_timer.timeout.emit()
     assert calls == [1]
+
+
+def test_a_flood_of_long_lines_keeps_the_panel_at_its_height_and_the_bar_shows_the_keys(app):
+    view, model, _ = build(animate=False)
+    model.set_keys(talk="f8", panel="ctrl+alt+p", see_through="ctrl+alt+o")
+    view.toggle_button.click()
+    view.finish_slide()
+    for n in range(30):
+        model.buddy_says(f"line {n} " + "word " * 80)
+    outer = view.window.layout()
+    outer.invalidate()
+    outer.activate()
+    assert outer.totalMinimumSize().height() <= PANEL_HEIGHT and view.window.height() == PANEL_HEIGHT
+    assert outer.totalMinimumSize().width() <= BAR_WIDTH  # the long key line and the quick buttons are clipped, never widen it
+    assert "Ctrl+Alt+O" in view.keys_label.text() and not view.keys_label.isHidden()
+    view.toggle_button.click()
+    view.finish_slide()
+    view.panel_layout.invalidate()
+    view.panel_layout.activate()
+    outer.invalidate()
+    outer.activate()
+    assert not view.keys_label.isHidden() and outer.totalMinimumSize().height() <= BAR_HEIGHT  # folded: the bar, its keys on it

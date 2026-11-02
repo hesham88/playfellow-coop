@@ -389,3 +389,21 @@ def test_audio_is_paced_against_an_absolute_schedule_never_ahead_of_real_time():
 def test_the_close_meanings_cover_the_documented_codes():
     from playfellow_coop.realtime_voice import CLOSE_MEANINGS
     assert set(CLOSE_MEANINGS) == {1000, 1008, 1011, 1013} and "60 minutes" in CLOSE_MEANINGS[1011]
+
+
+def test_an_empty_recording_says_nothing_was_heard_not_that_the_ai_failed(tmp_path):
+    """Owner run, 2 Nov: 6 of 11 recordings were empty or too short, and each showed "The AI model returned no answer", which blamed
+    the planner (31 of 31 planner calls had answered). An empty transcript now says what happened and what to do."""
+    from brain import BrainError
+
+    class Silent:
+        def transcribe(self, chunks, on_partial=lambda text: None, language="english", keywords=None):
+            raise BrainError("empty_answer")
+
+    said, queue = [], CommandQueue()
+    ptt = PushToTalk(FakeMic(frames=1), Silent(), queue, said.append)
+    ptt.key_down()
+    ptt.key_up()
+    ptt.wait()
+    assert queue.drain() == [] and len(said) == 1
+    assert "didn't hear" in said[0] and "AI model" not in said[0] and "hold" in said[0].lower()

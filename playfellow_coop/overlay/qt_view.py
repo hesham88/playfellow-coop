@@ -19,6 +19,8 @@ from typing import Callable
 from playfellow_coop.overlay import winstyle
 from playfellow_coop.overlay.panel import BAR_HEIGHT, BAR_WIDTH, OPACITY_RANGE, PANEL_HEIGHT, PanelModel, dock_rect, slide_heights
 
+CHAT_HEIGHT = 130  # the chat's fixed window inside the open panel (the panel's other rows take the rest of PANEL_HEIGHT)
+
 # Design tokens (contract 13, fixed names and values).
 TOKENS = {
     "bg_0": "#04061a",
@@ -55,6 +57,7 @@ def glass_stylesheet() -> str:
     QLabel#pill {{ font-size: 13px; font-weight: 700; color: {t["cyan"]}; }}
     QLabel#partial {{ font-size: 12px; font-style: italic; color: {t["cyan"]}; }}
     QLabel#caption {{ font-size: 11px; color: {t["ink_2"]}; }}
+    QLabel#keys {{ font-size: 10px; color: {t["ink_2"]}; }}
     QLabel.bubbleBuddy {{
         background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
             stop:0 {t["violet"]}, stop:1 #7a4fe0);
@@ -71,7 +74,8 @@ def glass_stylesheet() -> str:
         padding: 7px 10px; font-size: 13px;
     }}
     QPushButton:hover {{ background: rgba(255,255,255,0.18); }}
-    QPushButton#talk {{ font-size: 14px; font-weight: 700; min-height: 52px; border-radius: 16px; }}
+    QPushButton#talk {{ font-size: 14px; font-weight: 700; min-height: 22px; border-radius: 14px; }}
+    QPushButton#barButton {{ font-size: 15px; padding: 0px; border-radius: 15px; }}
     QPushButton#primary {{
         background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
             stop:0 {t["cyan"]}, stop:1 {t["violet"]});
@@ -105,7 +109,8 @@ class QtOverlay:
                  on_stop: Callable[[], None] = lambda: None, on_hand_over: Callable[[], None] = lambda: None,
                  show_in_recordings: bool = False, app=None, animate: bool = True):
         from PySide6.QtCore import Qt, QTimer
-        from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSlider, QVBoxLayout, QWidget
+        from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QSlider,
+                                       QVBoxLayout, QWidget)
 
         self._qt, self._widgets = Qt, (QLabel, QLineEdit, QPushButton)
         self.model = model
@@ -136,6 +141,7 @@ class QtOverlay:
         outer.addWidget(self.panel)
 
         layout = QVBoxLayout(self.panel)
+        self.panel_layout = layout
         layout.setContentsMargins(18, 16, 18, 14)
         layout.setSpacing(9)
 
@@ -147,13 +153,26 @@ class QtOverlay:
         self.pill_label = QLabel("", self.window)
         self.pill_label.setObjectName("pill")
         self.bar_talk = QPushButton("🎙", self.window)
-        self.bar_talk.setObjectName("talk")
+        self.bar_talk.setObjectName("barButton")
         self.bar_talk.setToolTip("Hold to talk")
         self.bar_talk.pressed.connect(lambda: self._talk_down())
         self.bar_talk.released.connect(lambda: self._talk_up())
         self.toggle_button = QPushButton("▾", self.window)
         self.toggle_button.clicked.connect(self._toggle)
-        bar.addWidget(self.pill_label, 1)
+        self.toggle_button.setObjectName("barButton")
+        for button in (self.bar_talk, self.toggle_button):  # compact, so the folded bar keeps BAR_HEIGHT
+            button.setFixedSize(30, 30)
+        self.keys_label = QLabel("", self.window)  # every key written out: in full screen the mouse is often gone
+        self.keys_label.setObjectName("keys")
+        for label in (self.pill_label, self.keys_label):  # a long line is clipped, never widens the docked window
+            label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+            label.setMinimumWidth(0)
+        words = QVBoxLayout()
+        words.setContentsMargins(0, 0, 0, 0)
+        words.setSpacing(0)
+        words.addWidget(self.pill_label)
+        words.addWidget(self.keys_label)
+        bar.addLayout(words, 1)
         bar.addWidget(self.bar_talk)
         bar.addWidget(self.toggle_button)
 
@@ -175,7 +194,13 @@ class QtOverlay:
         self.title_label.setObjectName("title")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.chat_box = QWidget(self.window)
+        self.chat_scroll = QScrollArea(self.window)  # a fixed window onto the chat: the panel keeps PANEL_HEIGHT whatever is said
+        self.chat_scroll.setWidgetResizable(True)
+        self.chat_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.chat_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.chat_scroll.setFixedHeight(CHAT_HEIGHT)
+        self.chat_box = QWidget()
+        self.chat_scroll.setWidget(self.chat_box)
         self.chat_layout = QVBoxLayout(self.chat_box)
         self.chat_layout.setContentsMargins(0, 0, 0, 0)
         self.chat_layout.setSpacing(6)
@@ -189,6 +214,7 @@ class QtOverlay:
         self.talk_button.released.connect(lambda: self._talk_up())
 
         self.chip_box = QWidget(self.window)
+        self.chip_box.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)  # clipped, never widens the window
         self.chip_layout = QHBoxLayout(self.chip_box)
         self.chip_layout.setContentsMargins(0, 0, 0, 0)
         self.chip_layout.setSpacing(6)
@@ -213,7 +239,7 @@ class QtOverlay:
 
         layout.addWidget(self.bar)
         layout.addWidget(self.title_label)
-        layout.addWidget(self.chat_box)
+        layout.addWidget(self.chat_scroll)
         layout.addWidget(self.partial_label)
         layout.addWidget(self.talk_button)
         layout.addWidget(self.chip_box)
@@ -247,6 +273,7 @@ class QtOverlay:
         )
         self.window.setWindowOpacity(model.opacity)
         self.pill_label.setText(model.pill_text)
+        self.keys_label.setText(model.shortcut_hint)
         self.title_label.setText(self._text("title"))
         self.talk_button.setText(self._text("hold_to_talk"))
         self.hand_button.setText(self._text("hand_over"))
@@ -261,7 +288,7 @@ class QtOverlay:
                 widget.setParent(None)
                 widget.deleteLater()
         QLabel = self._widgets[0]
-        for line in model.lines:
+        for line in model.shown_lines():  # the last few, cut short: the panel keeps its height whatever is said
             bubble = QLabel(line.text, self.chat_box)
             bubble.setProperty("class", "bubblePlayer" if line.who == "player" else "bubbleBuddy")
             bubble.setWordWrap(True)
@@ -280,9 +307,13 @@ class QtOverlay:
             self.chip_layout.addWidget(button)
             self.chip_buttons.append(button)
 
-        for widget in (self.title_label, self.chat_box, self.partial_label, self.talk_button,
+        for widget in (self.title_label, self.chat_scroll, self.partial_label, self.talk_button,
                        self.chip_box, self.entry, self.hand_button, self.stop_button, self.opacity_slider):
             widget.setVisible(model.visible)
+        self.caption_label.setVisible(model.visible and bool(self.caption_label.text()))
+        self.panel_layout.setContentsMargins(*((18, 12, 18, 12) if model.visible else (14, 8, 14, 8)))  # folded: just the bar
+        self.panel_layout.invalidate()  # the minimum size follows what is shown, so Windows never refuses the folded or open size
+        self.window.layout().invalidate()
         self.toggle_button.setText("▴" if model.visible else "▾")
         target = PANEL_HEIGHT if model.visible else BAR_HEIGHT
         if target != self._height and not self.slide_plan:

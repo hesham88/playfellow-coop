@@ -41,7 +41,8 @@ def parse(text: str) -> tuple[int, int, str]:
 def refuse_if_game_key(key: str, card) -> None:
     """The summon key must not be one the active controls card presses (the card's keys are what the game is played with)."""
     used = {k.lower() for action in getattr(card, "actions", {}).values() for k in action.keys}
-    if key in used:
+    catalogue = str(getattr(card, "genre", "")).lower() == "generic"  # the general card lists every key a game MIGHT use, not this game's
+    if key in used and not catalogue:
         raise HotkeyError(f"{key.upper()} is a key this game uses, so it can't summon the panel; choose another")
     if key in RESERVED:
         raise HotkeyError(f"{key.upper()} is {RESERVED[key]}; choose another")

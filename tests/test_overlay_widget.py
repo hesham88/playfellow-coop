@@ -35,3 +35,34 @@ def test_the_widget_is_docked_at_the_top_centre_of_the_screen():
     assert (x, y, w, h) == (680, 6, 560, 44)
     x, _, _, _ = dock_rect(screen_left=1920, screen_top=0, screen_width=2560, width=560, height=44)  # a second monitor
     assert x == 1920 + 1000
+
+
+def test_the_see_through_key_steps_through_levels_and_wraps_but_never_reaches_invisible():
+    model = PanelModel(CommandQueue())
+    seen = [model.step_opacity() for _ in range(5)]
+    assert all(v >= OPACITY_RANGE[0] > 0 for v in seen)
+    assert seen == [0.8, 1.0, OPACITY_RANGE[0], 0.55, 0.8]  # from the default 0.55: up to fully solid, then back to the floor
+
+
+def test_the_bar_writes_every_key_so_a_full_screen_game_without_a_mouse_is_still_usable():
+    """Owner, 2 Nov: in full-screen games the mouse is often gone, so the shortcuts must be clear and visible."""
+    model = PanelModel(CommandQueue(), language=lambda: "english")
+    model.set_keys(talk="f8", panel="ctrl+alt+p", see_through="ctrl+alt+o")
+    hint = model.shortcut_hint
+    for part in ("F8 talk", "Ctrl+Alt+P", "Ctrl+Alt+O", "F9", "F12"):
+        assert part in hint
+    assert "F8" not in PanelModel(CommandQueue(), language=lambda: "english").shortcut_hint  # no talk key set: none is promised
+    arabic = PanelModel(CommandQueue(), language=lambda: "arabic")
+    arabic.set_keys(talk="f8", panel="ctrl+alt+p", see_through="ctrl+alt+o")
+    assert "F8" in arabic.shortcut_hint and "Ctrl+Alt+O" in arabic.shortcut_hint
+
+
+def test_the_chat_keeps_only_the_last_few_short_lines_so_the_panel_cannot_outgrow_its_height():
+    """Owner run, 2 Nov: a long spoken request made the panel ask for 525 to 697 px and Windows refused the size."""
+    from playfellow_coop.overlay.panel import CHAT_CHARS, CHAT_LINES
+
+    model = PanelModel(CommandQueue())
+    for n in range(30):
+        model.buddy_says(f"line {n} " + "word " * 80)
+    shown = model.shown_lines()
+    assert len(shown) == CHAT_LINES and all(len(line.text) <= CHAT_CHARS for line in shown) and shown[-1].text.startswith("line 29")

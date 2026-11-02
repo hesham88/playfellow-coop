@@ -54,6 +54,12 @@ class VoiceLatency:
         return {"n": len(ordered), "p50": rank(0.5), "p95": rank(0.95)}
 
 
+HEARD_NOTHING = {
+    "english": "I didn't hear anything. Hold the mic (or the talk key) while you speak, and let go after the last word.",
+    "arabic": "لم أسمع شيئًا. اضغط مطوّلًا على الميكروفون (أو زر التحدث) وأنت تتكلم، ثم اتركه بعد آخر كلمة.",
+}
+
+
 class PushToTalk:
     def __init__(self, mic: Source, transcriber: RealtimeTranscriber, commands: CommandQueue, say: Callable[[str], None],
                  card=None, language: str = "english", latency: VoiceLatency | None = None, spawn: Callable = threading.Thread):
@@ -89,6 +95,9 @@ class PushToTalk:
             result = self._transcriber.transcribe(self._mic.chunks(), on_partial=lambda text: self._say(f"… {text}"),
                                                   language=self._language, keywords=keywords)
         except BrainError as error:
+            if error.key == "empty_answer":  # silence or a tap too short to carry words: the mic, not the AI, came back empty
+                self._say(HEARD_NOTHING["arabic" if self._language == "arabic" else "english"])
+                return
             self._say(error.friendly())  # a voice failure never stops play: the player can type instead
             return
         if self._commands.put(result.text):

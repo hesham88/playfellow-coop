@@ -7,7 +7,12 @@ import pytest
 from PIL import Image
 
 from playfellow_coop.overlay import hotkey, winstyle
+import os
+from pathlib import Path
+
 from tests.test_session_and_handover import CARD, MOVE
+
+ENGINE = Path(os.environ["PLAYFELLOW_ENGINE"])
 
 
 class FakeUser32:
@@ -153,3 +158,17 @@ def test_the_overlay_package_has_no_hook_or_injection_calls():
         source = inspect.getsource(module)
         for banned in ("SetWindowsHookEx", "WriteProcessMemory", "CreateRemoteThread", "LoadLibrary", "VirtualAllocEx"):
             assert banned not in source
+
+
+def test_the_general_card_lists_every_key_so_it_does_not_block_the_widget_keys_but_a_game_card_still_does():
+    """2 Nov: any_game (genre generic) lists every letter, F1-F8, F10, F11 and the page keys, so every widget key "clashed" and the
+    widget could not open for an unknown game. That card is a catalogue of what a game might use, not this game's keys."""
+    import controls
+
+    general = controls.load_card(ENGINE / "controls" / "any_game.yaml")
+    for text in ("ctrl+alt+p", "ctrl+alt+o"):
+        hotkey.Hotkey(text, card=general, user32=FakeUser32())  # accepted
+    with pytest.raises(hotkey.HotkeyError):
+        hotkey.Hotkey("ctrl+up", card=CARD, user32=FakeUser32())  # a game's own card still refuses its keys
+    with pytest.raises(hotkey.HotkeyError):
+        hotkey.Hotkey("ctrl+f9", card=general, user32=FakeUser32())  # the hand-over and stop keys stay reserved for every card

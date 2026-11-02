@@ -22,7 +22,17 @@ MAX_LINES = 6
 OPACITY_RANGE = (0.3, 1.0)  # the lowest point of the slider is still visible: the widget is never invisible
 DEFAULT_OPACITY = 0.55  # see-through by default, over the game
 DOCK_TOP = 6  # pixels from the top edge of the screen
-BAR_WIDTH, BAR_HEIGHT, PANEL_HEIGHT = 560, 52, 420  # the slim bar, and the panel it slides open into
+BAR_WIDTH, BAR_HEIGHT, PANEL_HEIGHT = 560, 52, 440  # the slim bar, and the panel it slides open into (its rows need 430)
+OPACITY_STEPS = (0.3, 0.55, 0.8, 1.0)  # the see-through key walks these and wraps; the first is the floor, never invisible
+CHAT_LINES, CHAT_CHARS = 4, 140  # what the open panel shows, so a long spoken request can never make it outgrow PANEL_HEIGHT
+KEY_WORDS = {"talk": ("talk", "تحدّث"), "panel": ("open", "افتح"), "see_through": ("see-through", "الشفافية"),
+             "hand": ("hand over", "سلّم التحكم"), "stop": ("stop", "إيقاف")}
+
+
+def key_label(key: str) -> str:
+    """"ctrl+alt+p" -> "Ctrl+Alt+P", "f8" -> "F8": how a key is written on the bar."""
+    return "+".join(piece.upper() if len(piece) <= 3 and (len(piece) == 1 or piece[0] == "f") else piece.capitalize()
+                    for piece in key.split("+") if piece)
 
 
 def dock_rect(screen_left: int, screen_top: int, screen_width: int, width: int, height: int) -> tuple[int, int, int, int]:
@@ -59,6 +69,7 @@ class PanelModel:
         self.lines: deque[Line] = deque(maxlen=MAX_LINES)
         self.opacity = DEFAULT_OPACITY
         self.heard_partial = ""
+        self.keys: dict[str, str] = {"hand": "f9", "stop": "f12"}  # the session's own keys; set_keys adds the talk and widget keys
 
     # ---- what a view needs -------------------------------------------------------------------------------------
     @property
@@ -119,6 +130,30 @@ class PanelModel:
         """Open or close the widget (the bar's own arrow, or the summon key). Returns the new collapsed state."""
         self.toggle()
         return self.collapsed
+
+    def step_opacity(self) -> float:
+        """The see-through key: the next level up, wrapping from fully solid back to the floor (never invisible)."""
+        higher = [level for level in OPACITY_STEPS if level > self.opacity + 1e-6]
+        return self.set_opacity(higher[0] if higher else OPACITY_STEPS[0])
+
+    def set_keys(self, talk: str | None = None, panel: str | None = None, see_through: str | None = None) -> None:
+        """The keys this run really listens to, so the bar promises only those (in full screen the mouse is often gone)."""
+        for name, key in (("talk", talk), ("panel", panel), ("see_through", see_through)):
+            if key:
+                self.keys[name] = key
+        self._changed()
+
+    @property
+    def shortcut_hint(self) -> str:
+        """One line for the bar, every key written out: "F8 talk · Ctrl+Alt+P open · Ctrl+Alt+O see-through · F9 hand over · F12 stop"."""
+        index = 1 if self.arabic else 0
+        order = ("talk", "panel", "see_through", "hand", "stop")
+        return " · ".join(f"{key_label(self.keys[name])} {KEY_WORDS[name][index]}" for name in order if name in self.keys)
+
+    def shown_lines(self) -> list[Line]:
+        """The last few lines, each cut short: the open panel draws these, so it keeps its height whatever is said."""
+        return [Line(line.who, line.text if len(line.text) <= CHAT_CHARS else line.text[:CHAT_CHARS - 1] + "…")
+                for line in list(self.lines)[-CHAT_LINES:]]
 
     def set_opacity(self, value: float) -> float:
         low, high = OPACITY_RANGE

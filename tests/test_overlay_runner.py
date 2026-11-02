@@ -185,3 +185,21 @@ def test_the_overlay_switch_is_off_by_default_and_read_from_the_command_line():
     assert parts.overlay is False and parts.summon_key == "ctrl+alt+p"
     parts, _ = entry.build(["--overlay", "--summon-key", "ctrl+alt+o"], build_parts=lambda cfg: Parts(), key_loader=lambda: None)
     assert parts.overlay is True and parts.summon_key == "ctrl+alt+o"
+
+
+def test_the_see_through_key_steps_the_opacity_on_the_main_thread_and_its_key_starts_and_stops_with_the_window():
+    runner, model, view, pump = make()
+    extra = FakePump()
+    runner.extra_pumps.append(extra)
+    before = model.opacity
+    worker = threading.Thread(target=runner.step_opacity)
+    worker.start()
+    worker.join()
+    assert model.opacity == before  # nothing changes from the hotkey's thread
+    runner.tick()
+    assert model.opacity > before
+    runner.run()
+    assert extra.started == 1
+    runner.finish()
+    runner.tick()
+    assert extra.stopped == 1 and pump.stopped == 1
