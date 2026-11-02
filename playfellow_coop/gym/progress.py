@@ -25,4 +25,11 @@ PROGRESS = {
     "tiny_kingdom": lambda p0, p: 0.9 * _frac(p["wave"], p["waves"]) if p["castle"] > 0 else 0.0,
     "top_racer": lambda p0, p: 0.95 * _frac(p["lap"] - p0["lap"], p["laps"]),
     "turn_quest": lambda p0, p: 0.6 * _frac(p["level"] - p0["level"], 4) + (0.2 if p["sword"] else 0.0) + (0.15 if p["enemy"] == "dragon" else 0.0),
+    "osg_2048": lambda p0, p: _osg_2048(p0, p),  # the open-source 2048 (bench/osg_progress.py): best-tile climb, the score alone earns nothing
 }
+
+
+def _osg_2048(p0, p):
+    from bench.osg_progress import progress  # imported on use: the bench file brings the open-source game's own score
+
+    return progress(p0, p)
