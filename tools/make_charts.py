@@ -307,11 +307,11 @@ def _build_arena_wins_and_cost(arena_rows: list[tuple[str, dict[str, Any]]], out
 
     top_y = 200
     row_h = min(132, max(88, (H - 310) // max(1, len(ordered))))
-    bar_x = 740
-    bar_w = 430
-    cost_x = 1470
+    bar_x = 820
+    bar_w = 380
+    cost_x = 1480
 
-    c.text(96, top_y - 18, "Model / Brain & Attribution Mode", size=20, fill=INK_2, bold=True)
+    c.text(96, top_y - 18, "Run / Benchmark Set & Operating Rung", size=20, fill=INK_2, bold=True)
     c.text(bar_x, top_y - 18, "Episodes Won (Win Share)", size=20, fill=INK_2, bold=True)
     c.text(cost_x, top_y - 18, "Recorded Spend & Token Load", size=20, fill=INK_2, bold=True)
     c.line(88, top_y - 4, W - 88, top_y - 4, LINE, width=1)
@@ -333,8 +333,8 @@ def _build_arena_wins_and_cost(arena_rows: list[tuple[str, dict[str, Any]]], out
         set_tag = set_and_file_label(filename, data)
         model_title = f"{data.get('model')} ({data.get('brain')}) — {set_tag}"
 
-        c.text(104, y + 42, model_title, size=18, fill=INK, bold=True)
-        c.text(104, y + 76, mode, size=18, fill=accent, bold=True)
+        c.text(104, y + 40, model_title, size=15, fill=INK, bold=True)
+        c.text(104, y + 74, mode, size=18, fill=accent, bold=True)
 
         c.rect(bar_x, y + 26, bar_w, 32, BG_0, stroke=LINE, radius=8, stroke_width=1)
         fill_w = max(8 if win_rate > 0 else 0, round(bar_w * win_rate))
