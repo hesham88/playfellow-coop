@@ -166,7 +166,7 @@ def test_results_carry_the_rung_the_action_shares_and_an_interval_for_progress(t
     out = tmp_path / "h.json"
     ar.write_results(out, "c", "muse", "m", ["snake"], helped)
     honest = json.loads(out.read_text(encoding="utf-8"))["honesty"]
-    assert honest["rung"]["key"] == "human_skills" and honest["label"] == "[Assisted: Human Local Skill]" and abs(honest["action_share"]["human_skill"] - 0.9) < 1e-9
+    assert honest["rung"]["key"] == "human_skills" and honest["label"] == "[Assisted: Pre-written Skill]" and abs(honest["action_share"]["human_skill"] - 0.9) < 1e-9
     assert honest["progress_iqm"]["estimate"] == 1.0 and honest["progress_iqm"]["ci95"][0] <= 1.0
     raw = [ar.Episode("snake", i, progress=0.2, ticks=40) for i in range(3)]
     out2 = tmp_path / "r.json"

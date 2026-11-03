@@ -49,14 +49,14 @@ def test_glass_delta_harness_lift_budgeted_success_and_wilson():
 # ---- attribution --------------------------------------------------------------------------------------------------------------------
 def test_origin_shares_drive_the_label_and_a_row_never_shows_a_win_rate_without_who_played():
     shares = attribution.origin_share(["human_skill"] * 92 + ["model_chunk"] * 6 + ["fallback"] * 2)
-    assert shares.human_skill == pytest.approx(0.92) and attribution.label(shares) == "[Assisted: Human Local Skill]"
+    assert shares.human_skill == pytest.approx(0.92) and attribution.label(shares) == "[Assisted: Pre-written Skill]"
     auto = attribution.origin_share(["model_skill"] * 9 + ["model_chunk"])
     assert attribution.label(auto) == "[Autonomous: Model-Synthesized Skill]"
     assert attribution.label(attribution.origin_share(["model_chunk"] * 5)) == "[Model Alone]" and attribution.origin_share([]).human_skill == 0.0
     with pytest.raises(ValueError):
         attribution.origin_share(["mystery"])
     line = attribution.row("snake", 0.81, shares)
-    assert "81%" in line and "[Assisted: Human Local Skill]" in line and "92% human skill" in line
+    assert "81%" in line and "[Assisted: Pre-written Skill]" in line and "92% pre-written skill" in line
 
 
 def test_lifts_live_clock_penalty_and_action_age_percentiles():

@@ -64,7 +64,7 @@ def rung_of(doc: dict) -> tuple[str, str]:
     brain = doc.get("brain", "")
     skilled = any((e.get("extra") or {}).get("skill_steps", 0) > 0 for e in doc.get("episodes") or [])
     if brain in ("muse", "open"):
-        return ("human_skills", "[Assisted: Human Local Skill]") if skilled else ("raw_paused", "[Model Alone]")
+        return ("human_skills", "[Assisted: Pre-written Skill]") if skilled else ("raw_paused", "[Model Alone]")
     return "local_floor", "[Local floor: no model]"
 
 

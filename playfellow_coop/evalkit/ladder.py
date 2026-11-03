@@ -1,7 +1,7 @@
 """The evaluation ladder: which help each rung allows and which clock it runs on (research R1 section 3.5 "4-rung ladder", R2 section 6.1 "five tiers").
 
 A result is only meaningful with its rung. The rungs here merge both documents' ladders into the one we report: the local floor, raw model on a live clock, raw model on a paused clock,
-the system with model-written skills, and the system with human-written skills.
+the system with model-written skills, and the system with pre-written skills (written ahead of time by our team with AI coding agents).
 """
 from __future__ import annotations
 
@@ -31,7 +31,8 @@ RUNGS = (
          "the model's visual and strategic ceiling, separated from its latency", True, False, False),
     Rung("model_skills", 3, "System with model-written skills", "pixels plus model-configured perception", "local controllers written by the model from a blank folder", "live",
          "autonomous compound competence on a game nobody wrote a skill for", True, False, True),
-    Rung("human_skills", 4, "System with human-written skills", "pixels plus pre-built perception", "the model picks, a human-authored skill plays", "live",
+    Rung("human_skills", 4, "System with pre-written skills", "pixels plus pre-built perception",
+         "the model picks, a pre-written skill plays (written ahead of time by our team with AI coding agents, reviewed and tested)", "live",
          "the deployed composite system; never reported as the model alone", True, True, False),
 )
 BY_KEY = {r.key: r for r in RUNGS}

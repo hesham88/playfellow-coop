@@ -68,7 +68,7 @@ The $0 harness check (a scripted chooser, no model) wins 36 of 42 episodes (12 o
 
 ![Model-written skill, round by round](docs/img/charts/learning-curve.png)
 
-The five games with human-written skills (snake, box_push, slide_2048, lane_dash, brick_breaker), 3 seeds each unless said:
+The five games with pre-written skills (snake, box_push, slide_2048, lane_dash, brick_breaker), 3 seeds each unless said. A **pre-written skill** was written ahead of time by our team with AI coding agents, then reviewed and tested; the model at run time only picks it. A **model-written skill** (rung 3) is written by the model during the run and must pass the sandbox and the held-out check first.
 
 | Rung | Wins | Mean progress | File |
 |---|---|---|---|
@@ -80,10 +80,12 @@ The five games with human-written skills (snake, box_push, slide_2048, lane_dash
 | 2+ Model alone + SAM 3.1 marks (20-call cap; 14 games) | 0 of 28 | 0.217 | `results/fifteen/muse-sam-20261102.json` |
 | 3 Model-written skills (SkillSmith, F1), Muse Spark 1.3 writes | 0 of 6 | 0.504 | `results/skillsmith/skillsmith-muse-room-20261102.json`, `results/skillsmith/skillsmith-muse-2048-20261103.json` |
 | 3 Model-written skills (SkillSmith, F1), Muse Spark Open writes | 0 of 6 | 0.521 | `results/skillsmith/skillsmith-open-20261102.json`, `results/skillsmith/skillsmith-open-2048-20261103.json` |
-| 4 Model picks + human skill, Muse Spark 1.3 | 15 of 15 | 1.0 | `results/k-lane/muse-skills-pt1.json` |
-| 4 Model picks + human skill, Muse Spark Open | 14 of 15 (snake 2 of 3) | 0.933 | `results/k-lane/baseten-skills.json` |
+| 4 Model picks + pre-written skill, Muse Spark 1.3 | 15 of 15 | 1.0 | `results/k-lane/muse-skills-pt1.json` |
+| 4 Model picks + pre-written skill, Muse Spark Open | 14 of 15 (snake 2 of 3) | 0.933 | `results/k-lane/baseten-skills.json` |
 
-The SkillSmith games (no human skill exists for them):
+Result files written before 3 Nov 2026 carry the label `[Assisted: Human Local Skill]`; it means the pre-written skill above (written ahead of time by our team with AI coding agents).
+
+The SkillSmith games (no pre-written skill exists for them):
 
 | Game | Rung 3 state | File |
 |---|---|---|

@@ -2,8 +2,8 @@
 
 Reported wins mix the model's ability with the help scaffolded around it. Every evaluation therefore carries:
 
-  * Action Origin Share: for every input tick, who produced it: a human-written local skill, a model-written local skill, a direct model chunk, or the fallback (neutral) action;
-  * a label that follows from the shares: any human-written help makes the row [Assisted: Human Local Skill]; model-written help with no human help is
+  * Action Origin Share: for every input tick, who produced it: a pre-written local skill (written ahead of time by our team with AI coding agents), a model-written local skill, a direct model chunk, or the fallback (neutral) action;
+  * a label that follows from the shares: any pre-written help makes the row [Assisted: Pre-written Skill]; model-written help with no pre-written help is
     [Autonomous: Model-Synthesized Skill]; nothing local at all is [Model Alone];
   * Marginal Model Lift (what the model adds over the local floor that plays with no model) and Autonomous Skill Lift (what model-written skills add over raw model control);
   * the Live-Clock Penalty (how much of the paused-clock score is lost when the world does not wait) and the action-age distribution (P50 and P99 of the time from looking to acting).
@@ -25,7 +25,7 @@ class Shares:
     fallback: float = 0.0
 
     def as_text(self) -> str:
-        return f"{self.human_skill:.0%} human skill / {self.model_skill:.0%} model skill / {self.model_chunk:.0%} model chunk / {self.fallback:.0%} fallback"
+        return f"{self.human_skill:.0%} pre-written skill / {self.model_skill:.0%} model skill / {self.model_chunk:.0%} model chunk / {self.fallback:.0%} fallback"
 
 
 def origin_share(ticks: Iterable[str]) -> Shares:
@@ -40,9 +40,19 @@ def origin_share(ticks: Iterable[str]) -> Shares:
     return Shares(**{o: counts.get(o, 0) / total for o in ORIGINS})
 
 
+PREWRITTEN_LABEL = "[Assisted: Pre-written Skill]"  # the origin key stays `human_skill` so files and code keep matching
+LEGACY_PREWRITTEN_LABEL = "[Assisted: Human Local Skill]"
+# ^ the same rung as written by result files before 3 Nov 2026; records are never rewritten.
+
+
+def is_prewritten_label(text: str) -> bool:
+    """True for the pre-written-skill rung's label, old or new spelling."""
+    return text in (PREWRITTEN_LABEL, LEGACY_PREWRITTEN_LABEL)
+
+
 def label(shares: Shares) -> str:
     if shares.human_skill > 0:
-        return "[Assisted: Human Local Skill]"
+        return PREWRITTEN_LABEL
     if shares.model_skill > 0:
         return "[Autonomous: Model-Synthesized Skill]"
     return "[Model Alone]"

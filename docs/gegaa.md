@@ -88,7 +88,7 @@ Glass's delta = (mean_treated - mean_control) / std_control
 
 Intervals come from a stratified bootstrap (runs are resampled inside each task).
 
-Who played. For each input tick the origin is one of `human_skill`, `model_skill`, `model_chunk`, `fallback`. The label follows from the shares: any human-written help makes a row `[Assisted: Human Local Skill]`; model-written help only gives `[Autonomous: Model-Synthesized Skill]`; nothing local gives `[Model Alone]`.
+Who played. For each input tick the origin is one of `human_skill`, `model_skill`, `model_chunk`, `fallback`. The label follows from the shares: any pre-written help (a skill written ahead of time by our team with AI coding agents) makes a row `[Assisted: Pre-written Skill]` (older result files spell it the old way; see the README glossary); model-written help only gives `[Autonomous: Model-Synthesized Skill]`; nothing local gives `[Model Alone]`.
 
 Change of regime. A cheap embedding `e_t` of each picture is tracked with an exponential average `m_t = (1 - a) m_(t-1) + a e_t`; the cumulative sum `S_t = max(0, S_(t-1) + |e_t - m_t| - d)` fires when it crosses a threshold (`a = 0.03`, `d = 0.10` by default).
 
