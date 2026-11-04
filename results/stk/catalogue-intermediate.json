@@ -1,0 +1,444 @@
+{
+ "difficulty": "intermediate",
+ "track": "abyss",
+ "built": "2026-11-04T03:09:54",
+ "difficulty_note": "AI karts faster and use items: the start boost, skid boosts, nitro and clean bends now decide it; fewer stalls.",
+ "wins_so_far": {
+  "novice": "abyss 2026-11-03 18:49 (5:49.238) and 20:54 (4:29.365, best lap 1:27.042), both 1st of 4"
+ },
+ "track_notes": [
+  9,
+  22,
+  24,
+  26,
+  27,
+  58,
+  60,
+  76,
+  96,
+  98,
+  101,
+  114,
+  116,
+  125,
+  132,
+  136,
+  138,
+  150,
+  153,
+  160,
+  164,
+  165,
+  177
+ ],
+ "skills": [
+  {
+   "skill": "controls card",
+   "family": "pre-skill",
+   "area": "controls",
+   "source": "the game's own input.xml",
+   "does": "every key the buddy presses is a key the player really has bound",
+   "status": "built"
+  },
+  {
+   "skill": "read lesson boxes",
+   "family": "AI-skill",
+   "area": "reading",
+   "source": "tutorial + help pages (Muse vision)",
+   "does": "reads on-screen instructions and acts on them at the right moment",
+   "status": "built"
+  },
+  {
+   "skill": "menu routes",
+   "family": "AI-skill",
+   "area": "menus",
+   "source": "explored 3 Nov (Muse vision + tooltip reader)",
+   "does": "reaches races and menus with the keyboard, offline only",
+   "status": "partly"
+  },
+  {
+   "skill": "race gate",
+   "family": "pre-skill",
+   "area": "safety",
+   "source": "built 3 Nov",
+   "does": "no race key until the race map is on screen; never drives a menu",
+   "status": "built"
+  },
+  {
+   "skill": "hand-over (F9) and stop (F12)",
+   "family": "pre-skill",
+   "area": "safety",
+   "source": "owner request 3 Nov",
+   "does": "F9: the buddy lets go and waits; F12: everything stops",
+   "status": "built"
+  },
+  {
+   "skill": "rocket start",
+   "family": "pre-skill",
+   "area": "start",
+   "source": "help page + guide: accelerate at 'Set!'",
+   "does": "full throttle exactly at 'Set!' (countdown read locally)",
+   "status": "built"
+  },
+  {
+   "skill": "kart class: Tux, middleweight",
+   "family": "pre-skill",
+   "area": "physics",
+   "source": "owner's guide",
+   "does": "top speed 90 km/h (25 m/s), balanced acceleration, 225 kg; speed caps are set from it",
+   "status": "built"
+  },
+  {
+   "skill": "minimap localisation",
+   "family": "pre-skill",
+   "area": "driving",
+   "source": "the game's quads.xml + learned icon look",
+   "does": "knows where the kart is on the track, 20 times a second",
+   "status": "built"
+  },
+  {
+   "skill": "driveline pursuit",
+   "family": "pre-skill",
+   "area": "driving",
+   "source": "the game's own driveline",
+   "does": "follows the road; looks further at speed",
+   "status": "built"
+  },
+  {
+   "skill": "calm straights",
+   "family": "pre-skill",
+   "area": "driving",
+   "source": "owner feedback 3 Nov",
+   "does": "holds the wheel still on straights (no weaving)",
+   "status": "built"
+  },
+  {
+   "skill": "speed for the bend ahead",
+   "family": "pre-skill",
+   "area": "driving",
+   "source": "owner feedback 3 Nov (fell off curves)",
+   "does": "lifts before sharp bends, brakes a moment before very sharp ones",
+   "status": "built"
+  },
+  {
+   "skill": "outside line in tight bends",
+   "family": "pre-skill",
+   "area": "driving",
+   "source": "race notes 3 Nov (inner-wall stalls)",
+   "does": "aims a little wide of the centre line in tight bends",
+   "status": "built"
+  },
+  {
+   "skill": "track notes",
+   "family": "learned skill",
+   "area": "learning",
+   "source": "its own race notes",
+   "does": "comes into its noted trouble spots slower and wider",
+   "status": "built"
+  },
+  {
+   "skill": "nitro on straights",
+   "family": "pre-skill",
+   "area": "boosts",
+   "source": "tutorial lesson",
+   "does": "taps nitro when the road ahead is straight",
+   "status": "built"
+  },
+  {
+   "skill": "nitro tapping on a fading boost",
+   "family": "pre-skill",
+   "area": "boosts",
+   "source": "owner's guide",
+   "does": "tap nitro as a skid or zipper boost fades to hold top speed",
+   "status": "built (not yet proven in a race)"
+  },
+  {
+   "skill": "skid boost (yellow +16.2 km/h, red +23.4 km/h)",
+   "family": "pre-skill",
+   "area": "boosts",
+   "source": "tutorial + owner's guide",
+   "does": "hold skid through a bend at least 1 s (game data), release lined up with the exit",
+   "status": "built (not yet proven in a race)"
+  },
+  {
+   "skill": "brake-drift in hairpins",
+   "family": "pre-skill",
+   "area": "boosts",
+   "source": "owner's guide",
+   "does": "tap brake while drifting to pivot in tight hairpins",
+   "status": "partly (brake taps before very sharp bends, no drift)"
+  },
+  {
+   "skill": "snaking on straights",
+   "family": "pre-skill",
+   "area": "boosts",
+   "source": "owner's guide (speedrun)",
+   "does": "chained hop-drifts on straights for repeated boosts",
+   "status": "known, not built (speedrun trick, too risky in races)"
+  },
+  {
+   "skill": "hop / low-air hop",
+   "family": "pre-skill",
+   "area": "airborne",
+   "source": "owner's guide",
+   "does": "tap skid before a crest to land sooner",
+   "status": "known, not built (needs crest detection)"
+  },
+  {
+   "skill": "zipper buffering",
+   "family": "pre-skill",
+   "area": "boosts",
+   "source": "owner's guide",
+   "does": "do not stack a zipper item or nitro on a ground zipper",
+   "status": "known, not built"
+  },
+  {
+   "skill": "reverse off walls",
+   "family": "pre-skill",
+   "area": "recovery",
+   "source": "owner request 3 Nov",
+   "does": "backs off a wall with the wheel turned, before any rescue",
+   "status": "built"
+  },
+  {
+   "skill": "rescue",
+   "family": "pre-skill",
+   "area": "recovery",
+   "source": "tutorial lesson",
+   "does": "Rescue when stalled again, lost, or going nowhere",
+   "status": "built"
+  },
+  {
+   "skill": "focus + pause recovery",
+   "family": "pre-skill",
+   "area": "recovery",
+   "source": "races 3 Nov (game paused itself)",
+   "does": "takes the front back and leaves the pause menu",
+   "status": "built"
+  },
+  {
+   "skill": "item hunt (SAM)",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "owner request; SAM 3.1 + tracker",
+   "does": "picks one reachable gift box or nitro on gentle road, then the next",
+   "status": "built (gentle pulls only)"
+  },
+  {
+   "skill": "obstacle avoidance (SAM)",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "owner request; SAM 3.1 + tracker",
+   "does": "steers around bananas and crates in the path",
+   "status": "built (gentle)"
+  },
+  {
+   "skill": "aimed firing (SAM)",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "owner request; SAM 3.1 + tracker",
+   "does": "fires only with an opponent lined up, never at itself",
+   "status": "built"
+  },
+  {
+   "skill": "held power reading",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "the game's own icon files",
+   "does": "knows which power and how many charges it holds, 25 ms a look",
+   "status": "built"
+  },
+  {
+   "skill": "power rules per item",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "the game's own AI + data",
+   "does": "each power used at its moment; never thrown just to empty the hand",
+   "status": "built (not yet proven in a race)"
+  },
+  {
+   "skill": "rear-firing (look back + fire)",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "help page + owner's guide",
+   "does": "fire backwards when leading and a power has been held too long",
+   "status": "partly (no sight of karts behind)"
+  },
+  {
+   "skill": "shielding (bubblegum) and swatter",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "help page + owner's guide",
+   "does": "shield or swat with an opponent very close",
+   "status": "partly (attachments on the kart are not read yet)"
+  },
+  {
+   "skill": "item blocking (drop behind)",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "owner's guide",
+   "does": "drop a banana behind to block projectiles",
+   "status": "known, not built"
+  },
+  {
+   "skill": "wall riding (magnet sections)",
+   "family": "pre-skill",
+   "area": "tracks",
+   "source": "owner's guide",
+   "does": "ride gravity surfaces on Cocoa Temple / STK Enterprise",
+   "status": "known, not needed on Abyss"
+  },
+  {
+   "skill": "predictive drift",
+   "family": "pre-skill",
+   "area": "boosts",
+   "source": "owner + tutorial + guide",
+   "does": "measures the bend ahead, holds skid + turn through it, releases lined up",
+   "status": "built (first live trial)"
+  },
+  {
+   "skill": "fast banana eye",
+   "family": "AI-skill",
+   "area": "items",
+   "source": "owner 3 Nov (SAM too slow for bananas)",
+   "does": "local yellow detector, 10 looks a second, dodges at once",
+   "status": "built"
+  },
+  {
+   "skill": "learning at each lap end",
+   "family": "learned skill",
+   "area": "learning",
+   "source": "owner: 'act in real time while learning in parallel'",
+   "does": "a parallel thread adds the lap's trouble spots to the next lap",
+   "status": "built"
+  },
+  {
+   "skill": "steering damping + speed schedule",
+   "family": "pre-skill",
+   "area": "driving",
+   "source": "kart simulator (sim.py), 3 Nov",
+   "does": "steers on where the error is going; gentler at speed",
+   "status": "built (simulator-proven)"
+  },
+  {
+   "skill": "racing line (out-in-out)",
+   "family": "pre-skill",
+   "area": "driving",
+   "source": "racing genre",
+   "does": "wide entry, apex, wide exit for more speed through bends",
+   "status": "partly (outside aim in tight bends)"
+  },
+  {
+   "skill": "braking points",
+   "family": "pre-skill",
+   "area": "driving",
+   "source": "racing genre",
+   "does": "brake before the bend, not in it",
+   "status": "partly (speed for the bend ahead)"
+  },
+  {
+   "skill": "slipstream / drafting",
+   "family": "pre-skill",
+   "area": "racing",
+   "source": "racing genre",
+   "does": "tuck in behind a kart on a straight for a tow, then pass",
+   "status": "known, not built"
+  },
+  {
+   "skill": "overtaking",
+   "family": "pre-skill",
+   "area": "racing",
+   "source": "racing genre",
+   "does": "pick the side, pass on a straight or the inside of a bend",
+   "status": "known, not built"
+  },
+  {
+   "skill": "defending",
+   "family": "pre-skill",
+   "area": "racing",
+   "source": "racing genre",
+   "does": "hold the inside line when a kart is close behind",
+   "status": "known, not built (needs a look behind)"
+  },
+  {
+   "skill": "position awareness",
+   "family": "pre-skill",
+   "area": "racing",
+   "source": "the game's HUD",
+   "does": "reads its place from the standings ring; leaders keep leader-hitting powers",
+   "status": "built"
+  },
+  {
+   "skill": "shortcuts",
+   "family": "pre-skill",
+   "area": "tracks",
+   "source": "track exploration",
+   "does": "learned alternative routes per track",
+   "status": "known, not built"
+  },
+  {
+   "skill": "jumps and ramps",
+   "family": "pre-skill",
+   "area": "airborne",
+   "source": "racing genre",
+   "does": "straight and centred before a jump, no steering in the air",
+   "status": "known, not built"
+  },
+  {
+   "skill": "track memorisation",
+   "family": "learned skill",
+   "area": "learning",
+   "source": "its own races",
+   "does": "per-track notes of trouble spots and good lines",
+   "status": "built (trouble spots)"
+  },
+  {
+   "skill": "comeback plan",
+   "family": "pre-skill",
+   "area": "racing",
+   "source": "racing genre",
+   "does": "when far behind: maximise items and nitro, take risks",
+   "status": "known, not built"
+  },
+  {
+   "skill": "results honesty check",
+   "family": "pre-skill",
+   "area": "safety",
+   "source": "3 Nov correction",
+   "does": "a win counts only if the results screen shows 1st and the right difficulty",
+   "status": "built"
+  },
+  {
+   "skill": "command: menu / restart / race X",
+   "family": "command-skill",
+   "area": "commands",
+   "source": "owner 3 Nov",
+   "does": "voice or text makes the buddy go to the menu, restart, or start a race",
+   "status": "built"
+  },
+  {
+   "skill": "command: stop / wait / take it back",
+   "family": "command-skill",
+   "area": "commands",
+   "source": "owner 3 Nov",
+   "does": "F12 / F9 / voice / text",
+   "status": "built"
+  },
+  {
+   "skill": "command: driving tips",
+   "family": "command-skill",
+   "area": "commands",
+   "source": "owner 3 Nov",
+   "does": "more nitro / more items / dodge more / calmer, for this race",
+   "status": "built"
+  },
+  {
+   "skill": "never silent",
+   "family": "command-skill",
+   "area": "commands",
+   "source": "owner 3 Nov",
+   "does": "the widget always says what the buddy is doing or waiting for",
+   "status": "built"
+  }
+ ]
+}

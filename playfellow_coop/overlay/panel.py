@@ -20,7 +20,7 @@ STATES = {"ready": ("ready", "جاهز"), "listening": ("listening", "أستمع
 CHIPS = (("Collect the coins", "اجمع العملات"), ("Take me to the door", "وصّلني للباب"), ("You take it", "خذها"))
 MAX_LINES = 6
 OPACITY_RANGE = (0.3, 1.0)  # the lowest point of the slider is still visible: the widget is never invisible
-DEFAULT_OPACITY = 0.55  # see-through by default, over the game
+DEFAULT_OPACITY = 0.90  # owner 3 Nov: 90% by default, over the game (the floor stays 0.3, never invisible)
 DOCK_TOP = 6  # pixels from the top edge of the screen
 BAR_WIDTH, BAR_HEIGHT, PANEL_HEIGHT = 560, 52, 440  # the slim bar, and the panel it slides open into (its rows need 430)
 OPACITY_STEPS = (0.3, 0.55, 0.8, 1.0)  # the see-through key walks these and wraps; the first is the floor, never invisible
@@ -70,6 +70,9 @@ class PanelModel:
         self.opacity = DEFAULT_OPACITY
         self.heard_partial = ""
         self.keys: dict[str, str] = {"hand": "f9", "stop": "f12"}  # the session's own keys; set_keys adds the talk and widget keys
+        self.show_name = True  # False: the bar shows only the words (the character beside it already says who is talking)
+        self.chip_set = None  # the host's own quick commands for this game (english, arabic) pairs; None: the defaults
+        self.ticker = False  # True: the folded bar shows the buddy's latest line instead of its state (live play, panel closed)
 
     # ---- what a view needs -------------------------------------------------------------------------------------
     @property
@@ -92,12 +95,14 @@ class PanelModel:
 
     @property
     def pill_text(self) -> str:
+        if self.ticker and self.lines and self.lines[-1].who == "buddy":  # folded over a live game: the latest line on the bar itself
+            return f"{self._name} · {self.lines[-1].text}" if self.show_name else self.lines[-1].text
         english, arabic = STATES[self.state]
-        return f"{self._name} · {arabic if self.arabic else english}"
+        return f"{self._name} · {arabic if self.arabic else english}" if self.show_name else (arabic if self.arabic else english)
 
     @property
     def chips(self) -> list[str]:
-        return [arabic if self.arabic else english for english, arabic in CHIPS]
+        return [arabic if self.arabic else english for english, arabic in (self.chip_set or CHIPS)]
 
     def placeholder(self) -> str:
         return "اكتب أمرًا…" if self.arabic else "Type a command…"

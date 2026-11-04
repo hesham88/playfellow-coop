@@ -24,9 +24,11 @@ HWND_TOPMOST = -1
 SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE, SWP_FRAMECHANGED = 0x0001, 0x0002, 0x0010, 0x0020
 
 
-def overlay_exstyle(current: int, click_through: bool) -> int:
-    """The extended style bits for an overlay, keeping whatever else the window already had."""
-    style = current | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_LAYERED
+def overlay_exstyle(current: int, click_through: bool, allow_focus: bool = False) -> int:
+    """The extended style bits for an overlay, keeping whatever else the window already had. With allow_focus (the panel is
+    open for typing) the window may take keyboard focus; otherwise it never does."""
+    style = current | WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_LAYERED
+    style = style & ~WS_EX_NOACTIVATE if allow_focus else style | WS_EX_NOACTIVATE
     return style | WS_EX_TRANSPARENT if click_through else style & ~WS_EX_TRANSPARENT
 
 
@@ -37,13 +39,14 @@ class Applied:
     click_through: bool
 
 
-def apply_overlay_style(hwnd: int, click_through: bool = False, show_in_recordings: bool = False, user32=None) -> Applied:
+def apply_overlay_style(hwnd: int, click_through: bool = False, show_in_recordings: bool = False, user32=None,
+                        allow_focus: bool = False) -> Applied:
     """Make `hwnd` an overlay. With show_in_recordings the capture exclusion is lifted (the buddy's frames then mask the panel's
     rectangle instead, see mask_rectangle). Raises OSError when Windows refuses the capture setting, so a panel the buddy can
     still see is never silently accepted."""
     api = user32 or ctypes.windll.user32
     current = api.GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & 0xFFFFFFFF
-    style = overlay_exstyle(current, click_through)
+    style = overlay_exstyle(current, click_through, allow_focus)
     api.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
     api.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_FRAMECHANGED)
     affinity = WDA_NONE if show_in_recordings else WDA_EXCLUDEFROMCAPTURE

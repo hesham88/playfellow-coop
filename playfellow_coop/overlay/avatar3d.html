@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+</head>
+<body>
+<script type="module">
+// The crew member's own 3D model (the lite Meshy GLB) with its own rigged clips, cross-faded by the buddy's mood.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+const W = window.innerWidth, H = window.innerHeight;
+const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(W, H);
+renderer.setClearColor(0x000000, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x302040, 2.2));
+const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(1.5, 3, 2.5); scene.add(key);
+const rim = new THREE.DirectionalLight(0x8fd8ff, 1.4); rim.position.set(-2, 2, -2); scene.add(rim);
+const camera = new THREE.PerspectiveCamera(28, W / H, 0.05, 100);
+const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+const clock = new THREE.Clock();
+const CLIP = { idle: /idle/i, wave: /wave/i, celebrate: /cheer|victory/i, thinking: /talk/i, point: /talk/i, walk: /walk/i, run: /run/i };
+let model = null, mixer = null, actions = {}, current = null, wanted = 'idle';
+
+function frame(obj) {
+  const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3()), centre = box.getCenter(new THREE.Vector3());
+  const dist = (size.y / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.45;
+  camera.position.set(centre.x, centre.y, centre.z + dist);
+  camera.lookAt(centre);
+}
+
+function play(mood) {
+  wanted = mood;
+  if (!mixer) return;
+  const pattern = CLIP[mood] || CLIP.idle;
+  const name = Object.keys(actions).find(n => pattern.test(n)) || Object.keys(actions).find(n => CLIP.idle.test(n));
+  const next = actions[name];
+  if (!next || next === current) return;
+  next.reset().setEffectiveWeight(1).fadeIn(0.35).play();
+  if (current) current.fadeOut(0.35);
+  current = next;
+}
+
+window.setMood = (mood) => play(mood);
+window.setCharacter = (url) => {
+  loader.load(url, (gltf) => {
+    if (model) scene.remove(model);
+    model = gltf.scene; scene.add(model); frame(model);
+    mixer = new THREE.AnimationMixer(model); actions = {}; current = null;
+    for (const clip of gltf.animations) actions[clip.name] = mixer.clipAction(clip);
+    play(wanted);
+    document.title = 'ready:' + gltf.animations.length;
+  }, undefined, (err) => { document.title = 'error:' + err; });
+};
+
+renderer.setAnimationLoop(() => { if (mixer) mixer.update(clock.getDelta()); renderer.render(scene, camera); });
+const first = new URLSearchParams(location.search).get('model');
+if (first) window.setCharacter(first);
+</script>
+</body>
+</html>

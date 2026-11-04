@@ -1,0 +1,18 @@
+{
+ "steer_sign": 1.0,
+ "lessons": [
+  "drift",
+  "fire",
+  "lookBack",
+  "nitro",
+  "rescue"
+ ],
+ "from": "tutorial runs 3 Nov 17:51-18:05 (steering learned 3 times: anti-clockwise; lessons read off the screen)",
+ "updated": "2026-11-03",
+ "wins": {
+  "novice": "abyss 2026-11-03 18:49 (5:49.238) and 20:54 (4:29.365, best lap 1:27.042), both 1st of 4"
+ },
+ "corrections": [
+  "20:54 race was recorded as an Intermediate win by mistake: the results screen says Difficulty: Novice (difficulty keys did not take). Corrected 20:58."
+ ]
+}

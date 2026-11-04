@@ -8,7 +8,7 @@ from playfellow_coop.voice import CommandQueue
 
 def test_the_widget_starts_collapsed_and_see_through_but_never_invisible():
     model = PanelModel(CommandQueue())
-    assert model.collapsed is True and model.opacity == DEFAULT_OPACITY < 0.7
+    assert model.collapsed is True and model.opacity == DEFAULT_OPACITY == 0.90
     assert model.set_opacity(0.0) == OPACITY_RANGE[0] > 0  # the slider's lowest point is still visible
     assert model.set_opacity(5) == 1.0
 
@@ -41,7 +41,7 @@ def test_the_see_through_key_steps_through_levels_and_wraps_but_never_reaches_in
     model = PanelModel(CommandQueue())
     seen = [model.step_opacity() for _ in range(5)]
     assert all(v >= OPACITY_RANGE[0] > 0 for v in seen)
-    assert seen == [0.8, 1.0, OPACITY_RANGE[0], 0.55, 0.8]  # from the default 0.55: up to fully solid, then back to the floor
+    assert seen == [1.0, OPACITY_RANGE[0], 0.55, 0.8, 1.0]  # from the default 0.9: up to fully solid, then back to the floor
 
 
 def test_the_bar_writes_every_key_so_a_full_screen_game_without_a_mouse_is_still_usable():

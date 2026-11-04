@@ -1,0 +1,154 @@
+{
+ "note": "Read off the game's results screen by the model; the place and difficulty of wins were checked by eye on the screenshots, which are not published. One race was first recorded as an Intermediate win by mistake: the screen said Novice.",
+ "races": [
+  {
+   "session": "race-20261103-184150",
+   "track": "abyss",
+   "stopped_by": "minimap_gone",
+   "seconds": 364.2,
+   "laps_driven": 3.01,
+   "rescues": 4,
+   "key_events": 1716,
+   "sam_calls": 365,
+   "results_table_as_read_by_the_model": {
+    "screen": "race_results",
+    "results_shown": true,
+    "player_position": 1,
+    "rows": [
+     "the buddy 05:49.238",
+     "Wilber 05:55.437",
+     "Emule 05:59.067",
+     "Adiumy 06:02.429"
+    ]
+   }
+  },
+  {
+   "session": "race-20261103-194824",
+   "track": "abyss",
+   "stopped_by": "F12",
+   "seconds": 209.9,
+   "laps_driven": 1.91,
+   "rescues": 2,
+   "key_events": 911,
+   "sam_calls": 235,
+   "results_table_as_read_by_the_model": null
+  },
+  {
+   "session": "race-20261103-204801",
+   "track": "abyss",
+   "stopped_by": "minimap_gone",
+   "seconds": 283.4,
+   "laps_driven": 3.01,
+   "rescues": 0,
+   "key_events": 1344,
+   "sam_calls": 295,
+   "results_table_as_read_by_the_model": {
+    "screen": "results",
+    "results_shown": true,
+    "player_position": 1,
+    "rows": [
+     "the buddy 04:29.365",
+     "Gavroche 04:33.865",
+     "Godette 04:35.238",
+     "Emule 04:43.081"
+    ]
+   }
+  },
+  {
+   "session": "race-20261103-210906",
+   "track": "abyss",
+   "stopped_by": "minimap_gone",
+   "seconds": 273.5,
+   "laps_driven": 3.01,
+   "rescues": 1,
+   "key_events": 1310,
+   "sam_calls": 355,
+   "results_table_as_read_by_the_model": {
+    "screen": "results",
+    "results_shown": true,
+    "player_position": 4,
+    "rows": [
+     "Hexley 03:45.281",
+     "Xue 03:47.933",
+     "Gavroche 03:57.599",
+     "the buddy 04:18.613"
+    ]
+   }
+  },
+  {
+   "session": "race-20261103-214103",
+   "track": "abyss",
+   "stopped_by": "minimap_gone",
+   "seconds": 497.9,
+   "laps_driven": 2.96,
+   "rescues": 4,
+   "key_events": 1984,
+   "sam_calls": 685,
+   "results_table_as_read_by_the_model": null
+  },
+  {
+   "session": "race-20261103-230547",
+   "track": "abyss",
+   "stopped_by": "minimap_gone",
+   "seconds": 233.3,
+   "laps_driven": 3.01,
+   "rescues": 0,
+   "key_events": 1300,
+   "sam_calls": 250,
+   "results_table_as_read_by_the_model": {
+    "screen": "results",
+    "results_shown": true,
+    "player_position": 3,
+    "rows": [
+     "Kiki 03:34.655",
+     "Ko 03:37.899",
+     "the buddy 03:40.215",
+     "Gavroche 03:41.141"
+    ]
+   }
+  },
+  {
+   "session": "race-20261103-231941",
+   "track": "abyss",
+   "stopped_by": "max_seconds",
+   "seconds": 600.1,
+   "laps_driven": 0.53,
+   "rescues": 1,
+   "key_events": 270,
+   "sam_calls": 455,
+   "results_table_as_read_by_the_model": null
+  },
+  {
+   "session": "race-20261103-235015",
+   "track": "abyss",
+   "stopped_by": "minimap_gone",
+   "seconds": 228.6,
+   "laps_driven": 3.01,
+   "rescues": 0,
+   "key_events": 1224,
+   "sam_calls": 215,
+   "results_table_as_read_by_the_model": {
+    "screen": "race results",
+    "results_shown": true,
+    "player_position": 3,
+    "rows": [
+     "Godette 03:32.273",
+     "Gavroche 03:34.566",
+     "the buddy 03:36.548",
+     "Emule 03:38.411"
+    ]
+   }
+  },
+  {
+   "session": "race-20261104-000344",
+   "track": "abyss",
+   "stopped_by": "max_seconds",
+   "seconds": 600.1,
+   "laps_driven": 0.15,
+   "rescues": 1,
+   "key_events": 76,
+   "sam_calls": 60,
+   "results_table_as_read_by_the_model": null
+  }
+ ]
+}

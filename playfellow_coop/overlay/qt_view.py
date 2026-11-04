@@ -107,7 +107,10 @@ class QtOverlay:
     def __init__(self, model: PanelModel, on_talk_down: Callable[[], None] = lambda: None,
                  on_talk_up: Callable[[], None] = lambda: None,
                  on_stop: Callable[[], None] = lambda: None, on_hand_over: Callable[[], None] = lambda: None,
-                 show_in_recordings: bool = False, app=None, animate: bool = True):
+                 show_in_recordings: bool = False, app=None, animate: bool = True,
+                 follow: Callable[[], tuple[int, int, int, int] | None] | None = None):
+        """`follow`, when given, returns the game window's client rectangle (left, top, right, bottom, physical screen
+        pixels) or None; the widget then docks at the top centre of that window and follows it, instead of the screen's."""
         from PySide6.QtCore import Qt, QTimer
         from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSizePolicy, QSlider,
                                        QVBoxLayout, QWidget)
@@ -116,6 +119,8 @@ class QtOverlay:
         self.model = model
         self._talk_down, self._talk_up, self._stop, self._hand_over = on_talk_down, on_talk_up, on_stop, on_hand_over
         self._show_in_recordings = show_in_recordings
+        self._follow = follow
+        self.allow_focus = False  # True while the panel is open for typing (set by the host)
         self.app = app or QApplication.instance() or QApplication([])
         self.root = _AfterAdapter(lambda ms, fn: QTimer.singleShot(ms, fn))
 
@@ -324,14 +329,21 @@ class QtOverlay:
         if self.hwnd:
             self.applied = winstyle.apply_overlay_style(
                 self.hwnd, click_through=model.click_through,
-                show_in_recordings=self._show_in_recordings,
+                show_in_recordings=self._show_in_recordings, allow_focus=self.allow_focus,
             )
 
     # ---- the widget's motion: docked at the top centre, sliding open and closed --------------------------------
     def _place(self, height: int) -> None:
         self.window.resize(BAR_WIDTH, height)
         screen = self.window.screen()
-        if screen is not None:
+        target = self._follow() if self._follow is not None else None
+        if target is not None:  # glued to the game: the top centre of its window, wherever the window is or however big
+            scale = screen.devicePixelRatio() if screen is not None else 1.0
+            left, top, right, _ = (v / scale for v in target)
+            x, y, _, _ = dock_rect(int(left), int(top), int(right - left), BAR_WIDTH, height)
+            if (x, y) != (self.window.x(), self.window.y()):
+                self.window.move(x, y)
+        elif screen is not None:
             geo = screen.availableGeometry()
             x, y, _, _ = dock_rect(geo.left(), geo.top(), geo.width(), BAR_WIDTH, height)
             self.window.move(x, y)
@@ -356,6 +368,8 @@ class QtOverlay:
     def _reassert(self) -> None:
         if self.hwnd:
             winstyle.keep_on_top(self.hwnd)
+        if self._follow is not None:  # the game window moved or resized: follow it
+            self._place(self._height)
 
     def start(self) -> None:
         """Show the pill and apply the Windows overlay style. Never activates."""

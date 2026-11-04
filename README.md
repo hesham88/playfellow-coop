@@ -105,6 +105,34 @@ Speed and cost per rung (stage times, dollars and tokens per win, cache share, l
 
 Any agent can ask for one part under the same rules through the MCP server (`docs/mcp.md`): `python -m playfellow_coop.mcp_server`.
 
+## SuperTuxKart: a real open-source racing game, with pre-skills
+
+`playfellow_coop/games/stk` plays [SuperTuxKart](https://supertuxkart.net) 1.5, offline, in the real game window, through the keyboard only (it never touches the mouse, Online or Addons). You install the game yourself; nothing of the game is copied here. At run time the pack reads the game's own files: `input.xml` for the keys, `quads.xml` for the road. It is a separate pack with its own widget process, not yet part of `python -m playfellow_coop`.
+
+```
+pip install -e .[stk]
+python -m playfellow_coop.games.stk.widget     # the widget, docked on top of the game window
+python -m playfellow_coop.games.stk.mission --mission race --difficulty novice
+```
+
+The driving is a pre-written skill, as on the ladder above: 20 looks a second at the minimap, no model in that loop. The models handle what needs reading, and they answer in seconds: Muse reads the menus, the lesson boxes and the results table and answers typed or spoken commands, Muse Voice transcribes speech, and SAM names items on the road ahead (2-3 s a look, followed by a local tracker).
+
+**Results, read off the game's own results screen (Antediluvian Abyss, 3 laps, 4 karts, 3 November):**
+
+| Difficulty | Finish | Time | Winner's time |
+|---|---|---|---|
+| Novice | 1st, twice | 5:49.238, then 4:29.365 | the same |
+| Intermediate | 4th, 3rd, 3rd | 6:33.349, 3:40.215, 3:36.548 | 3:32.273 in the last race |
+| Expert, SuperTux | not tried | | |
+
+**Limits, said plainly:**
+
+- Intermediate has not been won. It still hits some bananas and misses many gift boxes, because SAM answers too late for them at speed.
+- Only one track has been raced. Story mode and split-screen with a person are not done.
+- A start-penalty fix (the game ignored a held throttle for 9 s in one race) has only offline tests so far, no live race.
+- Which skills are built, partly built or only known is in `results/stk/catalogue-intermediate.md`. The power rules, drift timing and nitro chaining were added after the races above and have only offline tests so far.
+- The character beside the widget needs the crew's art, which is not in this repo (`PLAYFELLOW_ASSETS`). Without it the bar runs alone. It also loads three.js from a CDN.
+
 ## Judges: try it
 
 **Judges:** see the access note in the submission. [JUDGES.md](JUDGES.md) has the three paths — replay with no key, offline live on the Practice Arena with the built-in brain, live with your own keys — and how to test it yourself on a game. Every command there has been run and its output pasted in.
@@ -193,7 +221,7 @@ Every test runs offline: a fake server on 127.0.0.1 stands in for the Meta API, 
 
 ## What this does and does not do
 
-It plays and talks with you. It does not judge or score the player. The demo uses our own Practice Arena, the arena pack and one open-source game. Offline, single-player games only (`RESPONSIBLE_USE.md`).
+It plays and talks with you. It does not judge or score the player. The demo uses our own Practice Arena, the arena pack and one open-source game; the separate SuperTuxKart pack above also plays that open-source game. Offline games only (`RESPONSIBLE_USE.md`).
 
 ## Contributing
 
