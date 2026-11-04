@@ -14,6 +14,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from playfellow_coop.games.stk.drive import turn_radius
+
 YAW_RATE = 1.6  # rad/s with a steering key held (a medium kart, roughly)
 
 
@@ -34,7 +36,7 @@ def run(driver, track, speed: float = 20.0, seconds: float = 60.0, hz: float = 2
     heading = math.atan2(d[1], d[0])
     v = speed
     dt = 1.0 / hz
-    flips, last_side, worst, big, total = 0, None, 0.0, 0, 0.0
+    flips, last_side, worst, big, total, skid_side = 0, None, 0.0, 0, 0.0, 0
     steps = int(seconds * hz)
     for k in range(steps):
         now = k * dt
@@ -46,14 +48,27 @@ def run(driver, track, speed: float = 20.0, seconds: float = 60.0, hz: float = 2
         if side:
             last_side = side
         steer = (1 if "left" in keys else -1 if "right" in keys else 0) * driver.steer_sign
-        heading += steer * YAW_RATE * dt
+        # the game's skid (skidding.cpp): starts on the skid key with a steering key held above 10 m/s, keeps its side, and
+        # steers 0.8 / 0.5 / 0.2 of full lock (inward key / none / outward key); the kart's circle from the game's turn table
+        if "v" in keys and v > 10.0:
+            if skid_side == 0 and steer:
+                skid_side = steer
+            if skid_side:
+                frac = 0.8 if steer == skid_side else 0.2 if steer == -skid_side else 0.5
+                heading += skid_side * v * frac / turn_radius(v, driver.kart_class) * dt
+        else:
+            skid_side = 0
+        if not skid_side:
+            heading += steer * min(YAW_RATE, v / turn_radius(v, driver.kart_class)) * dt
         if throttle_follows_keys:
             target_v = speed if "up" in keys else max(v - 6.0 * dt * 4, 4.0)
             if "down" in keys:
                 target_v = max(v - 12.0 * dt * 4, 4.0)
             v += (target_v - v) * 0.15
         pos = pos + v * dt * np.array([math.cos(heading), math.sin(heading)])
-        dist = float(np.min(np.linalg.norm(track.centre - pos, axis=1)))
+        # across the road, not to the nearest centre point (those are ~7 m apart on Abyss: up to 3.5 m read as "off" on the line)
+        nearest = int(np.argmin(np.linalg.norm(track.centre - pos, axis=1)))
+        dist = abs(track.lateral(nearest, pos))
         worst = max(worst, dist)
         total += dist
         if driver.log and len(driver.log[-1]) == 8 and abs(driver.log[-1][4]) > 0.5:

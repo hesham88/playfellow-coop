@@ -24,16 +24,20 @@ SKILLS = [
     ("race gate", "safety", "built 3 Nov", "no race key until the race map is on screen; never drives a menu", "built"),
     ("hand-over (F9) and stop (F12)", "safety", "owner request 3 Nov", "F9: the buddy lets go and waits; F12: everything stops", "built"),
     ("rocket start", "start", "help page + guide: accelerate at 'Set!'", "full throttle exactly at 'Set!' (countdown read locally)", "built"),
-    ("kart class: Tux, middleweight", "physics", "owner's guide", "top speed 90 km/h (25 m/s), balanced acceleration, 225 kg; speed caps are set from it", "built"),
+    ("kart class from the game's data", "physics", "kart_characteristics.xml + each kart.xml (4 Nov research)", "light / medium / heavy: turning circle per speed decides how fast a bend can be taken", "built"),
+    ("heavy kart choice", "physics", "kart_characteristics.xml: heavy = top speed x1.05", "picks a heavy kart (Puffy) on the kart screen; its minimap look is made from the game's own icon file", "built (not yet proven in a race)"),
+    ("item line from the track's data", "items", "the track's scene.xml + item.cpp pick-up radius 1.1 m (4 Nov research)", "plans the line through side gift boxes and nitro cans, 2.2 m clear of every fixed banana", "built (not yet proven in a race)"),
+    ("keep a held power", "items", "powerup.cpp: collect mode 'new' replaces the held power", "with a power in hand, gift boxes stop pulling the line", "built (not yet proven in a race)"),
+    ("no counter-steer after a skid", "boosts", "skidding.cpp: the game straightens the kart on release", "no steering key for 0.2 s after letting go of a skid", "built (not yet proven in a race)"),
     ("minimap localisation", "driving", "the game's quads.xml + learned icon look", "knows where the kart is on the track, 20 times a second", "built"),
     ("driveline pursuit", "driving", "the game's own driveline", "follows the road; looks further at speed", "built"),
     ("calm straights", "driving", "owner feedback 3 Nov", "holds the wheel still on straights (no weaving)", "built"),
-    ("speed for the bend ahead", "driving", "owner feedback 3 Nov (fell off curves)", "lifts before sharp bends, brakes a moment before very sharp ones", "built"),
+    ("speed for the bend ahead", "driving", "owner 3 Nov + turn radius in the game's data (4 Nov)", "lifts only when the bend is tighter than the kart's turning circle at that speed; never on Abyss (bends 28 m+)", "built (rule changed 4 Nov, not yet proven in a race)"),
     ("outside line in tight bends", "driving", "race notes 3 Nov (inner-wall stalls)", "aims a little wide of the centre line in tight bends", "built"),
     ("track notes", "learning", "its own race notes", "comes into its noted trouble spots slower and wider", "built"),
     ("nitro on straights", "boosts", "tutorial lesson", "taps nitro when the road ahead is straight", "built"),
     ("nitro tapping on a fading boost", "boosts", "owner's guide", "tap nitro as a skid or zipper boost fades to hold top speed", "built (not yet proven in a race)"),
-    ("skid boost (yellow +16.2 km/h, red +23.4 km/h)", "boosts", "tutorial + owner's guide", "hold skid through a bend at least 1 s (game data), release lined up with the exit", "built (not yet proven in a race)"),
+    ("skid boost (yellow +16.2 km/h, red +23.4 km/h)", "boosts", "tutorial + owner's guide + skidding.cpp", "bends driven >= 1.1 s get a yellow, >= 3.3 s a red; steered with the game's three skid levels (outward 0.2 / none 0.5 / inward 0.8 of full lock); released at the bend's end", "built (not yet proven in a race)"),
     ("brake-drift in hairpins", "boosts", "owner's guide", "tap brake while drifting to pivot in tight hairpins", "partly (brake taps before very sharp bends, no drift)"),
     ("snaking on straights", "boosts", "owner's guide (speedrun)", "chained hop-drifts on straights for repeated boosts", "known, not built (speedrun trick, too risky in races)"),
     ("hop / low-air hop", "airborne", "owner's guide", "tap skid before a crest to land sooner", "known, not built (needs crest detection)"),
@@ -51,7 +55,7 @@ SKILLS = [
     ("item blocking (drop behind)", "items", "owner's guide", "drop a banana behind to block projectiles", "known, not built"),
     ("wall riding (magnet sections)", "tracks", "owner's guide", "ride gravity surfaces on Cocoa Temple / STK Enterprise", "known, not needed on Abyss"),
     # --- added 3 Nov evening: the wider racing and gaming skill set (owner: "fill the catalogue with all kinds of skills") ---
-    ("predictive drift", "boosts", "owner + tutorial + guide", "measures the bend ahead, holds skid + turn through it, releases lined up", "built (first live trial)"),
+    ("predictive drift", "boosts", "owner + tutorial + guide; bends from the driveline (4 Nov)", "skids planned from the map's bends: enters a quarter second before, one skid per bend per lap", "built (rewritten 4 Nov, not yet proven in a race)"),
     ("fast banana eye", "items", "owner 3 Nov (SAM too slow for bananas)", "local yellow detector, 10 looks a second, dodges at once", "built"),
     ("learning at each lap end", "learning", "owner: 'act in real time while learning in parallel'", "a parallel thread adds the lap's trouble spots to the next lap", "built"),
     ("steering damping + speed schedule", "driving", "kart simulator (sim.py), 3 Nov", "steers on where the error is going; gentler at speed", "built (simulator-proven)"),
@@ -80,20 +84,56 @@ FAMILY = {"controls": "pre-skill", "start": "pre-skill", "physics": "pre-skill",
 WIRING = {
     "controls card": ("card.py", "Card"), "read lesson boxes": ("instructions.py", "parse_answer"), "race gate": ("live.py", "gate_seen"),
     "hand-over (F9) and stop (F12)": ("widget.py", "hand_over"), "rocket start": ("countdown.py", "Countdown"),
-    "kart class: Tux, middleweight": ("drive.py", "safe ="), "minimap localisation": ("minimap.py", "IconModel"),
+    "kart class from the game's data": ("drive.py", "def turn_radius"), "minimap localisation": ("minimap.py", "IconModel"),
+    "heavy kart choice": ("mission.py", "kart_info("), "item line from the track's data": ("drive.py", "def plan_line"),
+    "keep a held power": ("drive.py", "self.held_power is None"), "no counter-steer after a skid": ("drive.py", "no_steer_until"),
     "driveline pursuit": ("drive.py", "def _steer"), "calm straights": ("drive.py", "straight_road"),
-    "speed for the bend ahead": ("drive.py", "safe ="), "outside line in tight bends": ("drive.py", "outside"),
+    "speed for the bend ahead": ("drive.py", "def road_radius_ahead"), "outside line in tight bends": ("drive.py", "outside"),
     "track notes": ("catalogue.py", "def note_race"), "nitro on straights": ("drive.py", "nitro_every"),
-    "nitro tapping on a fading boost": ("drive.py", "NITRO_OVERLAP"), "skid boost (yellow +16.2 km/h, red +23.4 km/h)": ("drive.py", "SKID_BONUS_TIME"),
+    "nitro tapping on a fading boost": ("drive.py", "NITRO_OVERLAP"), "skid boost (yellow +16.2 km/h, red +23.4 km/h)": ("drive.py", "SKID_RED_TIME"),
     "reverse off walls": ("drive.py", "def _reverse"), "rescue": ("drive.py", "def _rescue"), "focus + pause recovery": ("live.py", "refocused_at"),
     "item hunt (SAM)": ("items.py", "def plan"), "obstacle avoidance (SAM)": ("items.py", "OBSTACLES"), "aimed firing (SAM)": ("powers.py", "def decide"),
-    "predictive drift": ("drive.py", "skid_exit"), "fast banana eye": ("fasteye.py", "def bananas"), "learning at each lap end": ("live.py", "def learn_lap"),
+    "predictive drift": ("drive.py", "def bend_at"), "fast banana eye": ("fasteye.py", "def bananas"), "learning at each lap end": ("live.py", "def learn_lap"),
     "steering damping + speed schedule": ("drive.py", "speed_gain"), "track memorisation": ("catalogue.py", "def load_notes"),
     "results honesty check": ("mission.py", "finish_and_read"), "command: menu / restart / race X": ("act.py", "def main"),
     "command: stop / wait / take it back": ("widget.py", "def command"), "command: driving tips": ("live.py", "read_tune"),
     "never silent": ("widget.py", "def status_text"), "held power reading": ("held.py", "class HeldPower"), "power rules per item": ("powers.py", "def decide"),
     "position awareness": ("held.py", "def read_place"),
 }
+
+RESEARCH = Path(__file__).with_name("research_skills.json")  # 96 skills from the 4 Nov research (source code + game data + guides)
+# researched skill id -> the catalogue skill above whose code does it (only these count as built; the rest are researched)
+RESEARCH_BUILT = {
+    "start_set_press": "rocket start", "start_no_ready_press": "rocket start", "steer_dead_band": "calm straights",
+    "steer_no_counter": "no counter-steer after a skid", "no_brake_wide_corner": "speed for the bend ahead",
+    "brake_tight_corner": "speed for the bend ahead", "skid_enter": "predictive drift", "corner_plan": "predictive drift",
+    "skid_three_level": "skid boost (yellow +16.2 km/h, red +23.4 km/h)", "skid_release_yellow": "skid boost (yellow +16.2 km/h, red +23.4 km/h)",
+    "skid_hold_red": "skid boost (yellow +16.2 km/h, red +23.4 km/h)", "skid_no_yellow_in_red": "skid boost (yellow +16.2 km/h, red +23.4 km/h)",
+    "nitro_tap": "nitro on straights", "nitro_on_fade": "nitro tapping on a fading boost",
+    "nitro_collect_line": "item line from the track's data", "gift_collect_line": "item line from the track's data",
+    "banana_avoid_data": "item line from the track's data", "gift_skip_keep": "keep a held power", "banana_avoid_seen": "fast banana eye",
+    "menu_kart_heavy": "heavy kart choice", "read_place": "position awareness", "read_power": "held power reading",
+    "rescue_key": "rescue", "reverse_unstick": "reverse off walls", "track_memory": "track notes", "lap_learn": "learning at each lap end",
+    "fall_edge_margin": "track notes", "menu_read_press": "menu routes", "menu_difficulty": "menu routes",
+    "cmd_left_right": "command: driving tips", "cmd_straight": "command: driving tips", "cmd_nitro": "command: driving tips",
+    "cmd_drift": "command: driving tips", "cmd_brake": "command: driving tips", "narrate_plan": "never silent",
+    "narrate_result": "results honesty check", "bowling_fire": "power rules per item", "cake_fire": "power rules per item",
+    "swatter_use": "power rules per item", "bubble_shield": "power rules per item", "zipper_item": "power rules per item",
+}
+
+
+def research_rows() -> list[dict]:
+    """The researched skills, each marked built (with the catalogue skill doing it) or researched (not built yet)."""
+    try:
+        rows = json.loads(RESEARCH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    status = {n: st for n, _, _, _, st in SKILLS}
+    for r in rows:
+        by = RESEARCH_BUILT.get(r["id"])
+        r["status"] = f"built as '{by}' ({status.get(by, '?')})" if by else "researched, not built"
+    return rows
+
 
 DIFFICULTY_NOTES = {
     "novice": "AI karts slow; clean laps win.",
@@ -158,9 +198,16 @@ def build(difficulty: str, track_id: str, wins: dict | None = None) -> list[str]
              f"Track notes ({track_id}): trouble spots at driveline points {notes or 'none yet'}", "",
              "| skill | family | area | from | what it does | status |", "|---|---|---|---|---|---|"]
     lines += [f"| {r['skill']} | {r['family']} | {r['area']} | {r['source']} | {r['does']} | {r['status']} |" for r in rows]
+    researched = research_rows()
+    doc["researched"] = researched
+    (PRESKILLS / f"catalogue-{difficulty}.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    lines += ["", f"## Researched skills ({len(researched)}), 4 Nov", "", "| id | skill | family | area | trigger | keys | status |", "|---|---|---|---|---|---|---|"]
+    lines += [f"| {r['id']} | {r['name']} | {r['family']} | {r['area']} | {r['trigger']} | {r['keys_and_timing']} | {r['status']} |" for r in researched]
     (PRESKILLS / f"catalogue-{difficulty}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     built = sum(1 for r in rows if r["status"].startswith("built"))
+    r_built = sum(1 for r in researched if r["status"].startswith("built"))
     return [f"Skill catalogue for {difficulty}: {len(rows)} skills, {built} built and in use, the rest marked honestly.",
+            f"Researched skills: {len(researched)}, {r_built} of them covered by built code, the rest listed as not built yet.",
             DIFFICULTY_NOTES.get(difficulty, ""),
             f"From my last races on {track_id}: {len(notes)} trouble spots noted; I will come into them slower and wider." if notes
             else f"No notes yet on {track_id}; I will write them after this race."]

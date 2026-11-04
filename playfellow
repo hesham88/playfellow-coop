@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# PlayFellow co-op launcher (Linux/macOS): runs the tools with this folder's virtual environment, no activation needed.
+here=$(cd "$(dirname "$0")" && pwd)
+[ -x "$here/.venv/bin/python" ] || { echo "PlayFellow is not installed here yet: run  sh \"$here/bootstrap.sh\""; exit 1; }
+exec "$here/.venv/bin/python" -m playfellow_coop "$@"

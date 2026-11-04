@@ -50,6 +50,14 @@ class OverlayRunner:
             self.model.step_opacity()
         elif kind in ("say", "status") and data:
             self.model.buddy_says(str(data))
+        elif kind == "control" and data:  # an agent's widget control, from the shared files (overlay/bridge.py)
+            action, value = data
+            if action == "open":
+                self.model.show()
+            elif action == "fold":
+                self.model.hide()
+            elif action == "opacity":
+                self.model.set_opacity(value)
         elif kind == DONE:
             self._close()
 
@@ -97,6 +105,54 @@ class OverlayUnavailableError(RuntimeError):
     """The overlay cannot open, said in plain words (for example Qt missing)."""
 
 
+def panel_focus_listener(model, set_typing: Callable[[bool], None]) -> Callable[[], None]:
+    """A model listener: the open panel may take the keyboard for typing, folded it never does; `set_typing` runs only on a change."""
+    state = {"on": False}
+
+    def listener() -> None:
+        want = bool(model.visible)
+        if want != state["on"]:
+            state["on"] = want
+            set_typing(want)
+    return listener
+
+
+def _qt_typing(view, model) -> Callable[[bool], None]:  # pragma: no cover - needs a desktop
+    """The Qt/Windows side of typing in the panel (the same steps as the SuperTuxKart widget)."""
+    def set_typing(want: bool) -> None:
+        from PySide6.QtCore import Qt
+
+        from playfellow_coop.overlay import winstyle
+
+        view.allow_focus = want
+        view.window.setWindowFlag(Qt.WindowType.WindowDoesNotAcceptFocus, not want)
+        view.window.show()
+        view.hwnd = int(view.window.winId())
+        try:  # keep the view's own recording and click-through choices; only the focus bit changes
+            winstyle.apply_overlay_style(view.hwnd, click_through=bool(getattr(model, "click_through", False)),
+                                         show_in_recordings=bool(getattr(view, "_show_in_recordings", False)), allow_focus=want)
+        except OSError:
+            pass
+        if want:
+            view.window.activateWindow()
+            view.entry.setFocus()
+    return set_typing
+
+
+def game_follow(screen, title: str) -> Callable[[], tuple[int, int, int, int] | None]:
+    """The widget's anchor: the chosen game's client area (left, top, right, bottom) from the engine's own window finder, or
+    None while the game is minimised or gone (the widget then keeps its last place). Never raises: a desktop hiccup is not a crash."""
+    def follow() -> tuple[int, int, int, int] | None:
+        try:
+            box = screen.find(title)
+        except Exception:  # the finder talks to the desktop; any failure means "not visible now"
+            return None
+        if box is None:
+            return None
+        return box.left, box.top, box.left + box.width, box.top + box.height
+    return follow
+
+
 def build_overlay(parts, commands, handover, summon_key: str = "ctrl+alt+p", on_talk_down: Callable[[], None] = lambda: None,
                   on_talk_up: Callable[[], None] = lambda: None, see_through_key: str = "ctrl+alt+o") -> OverlayRunner:
     """The real thing: the Qt glass view, the panel model, and the summon
@@ -111,11 +167,17 @@ def build_overlay(parts, commands, handover, summon_key: str = "ctrl+alt+p", on_
         from playfellow_coop.overlay.qt_view import QtOverlay
 
         view = QtOverlay(model, on_talk_down=on_talk_down, on_talk_up=on_talk_up,
-                         on_stop=lambda: parts.safety.stop("stopped_button"), on_hand_over=lambda: handover.toggle())
+                         on_stop=lambda: parts.safety.stop("stopped_button"), on_hand_over=lambda: handover.toggle(),
+                         follow=getattr(parts, "follow", None))  # docked at the top centre of the chosen game, moving with it
     except ImportError as error:
         raise OverlayUnavailableError(
             "The command center needs Qt (PySide6), which is not installed, so it cannot open."
         ) from error
+    # Changing the focus flag re-creates the window and Qt would take that moment for "the last window closed": the loop ends only
+    # when the session ends (view.close quits it), as in the SuperTuxKart widget.
+    view.app.setQuitOnLastWindowClosed(False)
+    model.subscribe(panel_focus_listener(model, _qt_typing(view, model)))  # open to type; folded it never takes focus
+    model.on_submitted = getattr(parts, "give_back_focus", None)  # the command is in: the game gets the front back
     runner = OverlayRunner(model, view, handover=handover, safety=parts.safety)
     runner.pump = HotkeyPump(Hotkey(summon_key, card=parts.card), on_press=runner.summon)
     see_through_key = getattr(parts, "see_through_key", None) or see_through_key  # --see-through-key

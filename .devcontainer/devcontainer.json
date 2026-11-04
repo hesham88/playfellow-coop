@@ -1,0 +1,13 @@
+{
+  "name": "PlayFellow co-op (no download: tests, replays and the co-op bench in the browser)",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "sh bootstrap.sh",
+  "customizations": {
+    "codespaces": {
+      "openFiles": ["JUDGES.md"]
+    },
+    "vscode": {
+      "extensions": ["ms-python.python"]
+    }
+  }
+}

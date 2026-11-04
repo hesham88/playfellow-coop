@@ -1,0 +1,42 @@
+name: web arena
+
+# Publishes the browser arena (demo/web) to GitHub Pages: nothing to install, no account, no key. The page carries no secret: with no
+# live service configured it shows the arena, the hand-over (F9) and the stop (F12); the buddy's brain runs in the Windows app.
+on:
+  push:
+    branches: [main]
+    paths: ["demo/web/**", "docs/img/brand/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the site (the page and its art; no tests, no tools)
+        run: |
+          mkdir -p site/art
+          cp demo/web/*.mjs demo/web/*.json demo/web/index.html site/
+          rm -f site/*.test.mjs site/expected.json
+          for mood in neutral thinking determined smile; do cp docs/img/brand/crew-fello.png "site/art/fello-$mood.jpg"; done
+          # a plain 1x1 midnight pixel: the page's own gradients do the rest (a banner here would show its words behind the arena)
+          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNgYGBgYAAAAAUAAWbH4hIAAAAASUVORK5CYII=" | base64 -d > site/art/bg.jpg
+          cp docs/img/brand/logo.png site/art/logo.png
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

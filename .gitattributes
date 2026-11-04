@@ -14,3 +14,9 @@
 # Files written by our own code, kept byte for byte as written (some were written with CRLF): never rewritten.
 results/*.json -text
 docs/img/*.txt -text
+
+# installers and launchers: LF for sh, CRLF for Windows scripts
+*.sh text eol=lf
+playfellow text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf

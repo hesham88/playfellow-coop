@@ -67,7 +67,7 @@ install needs EXP-1 (`pyproject.toml`, squashed as b9e3517) and `pip install -e`
 
 ### 4.1 `muse_brain.py`
 - Talks to the Meta Model API with the OpenAI-compatible request shape (images as data URLs, JSON reply). Base URL pinned in one constant, like the engine's `ENDPOINTS`.
-- The key comes from the player's own credential store (the engine's keyring service), under its own entry name. The owner's key never ships and is never printed.
+- The key comes from the player's own credential store (the Windows credential manager, service `playfellow-coop`, entry `MODEL_API_KEY`; `python -m playfellow_coop keys set` stores it with hidden input). The owner's key never ships and is never printed.
 - Never uses Contributor mode and never sends play data for training; Standard mode only (Meta API terms). Model names appear as plain text; no Meta marks.
 - Returns the raw text; the engine's `parse_reply` does the checking against the card.
 - Failure mapping: 401/403 -> `BrainError("bad_key")`, 429 -> `BrainError("busy", retry=True, wait_seconds=...)`, 5xx/timeouts -> `busy` or `offline`. A BrainError detail never carries the request body.
@@ -111,15 +111,15 @@ the window, check it is in front, grab, shrink, add marks, build the prompt, ask
 
 ## 6. Compliance rules baked into the repo
 - First lines of the README: the one-line disclosure (what pre-existed, what is new) and the pinned engine tag.
-- Only the owner is named as the human author; the README says it was built with AI coding assistance.
+- Only the maintainer is named as the human author; the README says it was built with AI coding assistance.
 - Demo games: our Practice Arena, the arena pack and one open-source game. The video shows actions and results, not descriptions.
-- Wording: the buddy "plays and talks". The banned words in report 11 section 4 appear nowhere, and the engine's internal helper brain part is not imported by name or described.
+- Wording: the buddy "plays and talks". The event's banned words (kept as data in `tests/test_repo_rules.py`) appear nowhere, and the engine's internal helper brain part is not imported by name or described.
 - The course, the tutor and the product pages are not part of this repo.
 
-## 7. Risks and open points
-1. The organisers' answer on the fresh-repo structure is pending; nothing is pushed until the owner has it.
+## 7. Decisions and open points
+1. Settled: this fresh public repository is the submission; the engine stays an external dependency pinned to its tags.
 2. Decided: no patching and no new engine hook; the plugin composes the engine's public functions itself.
-3. The engine's modules are top-level, so the install is `pip install -e` of a checkout (data files stay next to the code).
-4. Muse access and credits depend on the owner's card and the day-4 yes; until then every Muse test uses the fake server.
+3. The engine's modules are top-level, so the install is `pip install -e` of a checkout (data files stay next to the code); `bootstrap.ps1` and `python -m playfellow_coop doctor --fix` do it.
+4. Settled: Muse access came on day 4; every test still uses the fake server, and live runs are the dated result files.
 5. `first_byte` may be unmeasurable if the API does not stream.
-6. Time: Glimmer-class local models need a 24 GB GPU (D66); the open-weight bonus needs a hosted partner route.
+6. Larger local models need a 24 GB GPU; open weights run hosted for the bench rows, and any local model runs through `--brain local-open`.

@@ -120,7 +120,7 @@ def test_nothing_routes_traffic_to_a_partner_gpu_service():
 
 
 def test_no_personal_path_or_key_shape():
-    pattern = re.compile(r"[A-Za-z]:[\\/]+(Users|PlayFellow)\b|AIza[0-9A-Za-z_\-]{30,}|\bsk-[A-Za-z0-9_\-]{20,}|pdl_(live|sdbx)_", re.I)
+    pattern = re.compile(DRIVE_PATH + r"|AIza[0-9A-Za-z_\-]{30,}|\bsk-[A-Za-z0-9_\-]{20,}|pdl_(live|sdbx)_", re.I)
     hits = [str(p.relative_to(ROOT)) for p in _files() if p.name != "test_repo_rules.py" and pattern.search(p.read_text(encoding="utf-8"))]
     assert hits == []
 
@@ -207,6 +207,13 @@ AGENT_NAMES = re.compile(r"\b(argon|antigravity|claude|anthropic|sonnet|opus|omn
 # the only files that may hold those words, by exact path: the vendor-name filter of the training data, its tests, and this scanner
 AGENT_NAME_FILES = {"train/dataset.py", "tests/test_train_dataset.py", "tests/test_train_baseline.py", "tests/test_repo_rules.py"}
 CREDIT = "with AI coding assistance, including Meta's Muse Code."
+DRIVE_PATH = r"(?<![A-Za-z])[A-Za-z]:[\\/]+(Users|PlayFellow)\b"  # a drive letter not preceded by a letter, so https://playfellow... is not a path
+
+
+def test_the_personal_path_check_catches_drive_paths_but_not_web_addresses():
+    pattern = re.compile(DRIVE_PATH, re.I)
+    assert pattern.search("see F:" + "\\PlayFellow\\notes") and pattern.search("C:" + "/Users/someone")
+    assert not pattern.search("https://playfellow.rivel.pro") and not pattern.search("http://playfellow.example")
 
 
 def _agent_name_hits(files):
@@ -239,7 +246,7 @@ def test_the_credit_sentence_is_exactly_the_owners_in_the_readme_and_the_notice(
     for name in ("README.md", "NOTICE.md"):
         text = (ROOT / name).read_text(encoding="utf-8")
         assert text.count(CREDIT) == 1, name
-        assert text.count("Muse Code") == 1, name  # named nowhere else
+        assert text.count("Muse Code") == text.count("Meta's Muse Code"), name  # only ever as Meta's Muse Code (the credit, and the MCP client the owner named)
 
 
 def test_the_open_weights_bench_brain_is_reached_only_from_bench_and_its_tests():

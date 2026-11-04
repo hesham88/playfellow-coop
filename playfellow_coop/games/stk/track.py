@@ -111,3 +111,99 @@ class Track:
             i += 1
             if i - index > n:
                 return b
+
+    # ---- what a racer reads off the map before the race (4 Nov research, STK-research-2-deep) ----
+
+    def lap_positions(self) -> np.ndarray:
+        """Metres along the lap of each centre point."""
+        seg = np.linalg.norm(np.roll(self.centre, -1, axis=0) - self.centre, axis=1)
+        return np.concatenate([[0.0], np.cumsum(seg)[:-1]])
+
+    def corners(self, min_deg: float = 25.0) -> list["Corner"]:
+        """The bends of the lap: runs of the centre line turning one way, with the angle turned, the arc length and the radius
+        (arc / angle). The driver plans skids from these: an arc driven in over 1 s pays a skid bonus, over 3 s the red one."""
+        c = self.centre
+        n = len(c)
+        if n < 6:
+            return []
+        seg = np.linalg.norm(np.roll(c, -1, axis=0) - c, axis=1)
+        s = np.concatenate([[0.0], np.cumsum(seg)[:-1]])
+        d = np.roll(c, -1, axis=0) - c
+        head = np.arctan2(d[:, 1], d[:, 0])
+        turn = (np.roll(head, -1) - head + np.pi) % (2 * np.pi) - np.pi  # + = anti-clockwise in world X, Z
+        rate = turn / np.maximum(seg, 0.2)
+        bend = np.convolve(np.concatenate([rate[-2:], rate, rate[:2]]), np.ones(5) / 5, "valid")
+        sign = np.where(np.abs(bend) > 0.012, np.sign(bend), 0)
+        out, i = [], 0
+        while i < n:
+            if sign[i] == 0:
+                i += 1
+                continue
+            j = i
+            while j + 1 < n and sign[j + 1] == sign[i]:
+                j += 1
+            angle = float(turn[i:j + 1].sum())
+            arc = float(seg[i:j + 1].sum())
+            if abs(np.degrees(angle)) >= min_deg and arc > 0:
+                out.append(Corner(i, j, float(s[i]), float(s[j] + seg[j]), 1 if angle > 0 else -1, abs(angle), arc,
+                                  arc / max(abs(angle), 1e-3), float(self.width[i:j + 1].mean())))
+            i = j + 1
+        return out
+
+    def lateral(self, index: int, xz: np.ndarray) -> float:
+        """How far `xz` lies from the centre line at point `index`, metres; + = to the left of the direction of travel
+        (anti-clockwise of it, in world X, Z: the same frame the driver steers in)."""
+        n = len(self.centre)
+        a, b = self.centre[index], self.centre[(index + 1) % n]
+        d = (b - a) / max(float(np.linalg.norm(b - a)), 1e-6)
+        rel = np.asarray(xz, float) - a
+        return float(-rel[0] * d[1] + rel[1] * d[0])
+
+
+@dataclass
+class Corner:
+    first: int  # index into `order` where the bend starts
+    last: int
+    s0: float  # metres along the lap
+    s1: float
+    side: int  # +1 anti-clockwise (world X, Z), -1 clockwise
+    angle: float  # radians turned
+    arc: float  # metres
+    radius: float  # metres
+    width: float
+
+
+@dataclass
+class TrackItem:
+    kind: str  # "item" (gift box), "small-nitro", "big-nitro", "banana", "zipper"
+    xz: np.ndarray
+    index: int  # nearest centre point
+    s: float  # metres along the lap
+    offset: float  # metres from the centre line, + = left of travel (Track.lateral)
+
+
+ITEM_TAGS = ("item", "small-nitro", "big-nitro", "banana", "zipper")
+
+
+def load_items(track: Track, data: Path = DEFAULT_DATA) -> list[TrackItem]:
+    """Every fixed item of the track (gift boxes, nitro cans, bananas, ground zippers) from its scene.xml, placed on the lap.
+    The game takes an item when the kart's centre passes within 1.1 m of it (item.cpp: distance squared 1.2)."""
+    scene = data / "tracks" / track.name / "scene.xml"
+    try:
+        root = ET.fromstring(scene.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, ET.ParseError):
+        return []
+    s_of = track.lap_positions()
+    n = len(track.centre)
+    out = []
+    for node in root.iter():
+        if node.tag not in ITEM_TAGS or node.get("x") is None or node.get("z") is None:
+            continue
+        xz = np.array([float(node.get("x")), float(node.get("z"))])
+        i = int(np.argmin(np.linalg.norm(track.centre - xz, axis=1)))
+        a, b = track.centre[i], track.centre[(i + 1) % n]
+        seg = float(np.linalg.norm(b - a))
+        along = float(np.dot(xz - a, (b - a) / seg)) if seg > 0 else 0.0
+        total = float(s_of[-1] + np.linalg.norm(track.centre[0] - track.centre[-1]))
+        out.append(TrackItem(node.tag, xz, i, (float(s_of[i]) + along) % total, track.lateral(i, xz)))
+    return sorted(out, key=lambda t: t.s)

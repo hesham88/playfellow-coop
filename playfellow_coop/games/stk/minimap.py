@@ -94,6 +94,8 @@ def find_icon(bgr: np.ndarray, geo: MapGeometry, colour: str = "red", expect: fl
     return max(rings, key=lambda r: r[1])[0] if rings else None
 
 
+ICON_FILE_SCALE = 0.95  # the icon file's size inside the map icon's circle (fitted on the 4 Nov Puffy race frames)
+SHAPED_RMS = 40.0  # a look made from an icon file: true sightings 34, wrong spots 87+, menu screens 44-60 (4 Nov frames)
 MATCH_RMS = 60.0  # mean colour distance (0-255) under which a patch IS the learned icon; measured: true icon 35-44, best wrong patch 82+
 
 
@@ -104,7 +106,8 @@ class IconModel:
     of the kart's paint or chrome cannot pass."""
 
     template: np.ndarray  # BGR, (2r+1, 2r+1)
-    mask: np.ndarray  # uint8 BGR mask, the disc inside the frame
+    mask: np.ndarray  # uint8 BGR mask, the disc inside the frame (or the icon's own opaque pixels when `shaped`)
+    shaped: bool = False
 
     @classmethod
     def learn(cls, bgr: np.ndarray, centre: tuple[float, float], unit: float) -> "IconModel | None":
@@ -126,6 +129,25 @@ class IconModel:
         disc = (np.hypot(xx, yy) <= r - 1.0).astype(np.uint8)
         return cls(data, cv2.merge([disc, disc, disc]))
 
+    @classmethod
+    def from_game_icon(cls, icon_file, r: int = 18, scale: float = ICON_FILE_SCALE) -> "IconModel | None":
+        """The look of any kart's minimap icon, made from the game's own icon file (kart.xml minimap-icon-file). Only the
+        icon's own opaque pixels are compared: what is around it on the map differs (4 Nov: Tux's learned look had a red
+        disc, Puffy in a race had a green ring and the map showing through, so a look with a backdrop never matched)."""
+        data = cv2.imread(str(icon_file), cv2.IMREAD_UNCHANGED)
+        if data is None:
+            return None
+        size = 2 * r + 1
+        s = max(3, min(size, int(round(size * scale))))
+        icon = cv2.resize(data, (s, s), interpolation=cv2.INTER_AREA)
+        out = np.zeros((size, size, 3), np.uint8)
+        mask = np.zeros((size, size), np.uint8)
+        o = (size - s) // 2
+        out[o:o + s, o:o + s] = icon[:, :, :3]
+        opaque = (icon[:, :, 3] > 200) if icon.shape[2] == 4 else np.ones((s, s), bool)
+        mask[o:o + s, o:o + s] = cv2.erode(opaque.astype(np.uint8), np.ones((3, 3), np.uint8))  # edges blend with the map
+        return cls(out, cv2.merge([mask, mask, mask]), shaped=True)
+
     def save(self, path) -> None:
         cv2.imwrite(str(path), self.template)
 
@@ -138,9 +160,13 @@ class IconModel:
         if r not in cache:
             size = 2 * r + 1
             template = cv2.resize(self.template, (size, size), interpolation=cv2.INTER_AREA)
-            yy, xx = np.mgrid[:size, :size] - r
-            disc = (np.hypot(xx, yy) <= r - 1.0).astype(np.uint8)
-            cache[r] = IconModel(template, cv2.merge([disc, disc, disc]))
+            if self.shaped:  # a look made from the game's icon file: keep its own outline, not a full disc
+                mask = (cv2.resize(self.mask, (size, size), interpolation=cv2.INTER_NEAREST) > 0).astype(np.uint8)
+                cache[r] = IconModel(template, mask, shaped=True)
+            else:
+                yy, xx = np.mgrid[:size, :size] - r
+                disc = (np.hypot(xx, yy) <= r - 1.0).astype(np.uint8)
+                cache[r] = IconModel(template, cv2.merge([disc, disc, disc]))
         return cache[r]
 
     def match(self, bgr: np.ndarray, geo: MapGeometry, near: tuple[float, float] | None = None, radius: float = 40.0,
@@ -163,7 +189,7 @@ class IconModel:
         res = cv2.matchTemplate(bgr[y0:y1, x0:x1], self.template, cv2.TM_SQDIFF, mask=self.mask)
         best, _, (bx, by), _ = cv2.minMaxLoc(res)
         rms = float(np.sqrt(max(best, 0.0) / (self.mask.sum())))
-        if rms > max_rms:
+        if rms > (min(max_rms, SHAPED_RMS) if self.shaped else max_rms):
             return None
         return (x0 + bx + r, y0 + by + r), rms
 

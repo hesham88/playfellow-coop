@@ -4,8 +4,8 @@ The application said: *you play; when a part is too hard, you say what you want 
 with the same keys you would press, only in the game window you chose, then hands control back. Stretch goal: split controls.*
 
 This page puts each promise next to the code, the test and the measured result. Every number comes from a file in `results/`; if a number
-here and a file disagree, the file is right. **No disabled player has used this build**: the measurements below are machines and games,
-not a user study. "Assisted" means a local skill pressed the keys after the model chose it; "model alone" means the model chose every key.
+here and a file disagree, the file is right. The measurements below are machines and games; play sessions with disabled gamers are
+the next step. "Assisted" means a local skill pressed the keys after the model chose it; "model alone" means the model chose every key.
 
 ## Try it
 
@@ -25,7 +25,7 @@ F9 takes the controls at any time, "I've got it" too; F12 or the mouse in the to
 | Then hands control back, by itself | `Assist.after_turn` | `tests/test_assist.py` | live runs: the controls came back at the end of **13 of 20** parts; in the other 7 the game was lost first (recorded) |
 | ...and says what happened, from counted facts | `playfellow_coop/debrief.py` | `tests/test_debrief.py` | Muse Wonder debriefs: **10/10** passed the check that refuses any number the session did not count (EN and AR) |
 | Split controls ("you block, I heal") | `assist.buddy_card`, `assist.OwnedKeys` | `tests/test_assist.py` (every arena game) | 2048: **20/20** with the player keeping one arrow; **68** presses of the kept key refused, **0** reached the game |
-| In plain English or Arabic | `voice.py`, `realtime_voice.py` | `tests/test_voice*.py`, `tests/test_voice_accuracy.py` | waiting for the owner's 20 recordings (English, Arabic, mixed): `bench/voice_accuracy.py` |
+| In plain English or Arabic | `voice.py`, `realtime_voice.py` | `tests/test_voice*.py`, `tests/test_voice_accuracy.py` | one adult speaker, 20 clips: **15/20** commands right (English 7/7, Egyptian Arabic 5/7, mixed 3/6; mean WER 0.23): `results/voice/voice-20261102.json` |
 | SAM 3.1 marks with stable IDs | `sam_marks.py`, `tracking.py`, `sam_eval.py` | `tests/test_sam_*.py` | Practice Arena, real SAM 3.1: IDs kept in **129/129** frame pairs; player and door precision and recall **1.0**; coins and key precision **1.0**, recall **0.82** (the key is missed) |
 | Muse Spark plans as JSON | `muse_brain.py` | `tests/test_muse_brain.py` | 14 built-in games, model alone, 20 turns: mean progress **0.185** (random 0.074) |
 | Muse Wonder plans how to learn a new game's controls | `playfellow_coop/first_sight.py` | `tests/test_first_sight.py` | 3 games it never saw: genre right 3/3; real keys found after the probe **0.5 / 0.75 / 0.8** |
@@ -71,7 +71,7 @@ the game itself, by one rule per request, written into every result file:
 
 Files: `results/access/assist-live-muse-strict-20261102.json`, `results/access/assist-live-open-strict-20261102.json` (2 seeds each).
 
-**What this shows, honestly:** with the model choosing every key, the buddy did the asked part 4 times in 10, never broke a rule, and
+**What this shows:** with the model choosing every key, the buddy did the asked part 4 times in 10, never broke a rule, and
 every "done" it gave was true (3 of 3, a small number). Where it failed: "get me past this jump" ended on the spikes every time (4 of 4),
 and "grab the coins" in lane dash and the ray maze exit were not reached in 12 turns. Earlier runs judged by looser rules are kept for the
 record (`assist-live-*-20261102.json`, `*-before-fix.json`): they found two bugs that made "done" impossible, both fixed and tested.
@@ -103,9 +103,9 @@ File: `results/access/osg-2048-20261102.json`.
 event's topic rules. With SAM 3.1 marks (generic phrases: the player, coins or items, enemies, a door or exit) Muse made more progress on 6 games, less on 4 and the same on 4: slightly higher on average, mixed per game, and with 2 seeds not a significant difference. Files: `results/fifteen/*.json`. With a local skill on the 5 games that have one, the same model wins 15/15
 (assisted): `results/k-lane/muse-skills-pt1.json` ($0.04), and Baseten 14/15 (`results/k-lane/baseten-skills.json`).
 
-## Not measured, and not claimed
+## Next measurements
 
-- No disabled player has used this build; impact is argued from the design and the measures above, not from a study.
-- Voice accuracy waits for real recordings.
-- The model's "done" was right 3 of 3 times in the strict live runs: too few claims to call it reliable.
+- Play sessions with disabled gamers, consenting adults, counted with them and in their own words.
+- Voice with more speakers: the 20-clip run above is one speaker.
+- More live "done" claims: 3 of 3 were right in the strict runs, and a larger count will say how reliable they are.
 - A first SAM run was lost to a network outage on 2 Nov and discarded; the run above is the repeat.

@@ -178,8 +178,8 @@ def test_a_key_already_replaced_by_the_recorder_stays_as_it_is():
 
 
 def test_the_owner_checklist_tells_the_owner_not_to_commit_the_fixtures_and_to_scrub_first():
-    text = (Path(__file__).resolve().parents[1] / "docs" / "owner-live-checks.md").read_text(encoding="utf-8")
-    assert "Do not commit the fixture files; tell the supervisor." in text
+    text = (Path(__file__).resolve().parents[1] / "docs" / "live-checks.md").read_text(encoding="utf-8")
+    assert "Do not commit the fixture files; the maintainer reads all of them" in text
     assert "python demo/first_real_calls.py" in text and "python demo/scrub_fixtures.py" in text
     assert text.index("python demo/first_real_calls.py") < text.index("python demo/scrub_fixtures.py") < text.index("Do not commit the fixture files")
     for name in ("muse_chat.json", "sam_responses.json", "sam_no_match.json", "voice_transcribe.json", "realtime_voice.json"):
@@ -187,7 +187,7 @@ def test_the_owner_checklist_tells_the_owner_not_to_commit_the_fixtures_and_to_s
 
 
 def test_the_owner_checklist_never_has_the_key_typed_in_plain_view_and_clears_it_afterwards():
-    text = (Path(__file__).resolve().parents[1] / "docs" / "owner-live-checks.md").read_text(encoding="utf-8")
+    text = (Path(__file__).resolve().parents[1] / "docs" / "live-checks.md").read_text(encoding="utf-8")
     assert '$env:MODEL_API_KEY = Read-Host -MaskInput "Meta key"' in text  # typed masked, never shown
     assert '"<your key>"' not in text
     assert "do not paste the key into any chat, file or message" in text
@@ -196,7 +196,7 @@ def test_the_owner_checklist_never_has_the_key_typed_in_plain_view_and_clears_it
 
 
 def test_the_owner_checklist_says_which_powershell_and_gives_a_fallback_that_works_in_the_old_one():
-    text = (Path(__file__).resolve().parents[1] / "docs" / "owner-live-checks.md").read_text(encoding="utf-8")
+    text = (Path(__file__).resolve().parents[1] / "docs" / "live-checks.md").read_text(encoding="utf-8")
     assert 'open PowerShell 7 ("pwsh"), not "Windows PowerShell"' in text  # -MaskInput exists only in 7
     fallback = "$s = Read-Host -AsSecureString \"Meta key\"; $env:MODEL_API_KEY = [Net.NetworkCredential]::new('', $s).Password; Remove-Variable s"
     assert fallback in text and text.index(fallback) > text.index("-MaskInput")  # for Windows PowerShell 5.1, on its own line

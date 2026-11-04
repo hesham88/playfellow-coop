@@ -16,6 +16,7 @@ Keys and input, all of them working in this widget:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import threading
 import time
@@ -23,13 +24,64 @@ from pathlib import Path
 
 from playfellow_coop.games.stk.paths import BUDGET, HOME, KEY_FILE, VOICE_BUDGET
 
-FEED = HOME / "live-feed.txt"
-LOCK = HOME / "widget.pid"
-STOP = HOME / "STOP"  # written by F12 / "stop": every buddy session stops on it
-HANDOVER = HOME / "HANDOVER"  # F9 / "wait": while it exists the buddy holds no key and waits
-STATUS = HOME / "STATUS"  # one line: what the buddy is doing or waiting for right now
-COMMANDS = HOME / "commands.txt"  # everything typed or said, for the sessions and the record
+def folder_name(title: str) -> str:
+    """A safe folder name for a game's files: letters, digits, dot, dash, underscore only (no ':', '|', '..' or path separators)."""
+    name = re.sub(r"[^a-z0-9._-]+", "-", title.lower()).strip("-.")
+    return re.sub(r"\.{2,}", ".", name) or "game"
+
+
+def game_files(title: str, home: Path = HOME) -> dict:
+    """The small files one game's widget shares with its sessions and with an MCP agent, wherever the widget was started from
+    (this pack's widget, or the main command's `--overlay`): the same title always gives the same folder."""
+    folder = Path(os.environ.get("PLAYFELLOW_GAME_DIR") or (home if title == "SuperTuxKart" else home.parent / folder_name(title)))
+    return {"dir": folder, "feed": folder / "live-feed.txt", "lock": folder / "widget.pid", "stop": folder / "STOP",
+            "handover": folder / "HANDOVER", "status": folder / "STATUS", "commands": folder / "commands.txt"}
+
+
+# Which game this widget serves: every game keeps its own feed, lock, stop and hand-over files; SuperTuxKart stays the default.
+GAME_TITLE = os.environ.get("PLAYFELLOW_GAME_TITLE", "SuperTuxKart")
+GAME_DIR = Path(os.environ.get("PLAYFELLOW_GAME_DIR") or (HOME if GAME_TITLE == "SuperTuxKart" else HOME.parent / folder_name(GAME_TITLE)))
+FEED = GAME_DIR / "live-feed.txt"
+LOCK = GAME_DIR / "widget.pid"
+STOP = GAME_DIR / "STOP"  # written by F12 / "stop": every buddy session stops on it
+HANDOVER = GAME_DIR / "HANDOVER"  # F9 / "wait": while it exists the buddy holds no key and waits
+STATUS = GAME_DIR / "STATUS"  # one line: what the buddy is doing or waiting for right now
+COMMANDS = GAME_DIR / "commands.txt"  # everything typed or said, for the sessions and the record
 QUIET_AFTER = 15.0  # seconds without a new line before the status is shown again
+
+
+CHARACTER_NAMES = ("fello", "dalil", "rami", "hakim", "vela")
+
+
+def parse_control(body: str):
+    """A line for the widget itself, written to the feed by an agent (`python -m playfellow_coop mcp`): '!open', '!fold',
+    '!opacity 0.6' (held to the slider's 0.3-1.0, so it never vanishes) or '!character vela'. Anything else is None: shown, or ignored."""
+    parts = body.strip().split()
+    if not parts or not parts[0].startswith("!"):
+        return None
+    word = parts[0][1:].lower()
+    if word in ("open", "fold") and len(parts) == 1:
+        return (word, None)
+    if word == "opacity" and len(parts) == 2:
+        try:
+            return ("opacity", min(1.0, max(0.3, float(parts[1]))))
+        except ValueError:
+            return None
+    if word == "character" and len(parts) == 2 and parts[1].lower() in CHARACTER_NAMES:
+        return ("character", parts[1].lower())
+    if word == "type" and len(parts) > 1:  # an agent's words, handled as if typed in the panel (unless the player holds the controls)
+        return ("type", " ".join(parts[1:])[:300])
+    return None
+
+
+def player_holds() -> bool:
+    """True while the player's own F9 or any stop is in force: an agent may not act then (it set neither, or cannot clear a stop)."""
+    if STOP.exists():
+        return True
+    try:
+        return HANDOVER.exists() and HANDOVER.read_text(encoding="utf-8").strip() != "agent"
+    except OSError:
+        return True
 
 
 def say_line(text: str, feed: Path = FEED) -> None:
@@ -45,9 +97,11 @@ def set_status(text: str) -> None:
     STATUS.write_text(text, encoding="utf-8")
 
 
-def hand_over(on: bool) -> str:
+def hand_over(on: bool, by: str = "you") -> str:
+    """F9 and 'wait' (by the player: 'you'), or an agent's hand_over ('agent'); the file says who, so an agent never undoes the player's."""
     if on:
-        HANDOVER.write_text("you", encoding="utf-8")
+        GAME_DIR.mkdir(parents=True, exist_ok=True)
+        HANDOVER.write_text("agent" if by == "agent" else "you", encoding="utf-8")
         return "You have the controls: I let go of every key and wait. F9 or 'go' gives them back to me."
     HANDOVER.unlink(missing_ok=True)
     return "I have the controls again."
@@ -57,10 +111,12 @@ def command(text: str) -> str:
     """What a typed or spoken command does, in words for the bar."""
     said = text.strip()
     low = said.lower()
+    GAME_DIR.mkdir(parents=True, exist_ok=True)
+    if re.search(r"\b(stop|halt)\b|توقف|قف", low):
+        STOP.write_text("stop", encoding="utf-8")  # the stop first, before anything that could fail
     with open(COMMANDS, "a", encoding="utf-8") as fh:
         fh.write(f"{time.strftime('%H:%M:%S')} {said}\n")
-    if re.search(r"\b(stop|halt)\b|توقف|قف", low):
-        STOP.write_text("stop", encoding="utf-8")
+    if STOP.exists() and re.search(r"\b(stop|halt)\b|توقف|قف", low):
         return f"Heard '{said}': stopping everything and letting go of every key."
     # hand-over and go count only when the message STARTS with them ("go faster on the straights" is advice, not "go");
     # "stop" anywhere stops, the safe direction
@@ -106,11 +162,40 @@ CHAT = None  # set by the running widget: (text) -> None, answers in the bar thr
 
 
 TUNE = HOME / "tune.json"  # live driving tweaks from the player's tips, read by the race loop
+#: the keys the chat may press for the player, per game (a game not listed here gets the arrows, enter and esc only)
+GAME_KEYS = {
+    "SuperTuxKart": ("up", "down", "left", "right", "enter", "esc"),
+    "Endless Sky": ("up", "down", "left", "right", "enter", "esc", "tab", "space", "a", "b", "d", "e", "f", "g", "h", "i", "j", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "y", "z"),
+}
+PRESS_KEYS = GAME_KEYS.get(GAME_TITLE, ("up", "down", "left", "right", "enter", "esc"))
+
+
+def allowed_presses(keys, limit: int = 6) -> list[str]:
+    """Only keys on this game's list go out, whatever the chat model asked for."""
+    return [k for k in (str(key).lower() for key in (keys or [])) if k in PRESS_KEYS][:limit]
+
+
+def press_in_game(keys: list[str]) -> str:  # pragma: no cover - needs the real window
+    """Presses keys in the game through the guarded hands: only while the game is in front."""
+    from playfellow_coop.games.stk.io import GameWindow
+
+    if STOP.exists() or HANDOVER.exists():
+        return "you have the controls (or everything is stopped), so I pressed nothing"
+    window = GameWindow(GAME_TITLE)
+    hands = window.hands(frozenset(PRESS_KEYS))
+    if not window.in_front():  # never pulls the game forward: keys go out only while the player has it in front
+        return "the game is not in front, so I pressed nothing"
+    for key in keys:
+        hands.tap(key)
+        time.sleep(0.25)
+    return "pressed " + " ".join(keys)
+
+
 TUNINGS = ("more_nitro", "more_items", "dodge_more", "calmer")
 
-CHAT_SYSTEM = ("You are Fello, a friendly game buddy playing SuperTuxKart for the player, who talks to you through a small bar "
+CHAT_SYSTEM = (f"You are Fello, a friendly game buddy playing {GAME_TITLE} for the player, who talks to you through a small bar "
                "over the game. Reply with JSON only: {\"reply\": one or two short, warm, concrete sentences, \"action\": one of "
-               "stop, hand_over, take_back, menu, restart, race, press, goal, none, \"keys\": for press, a list of up, down, left, right, enter, esc, \"goal\": for goal, what to reach in the game's menus in plain words, \"difficulty\": novice, intermediate, expert or empty, "
+               "stop, hand_over, take_back, menu, restart, race, press, goal, none, \"keys\": for press, a list from: " + ", ".join(PRESS_KEYS) + ", \"goal\": for goal, what to reach in the game's menus in plain words, \"difficulty\": novice, intermediate, expert or empty, "
                "\"tune\": a list from more_nitro, more_items, dodge_more, calmer (or empty)}. "
                "hand_over = the player wants to drive now; take_back = the player wants you to drive; stop = stop everything; "
                "menu = YOU go back to the game's main menu with the keyboard (you can: never say you can't); press = you press those menu keys now (for 'press enter', 'go down'); goal = you reach a menu item by reading the screen ('open singleplayer', 'pick Expert'); restart = you "
@@ -135,6 +220,10 @@ def make_chat(say, recent_lines):  # pragma: no cover - network
                 from playfellow_coop.games.stk.brains import load_key
 
                 key = load_key(KEY_FILE)
+                if not key:  # 4 Nov: started without a key, every request was refused (401) and showed as "bad_key"
+                    say("I have no model key, so I can't think about free sentences. Commands always work: stop, wait, take it back, "
+                        "left, right, nitro, drift, brake.")
+                    return
                 brain_box["b"] = MuseBrain(DEFAULT_MODEL, key, budget=DailyBudget(
                     BUDGET, 30.0, 20000), effort="minimal", cache_key=None)
                 brain_box["b"].max_tokens = 800
@@ -157,6 +246,11 @@ def make_chat(say, recent_lines):  # pragma: no cover - network
         elif action == "take_back":
             STOP.unlink(missing_ok=True)
             extra = " " + hand_over(False)
+        elif action == "press" and GAME_TITLE != "SuperTuxKart":
+            keys = allowed_presses(data.get("keys"))
+            extra = f" ({press_in_game(keys)})" if keys else " (no key on this game's list)"
+        elif action in ("menu", "restart", "race", "press", "goal") and GAME_TITLE != "SuperTuxKart":
+            extra = " (menus, races and restarts are SuperTuxKart actions; on this game I only press its own keys)"
         elif action in ("menu", "restart", "race", "press", "goal"):  # game actions, carried out through the guarded keyboard
             import subprocess
             import sys as _sys
@@ -165,7 +259,7 @@ def make_chat(say, recent_lines):  # pragma: no cover - network
             HANDOVER.unlink(missing_ok=True)
             args = [action] + ([data.get("difficulty") or "intermediate"] if action == "race" else [])
             if action == "press":
-                args += [k for k in (data.get("keys") or []) if k in ("up", "down", "left", "right", "enter", "esc")][:6] or ["enter"]
+                args += allowed_presses(data.get("keys")) or ["enter"]
             if action == "goal":
                 args.append(str(data.get("goal") or text)[:200])
             subprocess.Popen([_sys.executable, "-m", "playfellow_coop.games.stk.act", *args],
@@ -219,6 +313,67 @@ def widget_running() -> bool:
         return LOCK.exists()
 
 
+#: words the recogniser should expect, per game: its keywords make "nitro" or "bounty" win over a sound-alike
+GAME_WORDS = {
+    "SuperTuxKart": ["nitro", "banana", "drift", "rescue", "kart", "race", "novice", "intermediate", "expert", "single player", "story mode", "menu"],
+    "Endless Sky": ["bounty", "pilot", "mission", "restart", "reload", "shipyard", "outfitter", "upgrade", "weapons", "blaster", "Sparrow", "Scrapper", "Wasp", "land", "jump", "hyperspace", "credits", "James", "New Greenland", "New Boston"],
+}
+COMMON_WORDS = ["stop", "wait", "go", "hand over", "take it back", "restart", "pause", "PlayFellow", "Fello"]
+REAL_DOUBLES = {"haha", "mama", "papa", "dada", "bonbon", "tutu", "yoyo", "bye-bye", "couscous", "hehe", "ohoh"}
+
+
+def clean_heard(text: str) -> str:
+    """A clipped first syllable comes back doubled ("dodo a new mission", "Wewe are", "openopen single player"): one word written twice is said once."""
+    def single(match: re.Match) -> str:
+        return match.group(0) if match.group(0).lower() in REAL_DOUBLES else match.group(1)
+
+    return re.sub(r"\b([^\W\d_]{2,})\1\b", single, text.strip(), flags=re.IGNORECASE)
+
+
+def level_up(pcm: bytes, target_peak: int = 20000, most: float = 8.0) -> bytes:
+    """Brings a quiet recording up to a level the recogniser hears well (this laptop's array mic is very quiet). Never clips, and silence stays silence."""
+    import numpy as np
+
+    samples = np.frombuffer(pcm, dtype=np.int16)
+    if samples.size == 0:
+        return pcm
+    peak = int(np.abs(samples.astype(np.int32)).max())
+    if peak < 200:
+        return pcm
+    gain = min(target_peak / peak, most)
+    return pcm if gain <= 1.0 else np.clip(samples.astype(np.float32) * gain, -32768, 32767).astype(np.int16).tobytes()
+
+
+def stop_widget() -> bool:  # pragma: no cover - needs a real desktop
+    """Close the running widget (its process id is in the lock file), so a fresh one starts with this session's settings."""
+    try:
+        pid = int(LOCK.read_text())
+    except (OSError, ValueError):
+        return False
+    try:
+        import ctypes
+
+        from ctypes import wintypes
+
+        # PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION, this one process only
+        handle = ctypes.windll.kernel32.OpenProcess(0x0001 | 0x1000, False, pid)
+        if not handle:
+            return False
+        try:
+            # Windows reuses process ids: a stale lock may name some other program now. Only a Python process is ours.
+            buffer, size = ctypes.create_unicode_buffer(1024), wintypes.DWORD(1024)
+            if not ctypes.windll.kernel32.QueryFullProcessImageNameW(handle, 0, buffer, ctypes.byref(size)):
+                return False
+            if not Path(buffer.value).name.lower().startswith("python"):
+                LOCK.unlink(missing_ok=True)  # the lock was stale
+                return False
+            return bool(ctypes.windll.kernel32.TerminateProcess(handle, 0))
+        finally:
+            ctypes.windll.kernel32.CloseHandle(handle)
+    except OSError:
+        return False
+
+
 class PushToTalk:  # pragma: no cover - needs a microphone and the network
     """Hold the mic: record; release: Muse Voice transcribes on a worker thread and the words become a command."""
 
@@ -232,8 +387,8 @@ class PushToTalk:  # pragma: no cover - needs a microphone and the network
             from playfellow_coop.microphone import Microphone
 
             self.mic = Microphone()
-            self.mic.start()
-            self.on_say("Listening... (release the mic when done)")
+            self.mic.start()  # returns when the stream delivers audio: only now can a first word be heard, so only now does the bar say to speak
+            self.on_say("Speak now... (release when done)")
         except Exception as error:  # noqa: BLE001 - said in the bar, never silent
             self.mic = None
             self.on_say(f"The mic could not start ({type(error).__name__}): type the command instead.")
@@ -242,9 +397,12 @@ class PushToTalk:  # pragma: no cover - needs a microphone and the network
         mic, self.mic = self.mic, None
         if mic is None:
             return
+        threading.Thread(target=self._finish, args=(mic,), daemon=True).start()
+
+    def _finish(self, mic) -> None:
+        time.sleep(0.35)  # people let go on the last word: keep listening a moment so its end is not cut
         mic.stop()
-        frames = list(mic.chunks())
-        threading.Thread(target=self._transcribe, args=(frames,), daemon=True).start()
+        self._transcribe(list(mic.chunks()))
 
     def _transcribe(self, frames: list[bytes]) -> None:
         import io
@@ -263,14 +421,17 @@ class PushToTalk:  # pragma: no cover - needs a microphone and the network
                 clip.setnchannels(1)
                 clip.setsampwidth(2)
                 clip.setframerate(24000)
-                clip.writeframes(b"".join(frames))
+                clip.writeframes(level_up(b"".join(frames)))
             if self.reader is None:
                 from playfellow_coop.games.stk.brains import load_key
 
                 key = load_key(KEY_FILE)
+                if not key:
+                    self.on_say("I have no model key, so I can't hear speech; type a command instead (stop, wait, left, nitro...).")
+                    return
                 self.reader = MuseVoiceTranscriber(key, budget=DailyBudget(
                     VOICE_BUDGET, 2.0, 500))
-            text = self.reader.transcribe(buffer.getvalue()).strip()
+            text = clean_heard(self.reader.transcribe(buffer.getvalue(), keywords=COMMON_WORDS + GAME_WORDS.get(GAME_TITLE, [])))
         except Exception as error:  # noqa: BLE001 - said in the bar
             self.on_say(f"I couldn't make out the words ({type(error).__name__}); type it instead.")
             return
@@ -301,7 +462,7 @@ def main(argv=None) -> None:  # pragma: no cover - needs a real desktop
     from playfellow_coop.overlay.runner import OverlayRunner
     from playfellow_coop.voice import CommandQueue
 
-    window = GameWindow()
+    window = GameWindow(GAME_TITLE)
     commands = CommandQueue()
     model = PanelModel(commands)
     model.ticker = True
@@ -369,10 +530,26 @@ def main(argv=None) -> None:  # pragma: no cover - needs a real desktop
     from PySide6.QtCore import QTimer
 
     mood_inbox: list = []
+    control_inbox: list = []
 
     def feed_avatar():  # on the Qt thread: the feed thread drops lines in, the character reacts here
         while mood_inbox and "a" in avatar_box:
             avatar_box["a"].react(mood_inbox.pop(0))
+        while control_inbox:  # an agent's control line ('!open', '!opacity 0.6'), applied here on the Qt thread
+            action, value = control_inbox.pop(0)
+            if action == "open":
+                model.show()
+            elif action == "fold":
+                model.hide()
+            elif action == "opacity":
+                model.set_opacity(value)
+            elif action == "character" and "a" in avatar_box and hasattr(avatar_box["a"], "set_character"):
+                avatar_box["a"].set_character(value)
+            elif action == "type":  # an agent's words: handled like typing in the panel, never while the player holds the controls
+                if player_holds():
+                    bar(f"An agent asked '{value}', but you have the controls (or everything is stopped), so I left it.")
+                else:
+                    commands.put(value)
 
     mood_timer = QTimer()
     mood_timer.setInterval(150)
@@ -388,6 +565,12 @@ def main(argv=None) -> None:  # pragma: no cover - needs a real desktop
                 line = fh.readline()
                 if line:
                     body = line.strip()[9:] if line[2:3] == ":" else line.strip()
+                    control = parse_control(body)
+                    if control is not None:
+                        control_inbox.append(control)
+                        continue
+                    if body.startswith("!"):
+                        continue  # a malformed control line is never shown as speech
                     if not body.startswith("~"):
                         runner.event("say", body)
                     mood_inbox.append(body.lstrip("~"))
@@ -422,9 +605,13 @@ def main(argv=None) -> None:  # pragma: no cover - needs a real desktop
 
     threading.Thread(target=tail, name="feed", daemon=True).start()
     threading.Thread(target=keys, name="keys", daemon=True).start()
+    # Owner 4 Nov: the widget vanished while he changed its opacity. Opening the panel re-creates the window (setWindowFlag hides it first), and Qt
+    # takes that moment for "the last window closed" and leaves its event loop. The widget ends only when asked to.
+    view.app.setQuitOnLastWindowClosed(False)
     try:
         runner.run()
     finally:
+        print(time.strftime("%H:%M:%S"), "widget event loop ended", flush=True)
         LOCK.unlink(missing_ok=True)
 
 

@@ -1,4 +1,4 @@
-"""Update the F1 (SkillSmith, model-written skills) rows in README.md and JUDGES.md from the committed live files.
+"""Update the SkillSmith (model-written skills) rows in docs/metrics.md and JUDGES.md from the committed live files.
 
 One command, no hand edits:
 
@@ -7,7 +7,7 @@ One command, no hand edits:
 
 Only live files count (`skillsmith-muse-*.json`, `skillsmith-open-*.json` written by `bench/skillsmith_run.py`
 with a real brain). The sandbox proof and any fake-brain file are ignored. While no live file is committed the
-rows say "pending: run after the owner's yes"; the moment one lands, the same command replaces them with the
+rows say "pending: no result file yet"; the moment one lands, the same command replaces them with the
 file's own held-out wins, progress and writing cost. Rows are matched by their line prefix, so the command is
 idempotent and never touches any other line.
 """
@@ -21,7 +21,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GAMES = ("maze_chase", "key_caves", "action_quest", "osg_2048")  # osg_2048: the open-source 2048, which nobody wrote a skill for
 BRAINS = {"muse": "Muse Spark 1.3 writes", "open": "Muse Spark Open writes"}
-PENDING_RUNG = "| 3 Model-written skills (SkillSmith, F1) | pending: run after the owner's yes | — | harness `bench/skillsmith_run.py`; offline fake round only |"
+PENDING = "pending: no result file yet"
+DOC = "docs/metrics.md"  # the full measured tables live here; the README keeps the headline
+RUNG_PREFIX = "| 3 Model-written skills (SkillSmith"
+PENDING_RUNG = "| 3 Model-written skills (SkillSmith) | pending: no result file yet | — | harness `bench/skillsmith_run.py`; offline fake round only |"
 JUDGES_HEADING = "## 5. Watch a model-written skill play, no key"
 
 
@@ -59,9 +62,9 @@ def f1_rows(root: Path) -> tuple[list[str], list[str], list[str]]:
     """(README rung rows, README per-game rows, JUDGES table rows), generated only from the live files."""
     files = live_files(root)
     if not files:
-        games = [f"| {g} | pending: run after the owner's yes | no file yet |" for g in GAMES]
+        games = [f"| {g} | {PENDING} | no file yet |" for g in GAMES]
         games[GAMES.index("action_quest")] = "| action_quest | the gym has no progress score for it yet, so it cannot be scored | no file yet |"
-        return [PENDING_RUNG], games, ["| — | pending: run after the owner's yes | no live file yet |"]
+        return [PENDING_RUNG], games, [f"| — | {PENDING} | no live file yet |"]
     rung, games_by_name, judges = [], {}, []
     docs: dict[Path, dict] = {}
     for brain, by_game in files.items():
@@ -75,7 +78,7 @@ def f1_rows(root: Path) -> tuple[list[str], list[str], list[str]]:
         iqms = [row["held_out"]["progress_iqm"] for row in played if row["held_out"].get("progress_iqm") is not None]
         mean = round(sum(iqms) / len(iqms), 3) if iqms else "—"
         rels = ", ".join(f"`{rel}`" for rel in dict.fromkeys(rel for _, _, rel in rows))
-        rung.append(f"| 3 Model-written skills (SkillSmith, F1), {BRAINS[brain]} | {wins} of {len(episodes)} | {mean} | {rels} |")
+        rung.append(f"| 3 Model-written skills (SkillSmith), {BRAINS[brain]} | {wins} of {len(episodes)} | {mean} | {rels} |")
         for name, row, rel in rows:
             games_by_name.setdefault(name, []).append(f"{brain}: {_game_state(row)}")
             held = row.get("held_out") or {}
@@ -93,7 +96,7 @@ def update_readme(text: str, rung: list[str], games: list[str]) -> str:
     lines = text.splitlines()
     out, rung_done, games_done = [], False, set()
     for line in lines:
-        if line.startswith("| 3 Model-written skills (SkillSmith, F1)"):
+        if line.startswith(RUNG_PREFIX):
             if not rung_done:
                 out += rung
                 rung_done = True
@@ -129,7 +132,7 @@ def update_judges(text: str, rows: list[str]) -> str:
 
 def render(root: Path) -> tuple[str, str]:
     rung, games, judges = f1_rows(root)
-    readme = update_readme((root / "README.md").read_text(encoding="utf-8"), rung, games)
+    readme = update_readme((root / DOC).read_text(encoding="utf-8"), rung, games)
     judges_text = update_judges((root / "JUDGES.md").read_text(encoding="utf-8"), judges)
     return readme, judges_text
 
@@ -140,7 +143,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     readme, judges_text = render(ROOT)
     stale = []
-    for name, new in (("README.md", readme), ("JUDGES.md", judges_text)):
+    for name, new in ((DOC, readme), ("JUDGES.md", judges_text)):
         if (ROOT / name).read_text(encoding="utf-8") != new:
             stale.append(name)
             if not args.check:
@@ -148,7 +151,7 @@ def main(argv: list[str] | None = None) -> int:
     if stale:
         print(("out of date: " if args.check else "updated: ") + ", ".join(stale))
         return 1 if args.check else 0
-    print("F1 rows already match the committed live files" if live_files(ROOT) else "no live F1 file committed yet; rows stay pending")
+    print("SkillSmith rows already match the committed live files" if live_files(ROOT) else "no live SkillSmith file committed yet; rows stay pending")
     return 0
 
 

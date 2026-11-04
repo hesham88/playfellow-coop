@@ -323,8 +323,8 @@ def test_main_turns_the_events_on_only_when_there_is_a_plan(tmp_path, monkeypatc
 
 # ---- the owner's checklist ---------------------------------------------------------------------------------------------
 def test_the_owner_checklist_says_who_looks_at_a_real_recording_before_it_ships_and_gives_the_two_commands():
-    text = (Path(__file__).resolve().parents[1] / "docs" / "owner-live-checks.md").read_text(encoding="utf-8")
-    assert "ONLY after the architect has looked at the file" in text
+    text = (Path(__file__).resolve().parents[1] / "docs" / "live-checks.md").read_text(encoding="utf-8")
+    assert "ONLY after the maintainer has looked at the file" in text
     assert "--brain muse --log run1.jsonl --log-level garden" in text
     assert "python demo/record_replay.py session-logs/run1.jsonl" in text
 

@@ -1,8 +1,39 @@
 # Judges: try it in five ways
 
-Everything below was run once on the K lane machine on 2026-11-02, and the output is pasted as it came out (paths trimmed). No run below spends money: the live part stops before any paid call unless you put in your own key.
+Judges: see the access note in the submission.
 
-Set-up for every part: install as in the README (engine clone beside this repo, one virtual environment, `pip install -e .`), and set `PLAYFELLOW_ENGINE` to the engine clone's `software` folder when it is not beside this repo.
+## No download, no account, no password
+
+1. **The evidence, on this page's site:** every number with its result file is in [docs/metrics.md](docs/metrics.md); the files
+   themselves are in [results/](results/), readable in the browser.
+2. **The arena in your browser:** [hesham88.github.io/playfellow-coop](https://hesham88.github.io/playfellow-coop/). Play it with
+   the arrow keys, press **F9** to hand the controls over and back and **F12** to stop, in English or Arabic (`?lang=ar`). It is the
+   controls and the safety rules only: the buddy's brain runs in the Windows app below.
+3. **The code, tests and replays in a cloud workspace:** [open this repository in GitHub Codespaces](https://codespaces.new/hesham88/playfellow-coop)
+   with your GitHub account. It installs itself (`bootstrap.sh`), then sections 1, 2 and 5 below run there as written, with no key
+   (checked on 4 Nov in a clean Linux container: the replay tests 40 passed, the co-op bench printed the same lines as section 2, the
+   model-written skill replayed). Playing a real game needs Windows.
+4. **Everything else, on your PC,** in one line (sections 0 to 5 below). Nothing asks for a password; a Meta key is needed only for
+   the live part (section 3), and the rest runs with no key.
+
+Everything below was run on a development machine on 2026-11-02, and the output is pasted as it came out (paths trimmed). No run below spends money: the live part stops before any paid call unless you put in your own key.
+
+## 0. Set up in one line
+
+Windows, Python 3.11+, Git. In PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/hesham88/playfellow-coop/main/install.ps1 | iex
+cd $env:USERPROFILE\PlayFellow\playfellow-coop
+.\playfellow doctor
+```
+
+Every `python -m playfellow_coop ...` below can be run as `.\playfellow ...` with no activation step; to use `python` itself, run
+`.venv\Scripts\activate` first (if PowerShell refuses scripts, `.\playfellow` needs no policy change).
+
+The bootstrap makes a virtual environment, clones the engine at its pinned tag beside this folder, installs both, and runs the doctor,
+which lists anything still missing (`doctor --fix` installs it after showing the plan). On Linux or macOS, `sh bootstrap.sh` sets up
+parts 1, 2 and 5 below (they need no game window). If the engine sits elsewhere, set `PLAYFELLOW_ENGINE` to its `software` folder.
 
 ## 1. Replay with no key
 
@@ -71,7 +102,14 @@ when you asked and the picture now agrees (`done_by: model_verified`); the recor
 
 ## 3. Live with your own keys
 
-Copy `.env.example` to your own environment (never commit a filled copy): set `MODEL_API_KEY` to your Meta Model API key. `BASETEN_API_KEY` is only for the owner's recorded open-weights bench rows; public and judge traffic never goes there. Then:
+Store your Meta Model API key once, with hidden input, in the Windows credential manager (or set `MODEL_API_KEY` in your environment; never commit it):
+
+```
+python -m playfellow_coop keys set
+python -m playfellow_coop keys status     # says where the key comes from; never shows it
+```
+
+`BASETEN_API_KEY` is only for the recorded open-weights bench rows; public and judge traffic never goes there. Then:
 
 ```
 python -m playfellow_coop --brain muse --typed --max-usd 0.20
@@ -79,20 +117,22 @@ python -m playfellow_coop --brain muse --typed --max-usd 0.20
 
 `--max-usd` caps the session spend; the daily cap in `budget.py` applies as well. F9 hands the controls to you, F9 again hands them back, F12 stops everything.
 
-Run here with no key set (this machine also lacks the engine's input dependency, so it stops one step earlier; with the install done and still no key, the run refuses with a no-key message before any paid call):
-
-```
-ModuleNotFoundError: No module named 'pydirectinput'
-```
+With no key set, the run refuses with a no-key message before any paid call. `python -m playfellow_coop models` lists every brain
+with its measured cost per run, read from the committed result files.
 
 ## 4. Test it yourself on a game
 
-1. Open your game and note its window title.
-2. Make a controls card for it (the engine's card format lists the only keys the buddy may press).
-3. Dry-run first, so it looks and speaks but presses nothing:
+1. Open your game, then let PlayFellow find it; it prints the start command for each window it may play:
 
 ```
-python -m playfellow_coop --typed --dry-run --window "<your game window title>"
+python -m playfellow_coop games
+```
+
+2. The general card `any_game` works on any game; for a tighter list of keys, make a controls card in the engine's card format.
+3. Dry-run first, so it looks and speaks but presses nothing (the widget docks at the top centre of the game window):
+
+```
+python -m playfellow_coop --typed --dry-run --overlay --window "<your game window title>" --card any_game
 ```
 
 4. Type a line such as `grab the coins on the left`, check the spoken plan names only card keys, then run again without `--dry-run` when you are satisfied.

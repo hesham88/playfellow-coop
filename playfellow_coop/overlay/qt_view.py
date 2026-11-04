@@ -384,3 +384,4 @@ class QtOverlay:
 
     def close(self) -> None:
         self.window.close()
+        self.app.quit()  # the loop ends because the session ended, not because a window flag change hid the window

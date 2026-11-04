@@ -5,10 +5,17 @@ The brain is the engine's built-in one (no key, no network) or the Muse brain (n
 Windows credential manager, never from a file)."""
 from __future__ import annotations
 
+import sys
+
+if __name__ == "__main__" and len(sys.argv) > 1:  # the tools (doctor, games, keys, models, stk) run before the engine is imported,
+    from playfellow_coop import cli_tools          # so `doctor` works on the very PC where the engine is missing
+
+    if cli_tools.is_tool(sys.argv[1:]):
+        sys.exit(cli_tools.run(sys.argv[1:]))
+
 import argparse
 import dataclasses
 import os
-import sys
 import threading
 from pathlib import Path
 from typing import Callable
@@ -30,8 +37,7 @@ from playfellow_coop.voice import CommandQueue, typed_listener
 from playfellow_coop.session import play_session
 from playfellow_coop.stage_timer import StageTimer
 
-KEY_NAME = "MODEL_API_KEY"  # Meta's own name for the key
-KEYRING_SERVICE = "playfellow-coop"
+from playfellow_coop.cli_tools import KEY_NAME, KEYRING_SERVICE  # noqa: E402  (one entry, shared with `keys`)
 
 
 def load_muse_key() -> str | None:
@@ -274,7 +280,7 @@ def attach_skills(parts, cfg, switch: str) -> None:
 
 def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: Callable = listen_for_key,
          listen_stop: Callable = listen_for_f12, run: Callable = play_session, say: Callable = print,
-         overlay_builder: Callable | None = None) -> int:
+         overlay_builder: Callable | None = None, bridge_factory: Callable | None = None) -> int:
     try:
         parts, cfg = build_fn(argv)
     except BrainError as error:
@@ -339,12 +345,19 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
             if talk_key:
                 listen_hold(talk_key, talker.key_down, talker.key_up)
     overlay = None
+    default_overlay = False
     if getattr(parts, "overlay", False):
         from playfellow_coop.overlay.hotkey import HotkeyError
         from playfellow_coop.overlay.runner import OverlayUnavailableError
 
         if overlay_builder is None:
             from playfellow_coop.overlay.runner import build_overlay as overlay_builder
+            default_overlay = True  # the real widget: it also follows the shared files (tests inject their own builder and bridge)
+        from playfellow_coop.overlay.runner import game_follow
+        if getattr(parts, "screen", None) is not None:
+            parts.follow = game_follow(parts.screen, cfg.game_window)  # the widget sits on the game the player chose, not on the screen
+            if hasattr(parts.screen, "bring_to_front"):
+                parts.give_back_focus = lambda: parts.screen.bring_to_front(cfg.game_window)  # after a typed command
         try:
             overlay = overlay_builder(parts, commands, handover, getattr(parts, "summon_key", "ctrl+alt+p"),
                                       talker.key_down if talker else (lambda: None), talker.key_up if talker else (lambda: None))
@@ -355,6 +368,18 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
         note = widget_key_note(parts.card, getattr(parts, "summon_key", "ctrl+alt+p"), getattr(parts, "see_through_key", "ctrl+alt+o"))
         if note:
             say(note)
+    bridge = None
+    if overlay is not None and (bridge_factory is not None or default_overlay):
+        # One widget, however it was started: it follows the same files as the game packs' widget, so an MCP agent drives it
+        # (`python -m playfellow_coop mcp --game "<the same title>"`).
+        if bridge_factory is None:
+            from playfellow_coop.games.stk.widget import game_files
+            from playfellow_coop.overlay.bridge import WidgetBridge
+
+            def bridge_factory(on_event):
+                return WidgetBridge(game_files(cfg.game_window), on_event, handover, parts.safety, commands)
+        bridge = bridge_factory(lambda item: overlay.event(*item))
+        bridge.start()
     timer = StageTimer()
     listen_stop(lambda: parts.safety.stop("stopped_f12"))
     listen_key("f9", lambda: say(handover.toggle() or taken_line()))
@@ -391,8 +416,12 @@ def main(argv: list[str] | None = None, build_fn: Callable = build, listen_key: 
 
         worker = threading.Thread(target=session_thread, name="session", daemon=True)
         worker.start()
-        overlay.run()
-        worker.join()
+        try:
+            overlay.run()
+            worker.join()
+        finally:
+            if bridge is not None:
+                bridge.close()  # the lock file goes: an agent's status says the widget is no longer running
         reason = outcome.get("reason", "stopped")
     if log is not None:
         log.close()

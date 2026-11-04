@@ -50,7 +50,7 @@ def apply_overlay_style(hwnd: int, click_through: bool = False, show_in_recordin
     api.SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style)
     api.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_FRAMECHANGED)
     affinity = WDA_NONE if show_in_recordings else WDA_EXCLUDEFROMCAPTURE
-    if not api.SetWindowDisplayAffinity(hwnd, affinity):
+    if not api.SetWindowDisplayAffinity(hwnd, affinity) and not show_in_recordings:  # only hiding from capture can fail harmfully
         raise OSError("Windows refused to set the capture exclusion for the overlay")
     return Applied(style, not show_in_recordings, click_through)
 

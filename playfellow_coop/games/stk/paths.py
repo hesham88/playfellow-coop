@@ -39,6 +39,20 @@ def game_data() -> Path:
     return Path("supertuxkart-data-not-found")
 
 
+def kart_info(kart: str, data: Path | None = None) -> dict:
+    """A kart's class and minimap icon file, read from its kart.xml (heavy karts: 5% more top speed, wider turns)."""
+    folder = (data or game_data()) / "karts" / kart
+    try:
+        text = (folder / "kart.xml").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return {}
+    def attr(name: str) -> str:
+        m = re.search(rf'\b{name}\s*=\s*"([^"]*)"', text)
+        return m.group(1) if m else ""
+    icon = attr("minimap-icon-file") or attr("icon-file")
+    return {"name": attr("name"), "class": attr("type") or "medium", "icon": folder / icon if icon else None}
+
+
 def player_name() -> str:
     """The game's own player profile (its row is marked by name on the results table), or empty."""
     try:

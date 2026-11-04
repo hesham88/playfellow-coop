@@ -1,4 +1,4 @@
-# Owner live checks (one sitting, about 15 minutes)
+# Live checks on a real desktop (one sitting, about 15 minutes)
 
 Two checks need a person at the keyboard because they press real keys or look at a real screen. Nothing in this repository counts as
 "working" for these two things until you have done them and the files they write say so.
@@ -61,7 +61,7 @@ Repeat check 2 over SuperTux in borderless mode, and watch that not one key is d
 
 1. Play one real session with the Muse brain and SAM marks, writing a log: `python -m playfellow_coop --brain muse --log run1.jsonl --log-level garden` (a bare name goes under `session-logs/`, which git ignores; the file is never overwritten).
 2. Turn the log into the page's recording: `python demo/record_replay.py session-logs/run1.jsonl`. It refuses unless the log proves a real brain and real SAM marks.
-3. A REAL recording goes into `demo/web/replay.mjs` and the public repo ONLY after the architect has looked at the file. Do not commit it, and do not push it, before that.
+3. A REAL recording goes into `demo/web/replay.mjs` and the public repo ONLY after the maintainer has looked at the file. Do not commit it, and do not push it, before that.
 4. `--log-level` says which web level the run matches; the log cannot prove it, so check that the arena level you played is that level.
 
 ## Credit day: the first real calls (about 5 minutes, under one cent in practice, never more than 10 dollars)
@@ -73,7 +73,7 @@ Repeat check 2 over SuperTux in borderless mode, and watch that not one key is d
 
    The key is never typed on the command line itself: PSReadLine saves command lines to disk, while text typed at a `Read-Host` prompt is not saved.
 2. Run `python demo/first_real_calls.py`. It prints its plan (five calls: one chat, SAM twice, one voice file, one short realtime voice stream of at most 5 seconds) and waits. It sends nothing until you type `YES`; it refuses to run without the key, and it stops at the 10 dollar cap.
-3. It prints one line per call, `OK` or `DIFFERS`, and where it saved the raw answers (the key is replaced by `***`). Send those lines to the supervisor exactly as they are.
+3. It prints one line per call, `OK` or `DIFFERS`, and where it saved the raw answers (the key is replaced by `***`). Keep those lines exactly as they are for the maintainer.
 4. Run `python demo/scrub_fixtures.py`. It replaces ids, e-mail addresses, key shapes and paths in the saved files with fixed placeholders of the same kind (it prints how many, never a value) and changes nothing else.
-5. The files are in `tests/fixtures/real/`: `muse_chat.json`, `sam_responses.json`, `sam_no_match.json`, `voice_transcribe.json`, `realtime_voice.json`. Do not commit the fixture files; tell the supervisor. The architect reads all of them before anything is committed.
+5. The files are in `tests/fixtures/real/`: `muse_chat.json`, `sam_responses.json`, `sam_no_match.json`, `voice_transcribe.json`, `realtime_voice.json`. Do not commit the fixture files; the maintainer reads all of them before anything is committed.
 6. Clear the key: `Remove-Item Env:MODEL_API_KEY`, then close the window.

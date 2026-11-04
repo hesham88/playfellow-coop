@@ -94,7 +94,8 @@ def read_tune() -> dict:
         return {}
 from playfellow_coop.games.stk.io import GameWindow
 from playfellow_coop.games.stk.minimap import IconModel, MapGeometry, find_icon, in_kart_zone, map_visible
-from playfellow_coop.games.stk.track import Track
+from playfellow_coop.games.stk.paths import kart_info
+from playfellow_coop.games.stk.track import Track, load_items
 
 VK_F12 = 0x7B
 
@@ -176,7 +177,8 @@ class MapEyes:  # pragma: no cover - needs a real desktop
 
 def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True, steer_sign: float = 1.0, hz: float = 20.0,
         icon_path: Path | None = None, say=print, reader: Reader | None = None, guard=None,
-        stop: threading.Event | None = None, preskills: dict | None = None, sam_marker=None, notes: list | None = None) -> dict:  # pragma: no cover - needs a real desktop
+        stop: threading.Event | None = None, preskills: dict | None = None, sam_marker=None, notes: list | None = None,
+        kart: str = "tux") -> dict:  # pragma: no cover - needs a real desktop
     out.mkdir(parents=True, exist_ok=True)
     window = GameWindow()
     if not window.focus():
@@ -186,8 +188,17 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
     track = Track.load(track_id)
     geos: dict = {}
     eyes = MapEyes(window, lambda w, h: geos.setdefault((w, h), MapGeometry.for_view(track, w, h)))
-    driver = Driver(track, keys=keys, steer_sign=steer_sign)
-    model = IconModel.load(icon_path) if icon_path is not None and Path(icon_path).exists() else None
+    info = kart_info(kart)
+    driver = Driver(track, keys=keys, steer_sign=steer_sign, kart_class=info.get("class", "medium"), items=load_items(track))
+    say(f"Kart {info.get('name') or kart} ({driver.kart_class}); {len(driver.bends)} bends and {len(driver.items)} items on the map: "
+        f"skids planned per bend, the line goes through side boxes and cans and stays clear of bananas.")
+    learned_tux = IconModel.load(icon_path) if icon_path is not None and Path(icon_path).exists() else None
+    if kart != "tux" and info.get("icon"):  # a kart other than the one learned live: its minimap look from the game's own icon file
+        model = IconModel.from_game_icon(info["icon"])
+        fallbacks = [("Tux", learned_tux, "medium")]
+    else:
+        model = learned_tux
+        fallbacks = []
     watch = MessageWatch()
     t_start = time.monotonic()
     tick = 1.0 / hz
@@ -292,6 +303,18 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 if hit is None and (teleported or lost_for >= 0.3 or near is None) and now - last_full_search >= 0.5:
                     last_full_search = now
                     hit = model.match(frame, geo)  # the whole map (about 50 ms), at most twice a second, only while lost
+                if hit is None and seen == 0 and fallbacks and now - last_full_search < 0.01:
+                    # not one sighting yet: the kart on the grid may not be the one asked for (4 Nov: the menu kept Tux while
+                    # Puffy was asked, so the buddy never found itself and missed the start). Try every look it might have.
+                    for other, other_model, other_class in fallbacks:
+                        if other_model is None:
+                            continue
+                        hit = other_model.match(frame, geo)
+                        if hit is not None:
+                            model, driver.kart_class = other_model, other_class
+                            say(f"My kart is {other} ({other_class}), not the one I asked for; driving it as a {other_class} kart.")
+                            fallbacks = []
+                            break
                 icon = hit[0] if hit is not None else None
             if icon is not None:
                 last_icon, last_seen_at = icon, now
@@ -399,6 +422,7 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                         last_power_look = now
                         view = eyes.top()
                         power, charges = held_reader.read(view)
+                        driver.held_power = power  # a box would replace it: the item line stops chasing boxes while one is in hand
                         if power != held_power:
                             held_power, held_since = power, now
                             if power:
@@ -442,10 +466,15 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
               "rescues": sum(1 for e in driver.log if len(e) == 4 and e[1] == "rescue"), "refused_sends": hands.refused, "key_events": len(hands.audit),
               "instructions_obeyed": driver.obeyed, "reads": reader.log if reader is not None else [],
               "power_trips": getattr(guard, "trips", 0), "sam_keyframes": item_eye.keyframes if item_eye else 0,
-              "sam_calls": getattr(sam_marker, "calls", 0), "sam_tracked_pictures": getattr(sam_marker, "tracked_pictures", 0)}
+              "sam_calls": getattr(sam_marker, "calls", 0), "sam_tracked_pictures": getattr(sam_marker, "tracked_pictures", 0),
+              "kart": kart, "items_estimate": driver.item_passes(), "skids": {tier: sum(1 for e in driver.log if len(e) == 4 and e[1] == "drift end" and e[3] == tier) for tier in ("red", "yellow", "none")}}
     (out / "drive-log.json").write_text(json.dumps({"result": result, "log": driver.log[-4000:]}, default=str), encoding="utf-8")
     (out / "key-audit.json").write_text(json.dumps(hands.audit), encoding="utf-8")
     say(f"Run over ({stopped_by}): {result['laps_driven']} laps of road, {result['rescues']} rescues, {len(driver.obeyed)} instructions acted on.")
+    est, sk = result.get("items_estimate") or {}, result.get("skids") or {}
+    say(f"Skid boosts: {sk.get('red', 0)} red, {sk.get('yellow', 0)} yellow, {sk.get('none', 0)} skids with no boost. Items (estimate "
+        f"from the map): {est.get('boxes_in_reach', 0)} boxes and {est.get('cans_in_reach', 0)} cans passed within reach, "
+        f"{est.get('bananas_close', 0)} bananas passed too close.")
     return result
 
 
@@ -459,7 +488,7 @@ def main(argv=None):  # pragma: no cover
     p.add_argument("--icon", default=None, help="the learned minimap icon (read if it exists, written once learned)")
     a = p.parse_args(argv)
     print(json.dumps(run(a.track, Path(a.out), a.max_seconds, learn=not a.no_learn, steer_sign=a.steer_sign,
-                         icon_path=Path(a.icon) if a.icon else None), default=str))
+                         icon_path=Path(a.icon) if a.icon else None, kart=a.kart), default=str))
 
 
 if __name__ == "__main__":

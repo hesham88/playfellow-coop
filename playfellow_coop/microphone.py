@@ -5,6 +5,7 @@ Audio is 24 kHz, 16-bit, mono: what the realtime transcriber expects. Nothing is
 from __future__ import annotations
 
 import queue
+import time
 from typing import Iterator, Protocol
 
 RATE = 24000
@@ -34,6 +35,13 @@ class Microphone:
         self._stream = self._sd.RawInputStream(samplerate=RATE, channels=1, dtype="int16",
                                                blocksize=int(RATE * FRAME_SECONDS), callback=on_audio)
         self._stream.start()
+        self._wait_for_first_audio()
+
+    def _wait_for_first_audio(self, seconds: float = 1.0) -> None:
+        """The stream takes about a quarter of a second to deliver (measured 4 Nov); whoever says "speak now" must say it after that, or the first word is cut."""
+        ends = time.monotonic() + seconds
+        while self._frames.empty() and time.monotonic() < ends:
+            time.sleep(0.01)
 
     def stop(self) -> None:
         if self._stream is not None:

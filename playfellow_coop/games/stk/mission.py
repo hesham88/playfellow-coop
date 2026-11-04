@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Callable
 
 from playfellow_coop.games.stk import live
-from playfellow_coop.games.stk.paths import BUDGET, HOME, KEY_FILE, PRESKILLS as PRESKILLS_HOME, SESSIONS, player_name
+from playfellow_coop.games.stk.paths import BUDGET, HOME, KEY_FILE, PRESKILLS as PRESKILLS_HOME, SESSIONS, kart_info, player_name
 from playfellow_coop.games.stk.widget import STOP
 from playfellow_coop.games.stk.io import GameWindow, MENU_KEYS
 
@@ -103,7 +103,10 @@ def race_seen(s: Session, track_id: str, icon: Path) -> Callable[[], bool]:  # p
     from playfellow_coop.games.stk.minimap import IconModel, MapGeometry
     from playfellow_coop.games.stk.track import Track
 
-    track, model = Track.load(track_id), IconModel.load(icon)
+    kart = getattr(s, "kart", "tux")
+    info = kart_info(kart)  # another kart: its minimap look made from the game's own icon file (checked against the live look)
+    track = Track.load(track_id)
+    model = IconModel.from_game_icon(info["icon"]) if kart != "tux" and info.get("icon") else IconModel.load(icon)
 
     from playfellow_coop.games.stk.minimap import map_visible
 
@@ -175,6 +178,69 @@ def ordinal(n) -> str:
 DIFFICULTY_ORDER = ("novice", "intermediate", "expert", "supertux")
 
 
+def kart_step(s) -> str:
+    """The kart-screen instruction for the menu reader: the kart is chosen by the name shown on that screen, never by a count."""
+    name = kart_info(getattr(s, "kart", "tux")).get("name") or "Tux"
+    if name.lower() == "tux":
+        return "keep Tux and press enter."
+    return (f"move with left/right/up/down until the name shown for the selected kart reads '{name}' (a heavy kart), then press "
+            "enter; read the name after every key.")
+
+
+def kart_name_label(s) -> str:  # pragma: no cover - needs a real desktop
+    """The selected kart's name, written in yellow under the big kart on the kart screen (4 Nov recording: 58-64% down)."""
+    frame = s.frame()
+    h, w = frame.shape[:2]
+    return s.read_label(frame[int(h * 0.575):int(h * 0.645), int(w * 0.25):int(w * 0.75)]).strip().lower()
+
+
+def kart_walk(read, tap, want: str, say=print, rows: int = 4, cols: int = 7, wait: float = 0.5) -> bool:
+    """Put the kart screen's cursor on the kart named `want`, reading the name after every key. A guess first (the 4 Nov
+    grid has Puffy two rows under Tux), then a row-by-row sweep from the top-left corner. True when the name reads `want`."""
+    want = want.lower()
+
+    def on_it() -> bool:
+        words = read()
+        say(f"Kart under the cursor: '{words or 'nothing'}'.")
+        return want in words
+
+    if on_it():
+        return True
+    for key in ("down", "down"):
+        tap(key)
+        time.sleep(wait)
+    if on_it():
+        return True
+    for key in ["up"] * rows + ["left"] * cols:
+        tap(key)
+        time.sleep(wait * 0.6)
+    for row in range(rows):
+        step = "right" if row % 2 == 0 else "left"
+        for col in range(cols):
+            if on_it():
+                return True
+            if col < cols - 1:
+                tap(step)
+                time.sleep(wait)
+        tap("down")
+        time.sleep(wait)
+    return on_it()
+
+
+def choose_kart(s) -> bool:  # pragma: no cover - needs a real desktop
+    """On the kart screen: the asked-for kart by its name label, then Enter. If it cannot be found, Tux (the default) is kept
+    and the session says so, so the race code looks for the right kart on the minimap."""
+    name = kart_info(getattr(s, "kart", "tux")).get("name") or "Tux"
+    if name.lower() != "tux":
+        if kart_walk(lambda: kart_name_label(s), s.tap, name, say=s.say):
+            s.say(f"{name} is selected (its name is on screen). Enter.")
+        else:
+            s.say(f"I could not find {name} on the kart screen (locked or hidden); I keep Tux and drive it as Tux.")
+            s.kart = "tux"
+            kart_walk(lambda: kart_name_label(s), s.tap, "tux", say=s.say)
+    return s.tap("enter")
+
+
 def setup_route(s: Session, difficulty: str, seen) -> bool:  # pragma: no cover
     """Main menu to a running Normal Race. The model reads the screens up to the kart choice (it does that reliably); Race
     Setup is then driven with fixed keys learned on 3 Nov (the focus opens on the difficulty row), every key after taking
@@ -182,9 +248,28 @@ def setup_route(s: Session, difficulty: str, seen) -> bool:  # pragma: no cover
     from playfellow_coop.games.stk.widget import set_status
 
     set_status("going through the menus to the race (each step is shown here).")
-    ok = s.nav.reach("Get to the Race Setup screen (headings 'Select a difficulty' and 'Select a game mode'). From the main "
-                     "menu: Singleplayer (enter), then on the kart screen keep Tux and press enter. If a Paused menu or results "
-                     "screen is up, go back to the main menu first. Done (press none) when Race Setup is on screen.", max_steps=14)
+    # 4 Nov: the widget covers the kart screen's heading, so the menu reader took the kart screen for the main menu and
+    # pressed Enter on Tux. Now the reader only brings the main menu to 'Singleplayer'; the buddy presses Enter itself, picks
+    # the kart by the name written on the kart screen, and only then lets the reader go on to Race Setup.
+    ok = False
+    for attempt in range(3):  # 4 Nov 05:34: a freshly started game loaded for a minute and the 14 steps ran out on 'Loading'
+        ok = s.nav.reach("Get to the Main Menu (big SuperTuxKart logo, a row of icons: Story Mode, Singleplayer, Splitscreen "
+                         "Multiplayer, Online, Addons) with 'Singleplayer' focused. If a Paused menu, results screen or any other "
+                         "screen is up, go back (escape) to the main menu first. Never press enter. Done (press none) when "
+                         "Singleplayer is the focused icon of the Main Menu.", max_steps=14)
+        if ok or s.stop.is_set():
+            break
+        s.say("Not at the main menu yet (the game may still be loading); trying again.")
+    if not ok:
+        return False
+    if not s.tap("enter"):
+        return False
+    time.sleep(1.5)
+    if not choose_kart(s):
+        return False
+    time.sleep(1.5)
+    ok = s.nav.reach("Get to the Race Setup screen (headings 'Select a difficulty' and 'Select a game mode'). Never press "
+                     "escape. Done (press none) when Race Setup is on screen.", max_steps=6)
     if not ok:
         return False
     from playfellow_coop.games.stk.setup_screen import selected_difficulty
@@ -314,7 +399,7 @@ def mission_race(s: Session, reader, guard, icon: Path, track_id: str = "abyss",
         return
     s.results.append(live.run(track_id, s.out / track_id, max_seconds=600, learn=False, icon_path=icon, say=s.say,
                               reader=reader, guard=guard, stop=s.stop, preskills=learned, sam_marker=s.sam_marker,
-                              notes=load_notes(track_id)))
+                              notes=load_notes(track_id), kart=getattr(s, "kart", "tux")))
     finish_and_read(s, track_id)
     notes = note_race(s.out / track_id / "drive-log.json", track_id)  # learn from this race for the next one
     s.say(f"Race notes written: {len(notes['spots'])} trouble spots on {track_id} in my notes now.")
@@ -340,14 +425,22 @@ def main(argv=None):  # pragma: no cover
     p.add_argument("--no-model", action="store_true", help="no model calls: no menu or instruction reading")
     p.add_argument("--no-menus", action="store_true")
     p.add_argument("--difficulty", default="novice", choices=["novice", "intermediate", "expert", "supertux"])
+    p.add_argument("--kart", default="tux", help="kart to pick on the kart screen (heavy, e.g. puffy: 5%% more top speed)")
     a = p.parse_args(argv)
 
     stamp = time.strftime("%Y%m%d-%H%M%S")
     out = Path(a.out) / f"{a.mission}-{stamp}"
     out.mkdir(parents=True, exist_ok=True)
 
-    from playfellow_coop.games.stk.widget import say_line, widget_running
+    from playfellow_coop.games.stk.widget import say_line, stop_widget, widget_running
 
+    if a.read_key_file:  # the widget (a separate process) thinks and listens with the same key: hand it the file's place
+        import os
+
+        os.environ["PLAYFELLOW_MODEL_KEY_FILE"] = str(Path(a.read_key_file))
+        if widget_running():  # one already up may have started without a key (4 Nov: every typed or spoken sentence failed)
+            stop_widget()
+            time.sleep(1.0)
     window = GameWindow()
     if not widget_running():  # one widget for as long as the buddy has the game, shared by every session
         subprocess.Popen([sys.executable, "-m", "playfellow_coop.games.stk.widget"], creationflags=0x00000008 | 0x00000200)
@@ -363,6 +456,7 @@ def main(argv=None):  # pragma: no cover
 
     session = Session(out, say)
     session.difficulty = a.difficulty
+    session.kart = a.kart
     session.no_menus = a.no_menus
 
     reader = None

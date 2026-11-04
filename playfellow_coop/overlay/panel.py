@@ -190,6 +190,12 @@ class PanelModel:
         self.heard_partial = ""
         self.lines.append(Line("player", text.strip()[:300]))
         self._changed()
+        hook = getattr(self, "on_submitted", None)
+        if hook is not None:  # the host gives the game the front back once a command is in
+            try:
+                hook()
+            except Exception:  # noqa: BLE001 - the command is already in; a desktop hiccup must not lose it
+                pass
         return True
 
     def press_chip(self, index: int) -> bool:
