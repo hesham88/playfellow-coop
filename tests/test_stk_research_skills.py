@@ -6,8 +6,14 @@ import math
 import numpy as np
 import pytest
 
-from playfellow_coop.games.stk.drive import (Driver, Keys, SKID_BONUS_TIME, SKID_RED_TIME, skid_level, turn_radius)
+from playfellow_coop.games.stk.drive import (Driver as _Driver, Keys, SKID_BONUS_TIME, SKID_RED_TIME, skid_level, turn_radius)
 from playfellow_coop.games.stk.track import Track, TrackItem
+
+
+def Driver(track, **kw):
+    """These tests prove the 4 Nov research skills, which are off by default until proven live (proven_only)."""
+    kw.setdefault("proven_only", False)
+    return _Driver(track, **kw)
 
 
 def ring_track(radius: float = 60.0, points: int = 240, width: float = 10.0) -> Track:

@@ -84,6 +84,10 @@ class Driver:
     skid_target: float = SKID_BONUS_TIME
     skid_corner: object = None
     no_steer_until: float = -1.0  # after a skid the game straightens the kart itself: no counter-steer
+    # 5 Nov: the 4 Nov research skills (bend speed from the turning circle, skids planned per bend, the item line) were proven
+    # only in the small simulator and broke live driving. Off by default: the driver is the 3 Nov one that won races. Each
+    # new skill gets switched on alone once it has been proven in a live race.
+    proven_only: bool = True
     _edge_looks: int = 0
     fire_every: float = 1.5
     history: deque = field(default_factory=lambda: deque(maxlen=40))
@@ -414,7 +418,7 @@ class Driver:
             outside = -left_normal if turn > 0 else left_normal
             target = target + outside * self.track.width[j] * (0.15 if noted else 0.10 * min(1.0, bend / 1.2))
         s_here = self.along(xz, index)
-        if self.items:  # the item line from the track's own data: side boxes, cans, never the banana between them
+        if self.items and not self.proven_only:  # the item line from the track's own data: side boxes, cans, never the banana between them
             n = len(self.track.centre)
             j = self.track.nearest(target, hint=index)
             d = self.track.centre[(j + 1) % n] - self.track.centre[j]
@@ -424,8 +428,8 @@ class Driver:
         err = wrap(desired - heading) * self.steer_sign
         # the item line as a lateral error too (4 Nov, simulator: planned +2.4 m, drove -0.6 m - an offset seen 20-30 m ahead is
         # a smaller angle than the straight-road dead band, so the line was never steered to)
-        lat_err = (self.line_offset - self.track.lateral(index, xz)) if self.items else 0.0
-        if self.items and bend < 0.6:
+        lat_err = (self.line_offset - self.track.lateral(index, xz)) if (self.items and not self.proven_only) else 0.0
+        if self.items and not self.proven_only and bend < 0.6:
             err += 0.05 * float(np.clip(lat_err, -4.0, 4.0)) * self.steer_sign
         if self.item_bias and self.dodging and abs(err) < 0.45 and bend < 1.2:
             err += float(np.clip(self.item_bias, -self.dodge_cap, self.dodge_cap))  # a banana or crate in the path: dodging first
@@ -461,6 +465,14 @@ class Driver:
         # 4 Nov (research from the game's data): a kart only has to slow for a bend tighter than its own turning circle at that
         # speed. Every bend of Antediluvian Abyss (28 m and up) is wider than any kart's circle at top speed (15-19.5 m), so
         # the old table of "safe" speeds threw time away in every bend. Lift only when the road is tighter than the kart.
+        if self.proven_only:  # the 3 Nov bend speeds, as raced (Novice won twice, Intermediate 3rd at 3:36)
+            safe = (26.0 if bend < 0.5 else 22.0 if bend < 0.9 else 17.0 if bend < 1.4 else 13.0) * self.speed_scale
+            if speed > safe + 8.0:
+                keys.discard(k.accel)
+                keys.add(k.brake)
+            elif speed > safe or (noted and speed > safe - 2.0) or (size > 1.2 and speed > 8.0):
+                keys.discard(k.accel)
+            return self._finish_proven(now, xz, index, err, heading, speed, size, straight_road, observed, keys)
         road_r = self.road_radius_ahead(s_here)
         kart_r = turn_radius(speed, self.kart_class)
         if road_r < kart_r - 3.0 and speed > 8.0:
@@ -556,6 +568,55 @@ class Driver:
             keys |= {k.nitro, k.accel}  # nitro only burns while accelerate is held (1.5 source)
         elif straight and now - self.last_nitro > self.nitro_every and now > self.boost_ends - NITRO_OVERLAP:
             self.last_nitro = now  # short taps; during a skid boost it waits for the fade, so the boosts chain
+            keys |= {k.nitro, k.accel}  # nitro only burns while accelerate is held (1.5 source)
+        if self.taps:
+            keys |= self.taps
+            self.taps = set()
+        if self.auto_fire and size < 0.25 and now - self.last_fire > self.fire_every:
+            self.last_fire = now
+            keys.add(k.fire)
+        self.log.append((round(now, 2), round(float(xz[0]), 1), round(float(xz[1]), 1), index, round(err, 2), round(speed, 1), sorted(keys), "seen" if observed else "dead-reckoned"))
+        return self.kick(now, speed, keys)
+
+    def _finish_proven(self, now, xz, index, err, heading, speed, size, straight_road, observed, keys) -> set[str]:
+        """The rest of a look as the 3 Nov driver did it (predictive drift held at most 1.8 s, nitro tap every 2 s on
+        straights), word for word from commit 75456f6, so `proven_only` drives exactly what won races."""
+        k = self.keys
+        if self.force_drift and self.skid_dir == 0 and speed > 8.0:  # the player said drift: into this bend now
+            self.force_drift = False
+            self.skid_dir = 1 if err >= 0 else -1
+            self.skid_start, self.skid_exit = now, heading + 0.9 * self.skid_dir * self.steer_sign
+        if self.skid_dir == 0 and self.skid_enabled and now - self.skid_start > 1.5 and speed > 13.0 and abs(err) < 0.6:
+            exit_dir = self.track.ahead(index, 30.0) - self.track.ahead(index, 24.0)
+            exit_heading = math.atan2(exit_dir[1], exit_dir[0])
+            turn = wrap(exit_heading - heading) * self.steer_sign
+            entry = self.curvature_ahead(index, metres=14.0)
+            if abs(turn) > 0.9 and entry > 0.45:
+                self.skid_dir, self.skid_start, self.skid_exit = (1 if turn > 0 else -1), now, exit_heading
+                self.log.append((now, "drift", round(self.progress, 1), f"turn {turn:.2f} rad"))
+        if self.skid_dir:
+            held_for = now - self.skid_start
+            remaining = wrap(self.skid_exit - heading) * self.steer_sign * self.skid_dir
+            if remaining < 0.25 or held_for > 1.8 or abs(err) > 1.0 or speed < 8.0:
+                self.skid_dir = 0  # lined up with the exit (or running wide): let go, the boost fires
+                self.log.append((now, "drift end", round(held_for, 2), "yellow" if held_for >= SKID_BONUS_TIME else "none"))
+            else:
+                keys.discard(k.left)
+                keys.discard(k.right)
+                keys |= {k.drift, k.accel, k.left if self.skid_dir > 0 else k.right}
+        if now < self.hold_straight_until:  # the player said straight
+            keys.discard(k.left)
+            keys.discard(k.right)
+        if now < self.brake_until:  # the player said brake
+            keys.discard(k.accel)
+            keys.add(k.brake)
+        straight = size < 0.12 and straight_road
+        if straight and self.nitro_on_straight:
+            self.nitro_on_straight = False
+            self.last_nitro = now
+            keys |= {k.nitro, k.accel}
+        elif straight and now - self.last_nitro > 2.0:
+            self.last_nitro = now
             keys |= {k.nitro, k.accel}  # nitro only burns while accelerate is held (1.5 source)
         if self.taps:
             keys |= self.taps

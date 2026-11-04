@@ -303,7 +303,7 @@ def test_a_skid_is_held_for_the_time_the_game_pays_for():
 
 def test_nitro_waits_for_a_boost_to_fade():
     t = ring_track(n=200, radius=400.0)  # as good as straight
-    d = Driver(t, keys=Keys())
+    d = Driver(t, keys=Keys(), proven_only=False)  # a 4 Nov rule, not raced yet: only with the research skills switched on
     d.boost_ends = 100.0
     d.dead_band = 9.0  # hold the wheel still
     used, now, s = 0, 0.0, 0.0
@@ -316,6 +316,19 @@ def test_nitro_waits_for_a_boost_to_fade():
         used += "n" in d.step(now, on_ring(t, s))
         now, s = now + 0.05, s + 1.0
     assert used >= 2
+
+
+def test_by_default_the_driver_is_the_one_that_won_races():
+    # 5 Nov: the 4 Nov research driving (proven only in the simulator) broke live steering; the default is the 3 Nov driver
+    t = ring_track(n=200, radius=60.0)
+    d = Driver(t, keys=Keys())
+    assert d.proven_only
+    s, now = 0.0, 0.0
+    while now < 6.0:
+        d.step(now, on_ring(t, s))
+        now, s = now + 0.05, s + 1.0
+    assert not [e for e in d.log if len(e) == 4 and e[1] == "drift" and "bend r" in str(e[3])]  # no 4 Nov planned skids
+    assert d.line_offset == 0.0  # no item line
 
 
 def test_facts_from_the_15_source_are_in_the_driver():
