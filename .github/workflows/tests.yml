@@ -29,7 +29,7 @@ jobs:
         run: |
           git clone --depth 1 --branch pre-hackathon https://github.com/hesham88/playfellow.git engine
           python -m pip install -e engine
-          python -m pip install -e . pytest
+          python -m pip install -e ".[video]" pytest
       - name: Test (warnings are errors; the Rust DLL and Node are required here, never silently skipped)
         env:
           PF_REQUIRE_NATIVE: "1"

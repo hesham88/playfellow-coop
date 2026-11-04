@@ -13,6 +13,8 @@ dependencies = ["httpx>=0.27", "certifi", "Pillow>=10.1", "websockets>=16,<18", 
 
 [project.optional-dependencies]
 stk = ["numpy", "opencv-python-headless", "mss", "PySide6"]
+# tools/assemble_video.py: ffmpeg from PATH, or this package's bundled copy (CI runners have no ffmpeg on PATH)
+video = ["imageio-ffmpeg>=0.5"]
 
 [tool.setuptools]
 packages = ["playfellow_coop", "playfellow_coop.overlay", "playfellow_coop.games", "playfellow_coop.games.stk", "playfellow_coop.skills", "playfellow_coop.harness", "playfellow_coop.universal", "playfellow_coop.skillsmith", "playfellow_coop.gym", "playfellow_coop.evalkit", "playfellow_coop.adk_app", "playfellow_coop.adk_app.arena_eval", "playfellow_coop.serve", "playfellow_coop.agent", "train"]
