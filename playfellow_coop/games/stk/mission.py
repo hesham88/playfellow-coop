@@ -228,16 +228,18 @@ def kart_walk(read, tap, want: str, say=print, rows: int = 4, cols: int = 7, wai
 
 
 def choose_kart(s) -> bool:  # pragma: no cover - needs a real desktop
-    """On the kart screen: the asked-for kart by its name label, then Enter. If it cannot be found, Tux (the default) is kept
-    and the session says so, so the race code looks for the right kart on the minimap."""
+    """On the kart screen: the asked-for kart by its name label, then Enter. The cursor is walked for every kart, Tux
+    included: the profile's last kart is not necessarily Tux, and the driver must race the kart it planned for. If the
+    asked-for kart cannot be found, Tux is walked to instead and the session says so."""
     name = kart_info(getattr(s, "kart", "tux")).get("name") or "Tux"
-    if name.lower() != "tux":
-        if kart_walk(lambda: kart_name_label(s), s.tap, name, say=s.say):
-            s.say(f"{name} is selected (its name is on screen). Enter.")
-        else:
-            s.say(f"I could not find {name} on the kart screen (locked or hidden); I keep Tux and drive it as Tux.")
-            s.kart = "tux"
-            kart_walk(lambda: kart_name_label(s), s.tap, "tux", say=s.say)
+    if kart_walk(lambda: kart_name_label(s), s.tap, name, say=s.say):
+        s.say(f"{name} is selected (its name is on screen). Enter.")
+    elif name.lower() != "tux":
+        s.say(f"I could not find {name} on the kart screen (locked or hidden); I keep Tux and drive it as Tux.")
+        s.kart = "tux"
+        kart_walk(lambda: kart_name_label(s), s.tap, "tux", say=s.say)
+    else:
+        s.say("I could not put the cursor on Tux; I drive the kart on screen as Tux and say if the map disagrees.")
     return s.tap("enter")
 
 
@@ -265,6 +267,13 @@ def setup_route(s: Session, difficulty: str, seen) -> bool:  # pragma: no cover
     if not s.tap("enter"):
         return False
     time.sleep(1.5)
+    # STK 1.5 with an existing profile shows Player Select (player setup) before the karts: confirm the current player
+    # there first. On the kart screen itself this reach is already done and presses nothing.
+    s.nav.reach("Get to the Kart Select screen (a grid of karts with a kart name under it). If a Player Select or Player "
+                "Setup screen is shown, confirm the current player (press enter on the player, never on Add, Delete, "
+                "Rename or Cancel) to move on to the karts. Never press escape. Done (press none) when the Kart Select "
+                "screen is on screen.", max_steps=8)
+    time.sleep(1.0)
     if not choose_kart(s):
         return False
     time.sleep(1.5)
@@ -376,24 +385,17 @@ def mission_race(s: Session, reader, guard, icon: Path, track_id: str = "abyss",
         if line:
             s.say(line)
     s.say(f"Single-player race: {difficulty.capitalize()}, the game's default kart count, {track_name}, its default laps. I find it in the menus.")
-    if s.nav is None:
-        s.say("Menu reading needs the model key; stopping.")
-        return
     seen = race_seen(s, track_id, icon)
-    if s.no_menus:  # the race is being started by hand: wait for it, press nothing in the menus
+    if s.no_menus:  # the race is being started by hand: wait for it, press nothing in the menus; no model key is needed
         deadline = time.monotonic() + 600.0
         while time.monotonic() < deadline and not seen():
             time.sleep(0.5)
         ok = seen()
+    elif s.nav is None:
+        s.say("Menu reading needs the model key; stopping.")
+        return
     else:
         ok = setup_route(s, difficulty, seen)
-    if False:
-      ok = s.nav.reach(f"Start a single-player Normal Race on '{track_name}' at difficulty {difficulty.capitalize()} with the kart Tux, keeping "
-                     "the default number of karts and laps. If a Paused menu or a race results screen is on screen, go back to the main "
-                     "menu first (Back to menu / Exit Race). From the main menu: Singleplayer, then Tux on the kart screen (enter), then "
-                     f"on the next screen choose the difficulty {difficulty.capitalize()} in the difficulty row first (left/right), then "
-                     f"Normal Race, then '{track_name}' (the first track of the grid), then Start Race. Done when the race view is on screen.",
-                     confirm=seen, max_steps=40)
     if not ok:
         s.say("I could not reach the race from the menus; I pressed no race keys.")
         return

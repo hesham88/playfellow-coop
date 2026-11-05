@@ -41,9 +41,6 @@ def language_bias(language: str) -> list[str]:
     return [main] if main == "English" else [main, "English"]
 
 
-BYTES_PER_SECOND = 48000  # 24 kHz, 16-bit mono PCM: the engine-native rate (16 kHz is 32,000)
-
-
 def paced(chunks, bytes_per_second: int = BYTES_PER_SECOND, clock=None, sleep=None):
     """Hand out audio chunks no faster than real time, against an ABSOLUTE schedule (cookbook: voice API fundamentals).
 
