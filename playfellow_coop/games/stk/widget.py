@@ -597,14 +597,18 @@ def main(argv=None) -> None:  # pragma: no cover - needs a real desktop
                     mood_inbox.append(body.lstrip("~"))
                     last_line["at"] = time.monotonic()
                     continue
-                if not window.user32.IsWindow(window.hwnd):  # the game closed: stay up, wait for it, follow the new window
-                    runner.event("say", "The game closed. I'm still here; I'll follow it as soon as it opens again.")
+                if not window.user32.IsWindow(window.hwnd):  # the game closed: hide, wait for it, come back on the new window
+                    from PySide6.QtCore import QMetaObject, Qt
+
+                    # 5 Nov: staying visible left the bar stuck at the screen's top-left corner with no game under it
+                    QMetaObject.invokeMethod(view.window, "hide", Qt.ConnectionType.QueuedConnection)
                     while not window.user32.IsWindow(window.hwnd):
                         time.sleep(2.0)
                         try:
                             window.hwnd = GameWindow(GAME_TITLE).hwnd  # the same object: the bar and character follow it
                         except LookupError:
                             continue
+                    QMetaObject.invokeMethod(view.window, "show", Qt.ConnectionType.QueuedConnection)
                     runner.event("say", "The game is back. " + status_text())
                     last_line["at"] = time.monotonic()
                     continue

@@ -343,7 +343,7 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 # 5 Nov: with slow looks the near search kept failing and the whole map was searched only twice a second, so the
                 # kart was "lost" most of the time, drove blind and stalled (1.6 sightings a second). The whole map costs about
                 # 40 ms: search it at once whenever the near search misses.
-                if hit is None and (teleported or near is None or lost_for >= 0.0) and now - last_full_search >= 0.05:
+                if hit is None and (teleported or near is None or lost_for >= 0.0) and now - last_full_search >= 0.15:
                     last_full_search = now
                     hit = model.match(frame, geo)
                 if hit is None and seen == 0 and fallbacks and now - last_full_search < 0.01:

@@ -88,6 +88,7 @@ class Driver:
     # only in the small simulator and broke live driving. Off by default: the driver is the 3 Nov one that won races. Each
     # new skill gets switched on alone once it has been proven in a live race.
     proven_only: bool = True
+    never_lift: bool = True  # with proven_only: full throttle through every bend wider than the kart's turning circle
     _edge_looks: int = 0
     fire_every: float = 1.5
     history: deque = field(default_factory=lambda: deque(maxlen=40))
@@ -480,12 +481,17 @@ class Driver:
         # 4 Nov (research from the game's data): a kart only has to slow for a bend tighter than its own turning circle at that
         # speed. Every bend of Antediluvian Abyss (28 m and up) is wider than any kart's circle at top speed (15-19.5 m), so
         # the old table of "safe" speeds threw time away in every bend. Lift only when the road is tighter than the kart.
-        if self.proven_only:  # the 3 Nov bend speeds, as raced (Novice won twice, Intermediate 3rd at 3:36)
+        if self.proven_only and not self.never_lift:  # the 3 Nov bend speeds, as raced (Novice won twice, Intermediate 3rd)
             safe = (26.0 if bend < 0.5 else 22.0 if bend < 0.9 else 17.0 if bend < 1.4 else 13.0) * self.speed_scale
             if speed > safe + 8.0:
                 keys.discard(k.accel)
                 keys.add(k.brake)
             elif speed > safe or (noted and speed > safe - 2.0) or (size > 1.2 and speed > 8.0):
+                keys.discard(k.accel)
+            return self._finish_proven(now, xz, index, err, heading, speed, size, straight_road, observed, keys)
+        if self.proven_only:  # owner 5 Nov: "speed is always needed, you shouldn't slow down": lift only for a bend tighter
+            # than the kart's own turning circle (none on Abyss) or when pointing far off the road; the 3 Nov line otherwise
+            if self.road_radius_ahead(s_here) < turn_radius(speed, self.kart_class) or (size > 1.2 and speed > 8.0):
                 keys.discard(k.accel)
             return self._finish_proven(now, xz, index, err, heading, speed, size, straight_road, observed, keys)
         road_r = self.road_radius_ahead(s_here)

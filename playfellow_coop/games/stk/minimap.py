@@ -95,8 +95,31 @@ def find_icon(bgr: np.ndarray, geo: MapGeometry, colour: str = "red", expect: fl
 
 
 ICON_FILE_SCALE = 0.95  # the icon file's size inside the map icon's circle (fitted on the 4 Nov Puffy race frames)
-SHAPED_RMS = 40.0  # a look made from an icon file: true sightings 34, wrong spots 87+, menu screens 44-60 (4 Nov frames)
+SHAPED_RMS = 48.0  # backdrop-free looks: 5 Nov, on the 3 Nov winning race video the learned look scored 26 typical / 45 worst on true sightings; icon-file look 34, menus 44-60
 MATCH_RMS = 60.0  # mean colour distance (0-255) under which a patch IS the learned icon; measured: true icon 35-44, best wrong patch 82+
+
+
+def without_backdrop(template: np.ndarray) -> np.ndarray:
+    """A mask of the icon itself (the red ring and the kart's face), without the bit of map that was behind it when the look
+    was learned. 5 Nov: a look learned on a teal stretch matched other teal stretches and the buddy thought it was across the
+    track, steering into the right-hand wall; the backdrop is different at every place on the map, so it must not count."""
+    size = template.shape[0]
+    r = size // 2
+    yy, xx = np.mgrid[:size, :size] - r
+    dist = np.hypot(xx, yy)
+    disc = dist <= r - 1.0
+    ring_band = (dist > r - 4.5) & disc
+    inner = dist <= r - 4.5
+    t = template.astype(np.int32)
+    redness = t[:, :, 2] - np.maximum(t[:, :, 0], t[:, :, 1])
+    ring = ring_band & (redness > 60)
+    edge = inner & (dist > r - 7.5)  # just inside the ring: mostly backdrop
+    backdrop = np.median(template[edge], axis=0) if edge.any() else np.zeros(3)
+    face = inner & (np.abs(t - backdrop.astype(np.int32)).sum(axis=2) > 60)
+    keep = (ring | face).astype(np.uint8)
+    if keep.sum() < 30:  # not enough left to be sure: fall back to the whole disc
+        keep = disc.astype(np.uint8)
+    return cv2.merge([keep, keep, keep])
 
 
 @dataclass
@@ -115,19 +138,15 @@ class IconModel:
         cx, cy = int(round(centre[0])), int(round(centre[1]))
         if cy - r < 0 or cx - r < 0 or cy + r + 1 > bgr.shape[0] or cx + r + 1 > bgr.shape[1]:
             return None
-        yy, xx = np.mgrid[:2 * r + 1, :2 * r + 1] - r
-        disc = (np.hypot(xx, yy) <= r - 1.0).astype(np.uint8)
-        return cls(bgr[cy - r:cy + r + 1, cx - r:cx + r + 1].copy(), cv2.merge([disc, disc, disc]))
+        crop = bgr[cy - r:cy + r + 1, cx - r:cx + r + 1].copy()
+        return cls(crop, without_backdrop(crop), shaped=True)
 
     @classmethod
     def load(cls, path) -> "IconModel | None":
         data = cv2.imread(str(path), cv2.IMREAD_COLOR)
         if data is None:
             return None
-        r = data.shape[0] // 2
-        yy, xx = np.mgrid[:2 * r + 1, :2 * r + 1] - r
-        disc = (np.hypot(xx, yy) <= r - 1.0).astype(np.uint8)
-        return cls(data, cv2.merge([disc, disc, disc]))
+        return cls(data, without_backdrop(data), shaped=True)
 
     @classmethod
     def from_game_icon(cls, icon_file, r: int = 18, scale: float = ICON_FILE_SCALE) -> "IconModel | None":
