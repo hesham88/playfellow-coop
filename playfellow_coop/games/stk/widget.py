@@ -476,7 +476,14 @@ def main(argv=None) -> None:  # pragma: no cover - needs a real desktop
     from playfellow_coop.overlay.runner import OverlayRunner
     from playfellow_coop.voice import CommandQueue
 
-    window = GameWindow(GAME_TITLE)
+    # 5 Nov: the widget crashed when it started before the game window existed (LookupError, over and over in the log), and
+    # quit whenever the game closed, so the 3D character kept disappearing. Now it waits for the game and stays up.
+    while True:
+        try:
+            window = GameWindow(GAME_TITLE)
+            break
+        except LookupError:
+            time.sleep(2.0)
     commands = CommandQueue()
     model = PanelModel(commands)
     model.ticker = True
@@ -590,12 +597,17 @@ def main(argv=None) -> None:  # pragma: no cover - needs a real desktop
                     mood_inbox.append(body.lstrip("~"))
                     last_line["at"] = time.monotonic()
                     continue
-                if not window.user32.IsWindow(window.hwnd):  # the game closed: so does the widget
-                    runner.finish()
-                    from PySide6.QtCore import QMetaObject, Qt
-
-                    QMetaObject.invokeMethod(view.app, "quit", Qt.ConnectionType.QueuedConnection)
-                    return
+                if not window.user32.IsWindow(window.hwnd):  # the game closed: stay up, wait for it, follow the new window
+                    runner.event("say", "The game closed. I'm still here; I'll follow it as soon as it opens again.")
+                    while not window.user32.IsWindow(window.hwnd):
+                        time.sleep(2.0)
+                        try:
+                            window.hwnd = GameWindow(GAME_TITLE).hwnd  # the same object: the bar and character follow it
+                        except LookupError:
+                            continue
+                    runner.event("say", "The game is back. " + status_text())
+                    last_line["at"] = time.monotonic()
+                    continue
                 if time.monotonic() - last_line["at"] > QUIET_AFTER:  # never silent: say what it is doing or waiting for
                     runner.event("say", "Now: " + status_text())
                     last_line["at"] = time.monotonic()

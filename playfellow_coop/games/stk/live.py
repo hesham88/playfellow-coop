@@ -211,6 +211,7 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
     driver.notes = tuple(notes or ())
     TUNE.unlink(missing_ok=True)  # a spoken or typed tip lasts for the race it was given in, never for every race after
     last_banana_look, last_banana_said, laps_learned = -1.0, -99.0, 0
+    looks_done, sightings, rate_since = 0, 0, None  # the race loop's pace, measured while racing
     nudges = Nudges()
     held_reader, held_power, held_since, place, last_power_look = HeldPower(), None, 0.0, None, -1.0
     charges, shots_at = 0, -99.0
@@ -300,9 +301,12 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 hit = None
                 if near is not None and not teleported and lost_for < 0.6:
                     hit = model.match(frame, geo, near=near, radius=min(14.0 + 40.0 * lost_for, 40.0))
-                if hit is None and (teleported or lost_for >= 0.3 or near is None) and now - last_full_search >= 0.5:
+                # 5 Nov: with slow looks the near search kept failing and the whole map was searched only twice a second, so the
+                # kart was "lost" most of the time, drove blind and stalled (1.6 sightings a second). The whole map costs about
+                # 40 ms: search it at once whenever the near search misses.
+                if hit is None and (teleported or near is None or lost_for >= 0.0) and now - last_full_search >= 0.05:
                     last_full_search = now
-                    hit = model.match(frame, geo)  # the whole map (about 50 ms), at most twice a second, only while lost
+                    hit = model.match(frame, geo)
                 if hit is None and seen == 0 and fallbacks and now - last_full_search < 0.01:
                     # not one sighting yet: the kart on the grid may not be the one asked for (4 Nov: the menu kept Tux while
                     # Puffy was asked, so the buddy never found itself and missed the start). Try every look it might have.
@@ -444,8 +448,9 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 if now - last_banana_look >= 0.1:  # the fast eye: bananas ten times a second, no model (SAM is 2-3 s late)
                     last_banana_look = now
                     push = dodge(bananas(eyes.road()))
-                    if push:  # take the wheel for half a second: a banana costs more than any line
-                        driver.forced_bias, driver.forced_until = push, now + 0.5
+                    if push:  # a gentle push around it, as raced on 3 Nov; the 4 Nov "take the wheel at full lock for 0.5 s"
+                        # swung the kart into walls on false sightings (5 Nov 02:12: two "banana" swerves, two crashes)
+                        driver.item_bias, driver.dodging = push, True
                         if now - last_banana_said > 3.0:
                             last_banana_said = now
                             say("Banana ahead: steering around it.")
@@ -456,6 +461,17 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                     laps_learned = lap
                     threading.Thread(target=learn_lap, args=(driver, lap, say), daemon=True).start()
                 hands.hold_only(driver.step(now, xz, racing=True))
+                if rate_since is None:
+                    rate_since = now
+                looks_done += 1
+                sightings += xz is not None
+                if now - rate_since >= 10.0:  # the loop's real pace, said and logged: 5 Nov it fell to 1.6 a second unseen
+                    rate = looks_done / (now - rate_since)
+                    driver.log.append((now, "pace", round(rate, 1), f"{sightings} sightings of {looks_done} looks"))
+                    if rate < 12.0 or sightings < 0.7 * looks_done:
+                        say(f"I'm only looking {rate:.0f} times a second and saw my kart {sightings} of {looks_done} times: "
+                            "my driving gets worse like this.")
+                    looks_done, sightings, rate_since = 0, 0, now
             time.sleep(max(0.0, tick - ((time.monotonic() - t_start) - now)))
     finally:
         hands.release_all()
