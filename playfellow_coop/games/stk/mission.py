@@ -483,7 +483,8 @@ def main(argv=None):  # pragma: no cover
             from playfellow_coop.games.stk.menus import Navigator
 
             session.nav = Navigator(look=session.frame, ask=muse_menu_eye(key, Path(a.budget_file), a.cap_usd, out / "model-calls.jsonl"),
-                                    press=session.tap, say=say)
+                                    press=session.tap, say=say,
+                                    alive=lambda: bool(session.window.user32.IsWindow(session.window.hwnd)))
             from playfellow_coop.games.stk.brains import muse_label_reader
 
             session.read_label = muse_label_reader(key, Path(a.budget_file), a.cap_usd, out / "model-calls.jsonl")

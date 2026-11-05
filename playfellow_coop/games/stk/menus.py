@@ -94,10 +94,14 @@ class Navigator:
     press: Callable[[str], bool]  # one guarded key tap
     say: Callable[[str], None] = print
     history: list = field(default_factory=list)
+    alive: Callable[[], bool] | None = None  # is the game window still there (no endless looks at a closed game)
 
     def reach(self, goal: str, confirm: Callable[[], bool] | None = None, max_steps: int = 18, settle: float = 0.6) -> bool:
         """Press keys until the goal is reached. `confirm` is the caller's own local test of the goal, when there is one."""
         for _ in range(max_steps):
+            if self.alive is not None and not self.alive():  # 5 Nov 02:06: the game closed and every look failed for minutes
+                self.say("The game window is gone (closed or crashed), so I stop here; nothing is pressed.")
+                return False
             if confirm is not None and confirm():
                 return True
             recent = "; ".join(f"{h.focused}->{h.press}" for h in self.history[-4:])
@@ -105,11 +109,17 @@ class Navigator:
             for _attempt in range(2):  # one empty or failed answer is a transport hiccup, not the end of the mission
                 try:
                     answer = self.ask(self.look(), f"Goal: {goal}. Recent steps (focused->pressed): {recent or 'none'}.")
+                    self._failed_looks = 0
                     break
                 except Exception as error:  # noqa: BLE001 - said and retried; nothing is pressed on a failed look
-                    self.say(f"The menu look failed ({type(error).__name__}); looking again.")
+                    self._failed_looks = getattr(self, "_failed_looks", 0) + 1
+                    if self._failed_looks == 1:  # said once, not every second (5 Nov: a minute of the same line)
+                        self.say(f"I can't see the game window right now ({type(error).__name__}); waiting for it, nothing is pressed.")
                     time.sleep(1.0)
             if answer is None:
+                if getattr(self, "_failed_looks", 0) >= 20:
+                    self.say("I still can't see the game after 20 tries; I stop here. Nothing was pressed.")
+                    return False
                 continue
             step = check(parse_step(answer))
             self.history.append(step)

@@ -338,3 +338,27 @@ def test_facts_from_the_15_source_are_in_the_driver():
     assert drive.SKID_BONUS_TIME > 1.0 and drive.SKID_MIN_SPEED >= 10.0
     src = __import__("inspect").getsource(drive)
     assert "keys |= {k.nitro, k.accel}" in src
+
+
+def test_menu_reader_stops_when_the_game_is_gone_and_says_a_failed_look_once():
+    # 5 Nov 02:06: the game window went away and "the menu look failed" was said every second for over a minute
+    import numpy as np
+
+    from playfellow_coop.games.stk.menus import Navigator
+
+    said = []
+
+    def broken_look():
+        raise OSError("no window")
+
+    nav = Navigator(look=broken_look, ask=lambda img, text: "", press=lambda k: True, say=said.append, alive=lambda: True)
+    import playfellow_coop.games.stk.menus as menus
+    menus.time.sleep, old = (lambda s: None), menus.time.sleep
+    try:
+        assert nav.reach("main menu", max_steps=30) is False
+        assert sum("can't see the game window" in s for s in said) == 1 and "20 tries" in said[-1]
+        gone = Navigator(look=lambda: np.zeros((4, 4, 3), np.uint8), ask=lambda img, text: "", press=lambda k: True,
+                         say=said.append, alive=lambda: False)
+        assert gone.reach("main menu") is False and "window is gone" in said[-1]
+    finally:
+        menus.time.sleep = old

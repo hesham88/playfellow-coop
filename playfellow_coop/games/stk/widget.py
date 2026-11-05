@@ -302,13 +302,27 @@ def widget_running() -> bool:
     try:
         import ctypes
 
+        from ctypes import wintypes
+
         handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
         if not handle:
             return False
-        code = ctypes.c_ulong()
-        ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
-        ctypes.windll.kernel32.CloseHandle(handle)
-        return code.value == 259  # STILL_ACTIVE
+        try:
+            code = ctypes.c_ulong()
+            ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(code))
+            if code.value != 259:  # STILL_ACTIVE
+                return False
+            # Windows reuses process ids: a stale lock may name another program (even the game). Only a Python process is
+            # the widget; otherwise the lock is stale and a widget must be started.
+            buffer, size = ctypes.create_unicode_buffer(1024), wintypes.DWORD(1024)
+            if not ctypes.windll.kernel32.QueryFullProcessImageNameW(handle, 0, buffer, ctypes.byref(size)):
+                return False
+            if not Path(buffer.value).name.lower().startswith("python"):
+                LOCK.unlink(missing_ok=True)
+                return False
+            return True
+        finally:
+            ctypes.windll.kernel32.CloseHandle(handle)
     except OSError:
         return LOCK.exists()
 
