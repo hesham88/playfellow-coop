@@ -35,6 +35,7 @@ class Countdown:
     ready_width: float = 0.0
     phase: str = "waiting"  # waiting -> ready -> set
     looks: int = 0
+    blank_after_ready: int = 0
 
     def look(self, frame: np.ndarray) -> str:
         self.looks += 1
@@ -46,6 +47,10 @@ class Countdown:
                 self.ready_width = width
             elif 0.0 < width < 0.8 * self.ready_width:
                 self.phase = "set"  # the word got shorter: "Set!" (or "Go!" if a look was missed): accelerate
+            # 5 Nov: looks were missed and "Set!" never seen; the letters gone after "Ready!" means Set or Go has come
+            self.blank_after_ready = self.blank_after_ready + 1 if width == 0.0 else 0
+            if self.blank_after_ready >= 4:
+                self.phase = "set"
         return self.phase
 
     @property

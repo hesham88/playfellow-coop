@@ -307,6 +307,9 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
             driver.skid_until = 1e9
         say("Using what the tutorial taught me: " + (", ".join(sorted(lessons)) or "steering") + ".")
     gate_seen, gate_deadline, outline_seen, icon_only = 0, 25.0, False, 0
+    # every race track's map loaded in the background now, so recognising the track at the start takes milliseconds (5 Nov:
+    # loading them during the countdown took 2 s and "Set!" was missed)
+    threading.Thread(target=lambda: [_TRACKS.setdefault(t, Track.load(t)) for t in race_tracks()], daemon=True).start()
     learn_marks: dict[str, list[float]] = {"before": [], "after": []}
     say(f"Waiting to see my kart on the {track_id} minimap before I touch a key.")
     from playfellow_coop.games.stk.widget import set_status
@@ -436,7 +439,7 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 race_up = outline or (outline_seen and icon is not None and model is not None)
                 gate_seen = gate_seen + 1 if race_up else 0
                 icon_only = icon_only + 1 if (icon is not None and not outline_seen) else icon_only
-                if icon_only in (10, 30, 50):  # the kart is on a race, but not on this track's map: which track is it?
+                if icon_only in (3, 15, 30, 50):  # the kart is on a race, but not on this track's map: which track is it?
                     h_, w_ = frame.shape[:2]
                     found_id = which_track(window, w_, h_, track_id)
                     if found_id:
@@ -468,7 +471,10 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 driver.step(now, xz, racing=False)
                 was_go = countdown.go_now
                 countdown.look(eyes.centre())
-                if countdown.go_now and not was_go:
+                if not countdown.go_now and countdown.phase == "waiting" and now - gate_at > 7.0:
+                    countdown.phase = "set"  # 5 Nov: no countdown seen at all (looks missed): the race is on, go
+                    say("I missed the countdown; the race must be on. Full throttle.")
+                elif countdown.go_now and not was_go:
                     say("Set! Full throttle.")
                 heading_now, speed_now = driver.heading(now)
                 wanted = {keys.accel} if countdown.go_now else set()
