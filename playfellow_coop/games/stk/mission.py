@@ -500,9 +500,12 @@ def mission_race(s: Session, reader, guard, icon: Path, track_id: str = "abyss",
     s.results.append(live.run(track_id, s.out / track_id, max_seconds=600, learn=False, icon_path=icon, say=s.say,
                               reader=reader, guard=guard, stop=s.stop, preskills=learned, sam_marker=s.sam_marker,
                               notes=load_notes(track_id), kart=getattr(s, "kart", "tux")))
-    finish_and_read(s, track_id)
-    notes = note_race(s.out / track_id / "drive-log.json", track_id)  # learn from this race for the next one
-    s.say(f"Race notes written: {len(notes['spots'])} trouble spots on {track_id} in my notes now.")
+    raced = (s.results[-1].get("track") if s.results and isinstance(s.results[-1], dict) else None) or track_id
+    finish_and_read(s, raced)
+    # 5 Nov: the track actually raced (the buddy recognises it from the minimap), so notes and wins go under the right track
+    notes = note_race(s.out / track_id / "drive-log.json", raced)  # learn from this race for the next one
+    s.say(f"Race notes written: {len(notes['spots'])} trouble spots on {raced} in my notes now.")
+    track_id = raced
     place = (s.results[-1].get("results_screen") or {}).get("player_position") if s.results and isinstance(s.results[-1], dict) else None
     if place == 1:
         learned.setdefault("wins", {})[difficulty] = f"{track_id} {time.strftime('%Y-%m-%d %H:%M')}"
