@@ -89,6 +89,10 @@ class Driver:
     # new skill gets switched on alone once it has been proven in a live race.
     proven_only: bool = True
     never_lift: bool = True  # with proven_only: full throttle through every bend wider than the kart's turning circle
+    # with proven_only: the item line from the track's data. Off: 5 Nov simulator, Abyss 2.1-2.5 items a lap with it vs 2.5-3.3
+    # without, Volcan Island 4.7-6.7 vs 4.7; the minimap is about a metre off and an item is taken within 1.1 m, so the map
+    # cannot aim at it. Close items need aiming by sight (the item seen on screen in the last metres).
+    item_line: bool = False
     _edge_looks: int = 0
     fire_every: float = 1.5
     history: deque = field(default_factory=lambda: deque(maxlen=40))
@@ -434,7 +438,8 @@ class Driver:
             outside = -left_normal if turn > 0 else left_normal
             target = target + outside * self.track.width[j] * (0.15 if noted else 0.10 * min(1.0, bend / 1.2))
         s_here = self.along(xz, index)
-        if self.items and not self.proven_only:  # the item line from the track's own data: side boxes, cans, never the banana between them
+        use_items = bool(self.items) and (not self.proven_only or self.item_line)
+        if use_items:  # the item line from the track's own data: side boxes, cans, never the banana between them
             n = len(self.track.centre)
             j = self.track.nearest(target, hint=index)
             d = self.track.centre[(j + 1) % n] - self.track.centre[j]
