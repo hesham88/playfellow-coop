@@ -22,7 +22,9 @@ def test_the_named_code_exists():
 
 def test_the_race_loop_calls_the_readers_and_the_rules():
     loop = (PACK / "live.py").read_text(encoding="utf-8")
-    for call in ("held_reader.read(", "read_place(", "decide(Moment(", "dodge(bananas(", "driver.kick(", "hands.clear()", "driver.begin_race(", "learn_lap"):
+    # 5 Nov: the power and place are read by PowerWatch on its own thread (inside the loop it cost 39% of the loop's time)
+    for call in ("reader.read(", "read_place(", "PowerWatch(", "decide(Moment(", "dodge(bananas(", "driver.kick(", "hands.clear()",
+                 "driver.begin_race(", "learn_lap"):
         assert call in loop, call
 
 

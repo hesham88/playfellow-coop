@@ -122,6 +122,10 @@ class Navigator:
                     return False
                 continue
             step = check(parse_step(answer))
+            if "quit" in f"{step.screen} {step.focused}".lower() and step.press not in ("esc", "none"):
+                # 5 Nov: Esc on the main menu opens "Are you sure you want to quit?"; one Enter on "Yes" closes the game.
+                # On a quit question the only key ever pressed is Esc (= No).
+                step.press = "esc"
             self.history.append(step)
             self.say(f"Menu: on '{step.screen}', '{step.focused}' is focused: {'pressing ' + step.press if step.press != 'none' else 'nothing to press'}.")
             if step.refused:

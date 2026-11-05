@@ -155,7 +155,8 @@ class MapEyes:  # pragma: no cover - needs a real desktop
         return canvas
 
     def top(self) -> np.ndarray:
-        """The top third of the view (the held power and the standings list), in a full-size frame."""
+        """The top third of the view (the held power and the standings list), in a full-size frame. Only the power watcher's
+        own thread calls this, with its own eyes (mss handles are per thread)."""
         x0, y0, x1, y1 = self.window.client_box()
         w, h = x1 - x0, y1 - y0
         bot = int(h * 0.34)
@@ -173,6 +174,42 @@ class MapEyes:  # pragma: no cover - needs a real desktop
         canvas = np.zeros((h, x1 - x0, 3), dtype=np.uint8)
         canvas[top:h] = shot
         return canvas
+
+
+class PowerWatch:  # pragma: no cover - needs a real desktop
+    """The held power, its charges and our place, read on a thread of its own about once a second.
+
+    5 Nov profile: reading the power icon inside the race loop took 39% of the loop's time (the masked icon match is slow
+    during a race), so the loop looked at the road 2-6 times a second instead of 16-17, the speed read 0 and the kart
+    reversed and turned round. The race loop now only takes the latest answer and never waits for it."""
+
+    def __init__(self, window: GameWindow, geo_for, every: float = 1.0):
+        self.window, self.geo_for, self.every = window, geo_for, every
+        self.power, self.charges, self.place, self.at = None, 0, None, 0.0
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, name="power-watch", daemon=True)
+
+    def start(self) -> "PowerWatch":
+        self._thread.start()
+        return self
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    def _run(self) -> None:
+        eyes = MapEyes(self.window, self.geo_for)  # its own screen grabber (mss handles are per thread)
+        reader = HeldPower()
+        while not self._stop.is_set():
+            try:
+                view = eyes.top()
+                power, charges = reader.read(view)
+                place = read_place(view)
+                self.power, self.charges = power, charges
+                self.place = place or self.place
+                self.at = time.monotonic()
+            except Exception:  # noqa: BLE001 - a missed look is retried next time; the race never waits on this
+                pass
+            self._stop.wait(self.every)
 
 
 def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True, steer_sign: float = 1.0, hz: float = 20.0,
@@ -212,8 +249,10 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
     TUNE.unlink(missing_ok=True)  # a spoken or typed tip lasts for the race it was given in, never for every race after
     last_banana_look, last_banana_said, laps_learned = -1.0, -99.0, 0
     looks_done, sightings, rate_since = 0, 0, None  # the race loop's pace, measured while racing
+    banana_streak = 0
+    power_watch = None  # started with the race: the power reading on its own thread
     nudges = Nudges()
-    held_reader, held_power, held_since, place, last_power_look = HeldPower(), None, 0.0, None, -1.0
+    held_power, held_since, place, last_power_look = None, 0.0, None, -1.0
     charges, shots_at = 0, -99.0
     set_at = None
     item_eye = ItemEye(grab=eyes.forward, marker=sam_marker).start() if sam_marker is not None else None
@@ -420,22 +459,23 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                     if not bias and foe is not None:  # nothing to dodge or grab: line up on the opponent ahead
                         bias = aim_bias
                     driver.item_bias = bias
-                    driver.dodging = bool(_target is not None and _target.kind in ("banana", "crate"))
+                    driver.dodging = bool(_target is not None and _target.kind == "banana")
                     driver.auto_fire = False  # powers are used by the rules in powers.py, never on a timer
-                    if now - last_power_look >= 0.25:  # what is in hand, and our place: read off the view
+                    if now - last_power_look >= 0.25:  # what is in hand and our place: the power watcher's latest reading
                         last_power_look = now
-                        view = eyes.top()
-                        power, charges = held_reader.read(view)
+                        if power_watch is None:
+                            power_watch = PowerWatch(window, lambda w, h: geos.setdefault((w, h), MapGeometry.for_view(track, w, h))).start()
+                        power, charges = power_watch.power, power_watch.charges
                         driver.held_power = power  # a box would replace it: the item line stops chasing boxes while one is in hand
                         if power != held_power:
                             held_power, held_since = power, now
                             if power:
                                 say(f"Holding {power}" + (f" x{charges}" if charges > 1 else "") + ".")
-                        place = read_place(view) or place
+                        place = power_watch.place or place
                         karts = [s for s in item_eye.seen if s.kind == "kart" and t_now - s.at <= 0.8 and 0.20 < s.y < 0.66]
                         road_bend = driver.curvature_ahead(driver.index, metres=40.0) if driver.index is not None else 0.0
                         shoot, backwards, reason = decide(Moment(held_power, charges, karts, place, road_bend,
-                                                                 banana_in_path=bool(dodge(bananas(eyes.road()))), held_for=now - held_since,
+                                                                 banana_in_path=banana_streak >= 2, held_for=now - held_since,
                                                                  since_last=now - shots_at))
                         if shoot:
                             shots_at = driver.last_fire = now
@@ -448,6 +488,10 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 if now - last_banana_look >= 0.1:  # the fast eye: bananas ten times a second, no model (SAM is 2-3 s late)
                     last_banana_look = now
                     push = dodge(bananas(eyes.road()))
+                    # 5 Nov: single false sightings made it swerve ("scared"): a banana must be seen on two looks in a row
+                    banana_streak = banana_streak + 1 if push else 0
+                    if push and banana_streak < 2:
+                        push = 0.0
                     if push:  # a gentle push around it, as raced on 3 Nov; the 4 Nov "take the wheel at full lock for 0.5 s"
                         # swung the kart into walls on false sightings (5 Nov 02:12: two "banana" swerves, two crashes)
                         driver.item_bias, driver.dodging = push, True
@@ -475,6 +519,8 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
             time.sleep(max(0.0, tick - ((time.monotonic() - t_start) - now)))
     finally:
         hands.release_all()
+        if power_watch is not None:
+            power_watch.stop()
         if item_eye is not None:
             item_eye.stop()
     result = {"track": track_id, "stopped_by": stopped_by, "seconds": round(time.monotonic() - t_start, 1), "steer_sign": driver.steer_sign,

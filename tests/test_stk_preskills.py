@@ -375,3 +375,21 @@ def test_speed_is_read_even_at_three_looks_a_second():
     heading, speed = d.heading(now - 0.33)
     assert heading is not None and 15.0 < speed < 25.0
     assert not [e for e in d.log if len(e) == 4 and e[1] in ("reverse", "rescue")]
+
+
+def test_the_menu_reader_never_confirms_quitting_the_game():
+    # 5 Nov: Esc on the main menu opens "quit STK?"; Enter there would close the game
+    from playfellow_coop.games.stk import menus
+
+    pressed = []
+    answers = iter(['{"screen": "Quit Confirmation", "focused": "Yes", "press": "enter", "done": false}',
+                    '{"screen": "Main Menu", "focused": "Singleplayer", "press": "none", "done": true}'])
+    nav = menus.Navigator(look=lambda: None, ask=lambda img, text: next(answers), press=lambda k: pressed.append(k) or True,
+                          say=lambda s: None)
+    old = menus.time.sleep
+    menus.time.sleep = lambda s: None
+    try:
+        assert nav.reach("main menu", max_steps=3)
+    finally:
+        menus.time.sleep = old
+    assert "enter" not in pressed and pressed == ["esc"]

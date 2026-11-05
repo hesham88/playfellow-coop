@@ -18,8 +18,10 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-PROMPTS = {"gift": "gift box", "nitro": "nitro bottle", "banana": "banana", "crate": "wooden crate", "kart": "go-kart"}
-ITEMS, OBSTACLES = ("gift", "nitro"), ("banana", "crate")
+# 5 Nov: no "wooden crate": SuperTuxKart has no crate obstacles, and SAM named the gift boxes "crate", so the kart steered
+# away from the very boxes it should take (owner: "scared from gift crates")
+PROMPTS = {"gift": "gift box", "nitro": "nitro bottle", "banana": "banana", "kart": "go-kart"}
+ITEMS, OBSTACLES = ("gift", "nitro"), ("banana",)
 VIEW = (0.08, 0.62)  # the band of the race view SAM looks at: the road ahead, above the buddy's own kart
 FOV = 1.25  # radians across the view (the chase camera's field of view, roughly)
 
