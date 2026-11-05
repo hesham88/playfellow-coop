@@ -480,6 +480,8 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 wanted = {keys.accel} if countdown.go_now else set()
                 if countdown.go_now and set_at is None:
                     set_at = now
+                if set_at is not None and 1.0 <= now - set_at <= 1.25:  # owner 5 Nov: nitro the moment the race goes ("Go!")
+                    wanted = wanted | {keys.nitro}
                 if set_at is not None and now - set_at > 1.3:  # past "Go!" and not moving: the game is ignoring the held key
                     wanted = driver.kick(now, speed_now, wanted)
                 hands.hold_only(wanted)
