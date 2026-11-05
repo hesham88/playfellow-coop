@@ -393,3 +393,21 @@ def test_the_menu_reader_never_confirms_quitting_the_game():
     finally:
         menus.time.sleep = old
     assert "enter" not in pressed and pressed == ["esc"]
+
+
+def test_the_focus_frame_is_found_by_its_red_edges_not_by_other_red():
+    # 5 Nov: the caption named the track under the mouse; the focus sat on a locked Grand Prix and Enter did nothing
+    import cv2
+    import numpy as np
+
+    from playfellow_coop.games.stk.mission import focus_box, on_abyss
+
+    frame = np.full((1000, 958, 3), 190, np.uint8)
+    cv2.line(frame, (814, 200), (920, 200), (0, 0, 230), 3)  # the red line that always sits under the Random buttons
+    cv2.rectangle(frame, (412, 790), (546, 890), (0, 0, 230), 4)  # the focus frame on the Abyss tile
+    cv2.circle(frame, (100, 500), 30, (0, 0, 230), -1)  # red inside a thumbnail
+    assert on_abyss(focus_box(frame))
+    frame2 = np.full((1000, 958, 3), 190, np.uint8)
+    cv2.line(frame2, (814, 200), (920, 200), (0, 0, 230), 3)
+    cv2.rectangle(frame2, (40, 100), (180, 300), (0, 0, 230), 4)  # focus on the Grand Prix row
+    assert not on_abyss(focus_box(frame2))

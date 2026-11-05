@@ -187,6 +187,39 @@ def kart_step(s) -> str:
             "enter; read the name after every key.")
 
 
+ABYSS_TILE = (0.40, 0.76, 0.60, 0.92)  # the track grid's last row holds Antediluvian Abyss alone (x0, y0, x1, y1 shares)
+
+
+def focus_box(frame) -> tuple[float, float, float, float] | None:
+    """Where the keyboard focus is on a menu: the red frame around the focused tile, as (x0, y0, x1, y1) shares of the view.
+    Found by its long, thin, straight red edges, so red in a thumbnail does not count. None when no frame is seen."""
+    import cv2
+    import numpy as np
+
+    h, w = frame.shape[:2]
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    red = (((hsv[:, :, 0] < 8) | (hsv[:, :, 0] > 170)) & (hsv[:, :, 1] > 150) & (hsv[:, :, 2] > 120)).astype(np.uint8)
+    lines = cv2.morphologyEx(red, cv2.MORPH_OPEN, np.ones((1, max(int(w * 0.06), 3)), np.uint8))
+    count, _, stats, _ = cv2.connectedComponentsWithStats(lines)
+    edges = [(x, y, x + bw, y + bh) for x, y, bw, bh, area in stats[1:count] if area >= 20]
+    if not edges:
+        return None
+    # the frame's bottom edge is the lowest red line; its top edge is a line above it with the same span. Other red lines
+    # (one sits under the Random buttons on the track screen all the time) are left out
+    bx0, by0, bx1, by1 = max(edges, key=lambda e: e[3])
+    tops = [e for e in edges if e[3] < by0 and abs(e[0] - bx0) < 0.03 * w and abs(e[2] - bx1) < 0.03 * w]
+    ty = max(tops, key=lambda e: e[3])[1] if tops else by0
+    return bx0 / w, ty / h, bx1 / w, by1 / h
+
+
+def on_abyss(box) -> bool:
+    if box is None:
+        return False
+    cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+    x0, y0, x1, y1 = ABYSS_TILE
+    return x0 <= cx <= x1 and y0 <= cy <= y1
+
+
 def kart_name_label(s) -> str:  # pragma: no cover - needs a real desktop
     """The selected kart's name, written in yellow under the big kart on the kart screen (4 Nov recording: 58-64% down)."""
     frame = s.frame()
@@ -346,16 +379,29 @@ def setup_route(s: Session, difficulty: str, seen) -> bool:  # pragma: no cover
         return s.read_label(frame[int(h * 0.88):int(h * 0.955), int(w * 0.05):int(w * 0.95)]).strip().lower()
 
     found = False
-    for _ in range(10):
+    track_id = "abyss"  # this route races Antediluvian Abyss (the grid's last track)
+    if track_id == "abyss":
+        # 5 Nov: the caption under the grid names the track under the MOUSE, not the keyboard focus: it said "Antediluvian
+        # Abyss" while the focus sat on a locked Grand Prix, and Enter did nothing. Follow the red focus frame instead:
+        # Abyss is alone in the grid's last row, so Down moves the focus onto it from any row above.
+        for _ in range(10):
+            box = focus_box(s.frame())
+            if on_abyss(box):
+                found = True
+                s.say("The focus frame is on Antediluvian Abyss (the last row of the grid).")
+                break
+            s.tap("up" if box is not None and box[1] > ABYSS_TILE[3] else "down")
+            time.sleep(0.6)
+    for _ in range(0 if found or track_id == "abyss" else 10):
         words = track_caption()
         s.say(f"Track under the cursor: '{words or 'nothing yet'}'.")
-        if "abyss" in words:
+        if track_id in words.replace(" ", "_") or "abyss" in words and track_id == "abyss":
             found = True
             break
         if "locked" in words or "grand prix" in words or not words:
             s.tap("down")  # from the Grand Prix row down into the tracks
         else:
-            s.tap("left")  # Abyss is the first track: left until the row starts, then up
+            s.tap("left")
             time.sleep(0.6)
             if track_caption() == words:
                 s.tap("up")
