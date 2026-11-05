@@ -250,7 +250,22 @@ class Driver:
         so one look's position jitters by about a metre, which made the kart weave on straights (owner, 3 Nov)."""
         pts = [(t, p) for t, p in self.history if now - t <= 0.50]
         if len(pts) < 3:
-            return None, 0.0
+            # 5 Nov: at 3 looks a second there were never 3 positions in half a second, so the speed read 0 while the kart
+            # drove 20 m/s; the driver thought it had stalled, reversed and turned round (the "wrong way" loop). Widen the
+            # window to the last 3 positions, up to 1.5 s.
+            recent = [(t, p) for t, p in self.history if now - t <= 1.5]
+            pts = recent[-3:] if len(recent) >= 3 else recent
+            if len(pts) < 2:
+                return None, 0.0
+            if len(pts) == 2:
+                (t0, p0), (t1, p1) = pts
+                if t1 - t0 <= 0.05:
+                    return None, 0.0
+                v = (p1 - p0) / (t1 - t0)
+                speed = float(np.linalg.norm(v))
+                if speed > MAX_SPEED:
+                    return None, 0.0
+                return (math.atan2(v[1], v[0]) if speed > 1.5 else None), speed
         ts = np.array([t for t, _ in pts])
         if ts[-1] - ts[0] <= 0.05:
             return None, 0.0

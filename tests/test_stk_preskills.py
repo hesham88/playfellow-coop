@@ -362,3 +362,16 @@ def test_menu_reader_stops_when_the_game_is_gone_and_says_a_failed_look_once():
         assert gone.reach("main menu") is False and "window is gone" in said[-1]
     finally:
         menus.time.sleep = old
+
+
+def test_speed_is_read_even_at_three_looks_a_second():
+    # 5 Nov: at 3 looks a second the speed read 0 while the kart drove; the driver reversed and turned round
+    t = ring_track(n=200, radius=400.0)
+    d = Driver(t, keys=Keys())
+    s, now = 0.0, 0.0
+    for _ in range(12):
+        d.step(now, on_ring(t, s))
+        now, s = now + 0.33, s + 6.6  # 20 m/s seen three times a second
+    heading, speed = d.heading(now - 0.33)
+    assert heading is not None and 15.0 < speed < 25.0
+    assert not [e for e in d.log if len(e) == 4 and e[1] in ("reverse", "rescue")]
