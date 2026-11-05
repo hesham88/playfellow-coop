@@ -345,7 +345,7 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
                 last_tune_read = now
                 tune = read_tune()
                 driver.nitro_every = 1.2 if tune.get("more_nitro") else 2.0
-                driver.item_cap = 0.16 if tune.get("more_items") else 0.10
+                driver.item_cap = 0.16  # owner 5 Nov: easy gift boxes and nitro cans were skipped: SAM sightings pull at the "more items" strength
                 driver.dodge_cap = 0.30 if tune.get("dodge_more") else 0.22
                 driver.speed_scale = 0.88 if tune.get("calmer") else 1.0
             danger = guard.danger() if guard is not None else None
