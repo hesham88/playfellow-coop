@@ -456,6 +456,15 @@ def main(argv=None):  # pragma: no cover
             fh.write(line + "\n")
         say_line(text)
 
+    # a new session starts clean: a STOP or HAND-OVER left by an earlier session's F12 / F9 ended the 4 Nov 05:36 race 0.1 s
+    # after the start ("stopped", nothing pressed). Only flags older than this session are cleared; F12 / F9 pressed from
+    # now on still stop or hand over at once.
+    from playfellow_coop.games.stk.widget import HANDOVER
+
+    for flag, what in ((STOP, "stop"), (HANDOVER, "hand-over")):
+        if flag.exists():
+            flag.unlink(missing_ok=True)
+            say(f"Cleared the {what} left from the last session; F12 stops me and F9 hands over, as always.")
     session = Session(out, say)
     session.difficulty = a.difficulty
     session.kart = a.kart
