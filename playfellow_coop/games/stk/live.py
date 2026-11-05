@@ -176,6 +176,48 @@ class MapEyes:  # pragma: no cover - needs a real desktop
         return canvas
 
 
+_TRACKS: dict = {}  # track maps, loaded once per session
+
+
+def race_tracks() -> list[str]:
+    """Every race track the game has: only race tracks carry a driveline (quads.xml); the tutorial and the story hub are
+    left out, and so is anything marked as an arena or a cut-scene."""
+    import re
+
+    from playfellow_coop.games.stk.paths import game_data
+
+    out = []
+    for folder in sorted((game_data() / "tracks").iterdir()):
+        meta = folder / "track.xml"
+        if not ((folder / "quads.xml").exists() and meta.exists()):
+            continue
+        text = meta.read_text(encoding="utf-8", errors="replace")
+        if re.search(r'(arena|internal|cutscene)\s*=\s*"[Yy]', text) or folder.name in ("tutorial", "overworld"):
+            continue
+        out.append(folder.name)
+    return out
+
+
+def which_track(window: GameWindow, w: int, h: int, skip: str = "") -> str | None:  # pragma: no cover - needs a real desktop
+    """The race track whose minimap outline is on screen now (5 Nov: the buddy should race on any track, and the menus once
+    put it on another track than planned). Looks once at the window and tries every race track's own map."""
+    import mss
+
+    x0, y0, x1, y1 = window.client_box()
+    with (mss.MSS() if hasattr(mss, "MSS") else mss.mss()) as grab:
+        frame = np.asarray(grab.grab({"left": x0, "top": y0, "width": x1 - x0, "height": y1 - y0}))[:, :, :3].copy()
+    for tid in race_tracks():
+        if tid == skip:
+            continue
+        try:
+            tr = _TRACKS.get(tid) or _TRACKS.setdefault(tid, Track.load(tid))
+            if map_visible(frame, MapGeometry.for_view(tr, frame.shape[1], frame.shape[0]), tr):
+                return tid
+        except Exception:  # noqa: BLE001 - a track whose files do not parse is skipped
+            continue
+    return None
+
+
 class PowerWatch:  # pragma: no cover - needs a real desktop
     """The held power, its charges and our place, read on a thread of its own about once a second.
 
@@ -264,7 +306,7 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
         if "drift" in lessons:
             driver.skid_until = 1e9
         say("Using what the tutorial taught me: " + (", ".join(sorted(lessons)) or "steering") + ".")
-    gate_seen, gate_deadline = 0, 25.0
+    gate_seen, gate_deadline, outline_seen, icon_only = 0, 25.0, False, 0
     learn_marks: dict[str, list[float]] = {"before": [], "after": []}
     say(f"Waiting to see my kart on the {track_id} minimap before I touch a key.")
     from playfellow_coop.games.stk.widget import set_status
@@ -387,8 +429,27 @@ def run(track_id: str, out: Path, max_seconds: float = 400.0, learn: bool = True
             if phase == "gate":
                 # a race on this track is on screen: the kart icon is seen, or this track's map outline is (the icon can be
                 # hidden behind a lesson box while the kart is parked under it; it only comes out once the kart moves)
-                race_up = (icon is not None and model is not None) or map_visible(frame, geo, track)
+                # 5 Nov: the kart icon alone also shows on ANOTHER track's minimap: two races were driven on Ravenbridge
+                # Mansion with Abyss's map. The map's outline must be this track's before any race key.
+                outline = map_visible(frame, geo, track)
+                outline_seen = outline_seen or outline
+                race_up = outline or (outline_seen and icon is not None and model is not None)
                 gate_seen = gate_seen + 1 if race_up else 0
+                icon_only = icon_only + 1 if (icon is not None and not outline_seen) else icon_only
+                if icon_only in (10, 30, 50):  # the kart is on a race, but not on this track's map: which track is it?
+                    h_, w_ = frame.shape[:2]
+                    found_id = which_track(window, w_, h_, track_id)
+                    if found_id:
+                        track_id, track = found_id, Track.load(found_id)
+                        geos.clear()  # the map geometry follows the new track (the eyes read `track` at each look)
+                        driver = Driver(track, keys=keys, steer_sign=steer_sign, kart_class=driver.kart_class, items=load_items(track))
+                        last_icon, outline_seen, icon_only = None, True, 0
+                        say(f"This race is on {found_id.replace('_', ' ')}, not the track I expected: I drive it with its own map.")
+                        continue
+                if icon_only >= 60:  # about 3 s of seeing the kart on a minimap that is no race track's we know
+                    stopped_by = "wrong_track"
+                    say(f"My kart is on a race, but the minimap is not {track_id}'s: I'm on the wrong track, so I press nothing.")
+                    break
                 if gate_seen >= 3:
                     phase, gate_at = after_gate, now
                     hands.clear()  # nothing the game thinks is pressed: a key down at "Ready!" earns a penalty

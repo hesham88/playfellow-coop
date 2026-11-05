@@ -212,12 +212,47 @@ def focus_box(frame) -> tuple[float, float, float, float] | None:
     return bx0 / w, ty / h, bx1 / w, by1 / h
 
 
-def on_abyss(box) -> bool:
-    if box is None:
+def on_abyss(box, tile=ABYSS_TILE) -> bool:
+    if box is None or tile is None:
         return False
     cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
-    x0, y0, x1, y1 = ABYSS_TILE
+    x0, y0, x1, y1 = tile
     return x0 <= cx <= x1 and y0 <= cy <= y1
+
+
+def find_track_tile(frame, track_id: str = "abyss"):
+    """Where the track's tile is in the track grid, as (x0, y0, x1, y1) shares, found by matching the game's own picture of
+    the track (data/tracks/<id>/screenshot) at tile sizes. 5 Nov: the grid's last tile was assumed to be Abyss; it was
+    Ravenbridge Mansion, and two races were driven on the wrong track with Abyss's map."""
+    import cv2
+
+    from playfellow_coop.games.stk.paths import game_data
+
+    folder = game_data() / "tracks" / track_id
+    shots = sorted(folder.glob("screenshot*"))
+    if not shots:
+        return None
+    pic = cv2.imread(str(shots[0]), cv2.IMREAD_COLOR)
+    if pic is None:
+        return None
+    h, w = frame.shape[:2]
+    top = int(h * 0.30)  # the track grid (the Grand Prix row is above it)
+    grid = frame[top:int(h * 0.95)]
+    best = None
+    for share in (0.10, 0.115, 0.13, 0.145):
+        tw = int(w * share)
+        th = int(tw * pic.shape[0] / pic.shape[1])
+        if th >= grid.shape[0] or tw >= grid.shape[1]:
+            continue
+        small = cv2.resize(pic, (tw, th), interpolation=cv2.INTER_AREA)
+        res = cv2.matchTemplate(grid, small, cv2.TM_CCOEFF_NORMED)
+        _, score, _, (x, y) = cv2.minMaxLoc(res)
+        if best is None or score > best[0]:
+            best = (score, x, y + top, tw, th)
+    if best is None or best[0] < 0.5:
+        return None
+    score, x, y, tw, th = best
+    return x / w, y / h, (x + tw) / w, (y + th) / h
 
 
 def kart_name_label(s) -> str:  # pragma: no cover - needs a real desktop
@@ -384,13 +419,30 @@ def setup_route(s: Session, difficulty: str, seen) -> bool:  # pragma: no cover
         # 5 Nov: the caption under the grid names the track under the MOUSE, not the keyboard focus: it said "Antediluvian
         # Abyss" while the focus sat on a locked Grand Prix, and Enter did nothing. Follow the red focus frame instead:
         # Abyss is alone in the grid's last row, so Down moves the focus onto it from any row above.
-        for _ in range(10):
+        # 5 Nov 03:05: the last row was Ravenbridge Mansion, not Abyss. Find Abyss's tile by the game's own picture of it,
+        # then walk the focus frame onto that tile
+        tile = find_track_tile(s.frame(), track_id)
+        if tile is None:
+            s.say("I can't find Antediluvian Abyss's picture in the grid; I stop here.")
+            return False
+        for _ in range(16):
             box = focus_box(s.frame())
-            if on_abyss(box):
+            if on_abyss(box, tile):
                 found = True
-                s.say("The focus frame is on Antediluvian Abyss (the last row of the grid).")
+                s.say("The focus frame is on Antediluvian Abyss (matched by its picture).")
                 break
-            s.tap("up" if box is not None and box[1] > ABYSS_TILE[3] else "down")
+            if box is None:
+                s.tap("down")
+            else:
+                cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+                if cy < tile[1]:
+                    s.tap("down")
+                elif cy > tile[3]:
+                    s.tap("up")
+                elif cx < tile[0]:
+                    s.tap("right")
+                else:
+                    s.tap("left")
             time.sleep(0.6)
     for _ in range(0 if found or track_id == "abyss" else 10):
         words = track_caption()
