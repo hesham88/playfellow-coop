@@ -263,7 +263,7 @@ def make_chat(say, recent_lines):  # pragma: no cover - network
             if action == "goal":
                 args.append(str(data.get("goal") or text)[:200])
             subprocess.Popen([_sys.executable, "-m", "playfellow_coop.games.stk.act", *args],
-                             creationflags=0x00000008 | 0x00000200)
+                             creationflags=0x08000000 | 0x00000200)
             extra = f" (doing it now: {' '.join(args)})"
         tunes = [t for t in (data.get("tune") or []) if t in TUNINGS]
         if tunes:

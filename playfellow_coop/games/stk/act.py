@@ -49,7 +49,7 @@ def main(argv=None) -> None:  # pragma: no cover
     if what == "race":
         difficulty = argv[1] if len(argv) > 1 else "intermediate"
         subprocess.Popen([sys.executable, "-m", "playfellow_coop.games.stk.mission", "--mission", "race", "--difficulty", difficulty],
-                         creationflags=0x00000008 | 0x00000200)
+                         creationflags=0x08000000 | 0x00000200)
         return
     if what == "press":  # the player asked for keys: press them now, say each one
         from playfellow_coop.games.stk.io import GameWindow, MENU_KEYS

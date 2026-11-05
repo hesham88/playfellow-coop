@@ -445,7 +445,7 @@ def main(argv=None):  # pragma: no cover
             time.sleep(1.0)
     window = GameWindow()
     if not widget_running():  # one widget for as long as the buddy has the game, shared by every session
-        subprocess.Popen([sys.executable, "-m", "playfellow_coop.games.stk.widget"], creationflags=0x00000008 | 0x00000200)
+        subprocess.Popen([sys.executable, "-m", "playfellow_coop.games.stk.widget"], creationflags=0x08000000 | 0x00000200)
         time.sleep(2.0)
     transcript = out / "widget-lines.txt"
 
@@ -531,7 +531,7 @@ def main(argv=None):  # pragma: no cover
             if time.monotonic() - last_widget_check > 3.0:  # the widget must stay up the whole time the buddy has the game
                 last_widget_check = time.monotonic()
                 if not widget_running():
-                    subprocess.Popen([sys.executable, "-m", "playfellow_coop.games.stk.widget"], creationflags=0x00000008 | 0x00000200,
+                    subprocess.Popen([sys.executable, "-m", "playfellow_coop.games.stk.widget"], creationflags=0x08000000 | 0x00000200,
                                      stderr=open(HOME / "widget-err.log", "a"))
             if window.key_is_down(VK_F12) or STOP.exists():
                 session.stop.set()
