@@ -35,7 +35,7 @@ jobs:
           echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNgYGBgYAAAAAUAAWbH4hIAAAAASUVORK5CYII=" | base64 -d > site/art/bg.jpg
           cp docs/img/brand/logo.png site/art/logo.png
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
       - id: deployment
