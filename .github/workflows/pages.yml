@@ -34,7 +34,7 @@ jobs:
           # a plain 1x1 midnight pixel: the page's own gradients do the rest (a banner here would show its words behind the arena)
           echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNgYGBgYAAAAAUAAWbH4hIAAAAASUVORK5CYII=" | base64 -d > site/art/bg.jpg
           cp docs/img/brand/logo.png site/art/logo.png
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
